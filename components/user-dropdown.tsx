@@ -53,8 +53,8 @@ export function UserDropdown({
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-12 w-12 rounded-full">
           <Avatar className="h-12 w-12 border-2 border-transparent hover:border-gray-200">
-            <AvatarImage src={user.avatar || "/placeholder-user.svg"} alt={user.name} />
-            <AvatarFallback className="bg-gray-900 text-white font-medium text-lg">
+            {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
+            <AvatarFallback className="bg-gray-900 text-white font-medium text-sm">
               {user.initials}
             </AvatarFallback>
           </Avatar>

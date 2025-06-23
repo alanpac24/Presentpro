@@ -53,7 +53,7 @@ export default function ProfilePage() {
                 <CardContent className="p-8 text-center">
                   <div className="relative inline-block mb-4">
                     <Avatar className="h-28 w-28">
-                      <AvatarImage src={mockUser.avatar || "/placeholder-user.svg"} alt={mockUser.name} />
+                      {mockUser.avatar && <AvatarImage src={mockUser.avatar} alt={mockUser.name} />}
                       <AvatarFallback className="bg-gray-900 text-white text-4xl">JD</AvatarFallback>
                     </Avatar>
                     <Button

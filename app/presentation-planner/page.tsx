@@ -84,6 +84,7 @@ const fontStyles = ["Default Corporate", "Modern Sans-serif", "Classic Serif", "
 
 export default function PresentationPlannerPage() {
   const router = useRouter()
+  const [mode, setMode] = useState<"quick" | "detailed">("quick")
   const [quickPrompt, setQuickPrompt] = useState("")
 
   const [formData, setFormData] = useState<PresentationData>({
@@ -195,173 +196,140 @@ export default function PresentationPlannerPage() {
     <div className="min-h-screen bg-white">
       <PrivateHeader />
       {/* Header Section */}
-      <section className="pt-12 pb-16 px-6 lg:px-8 bg-gray-50">
-        {" "}
-        {/* Adjusted padding */}
-        <div className="max-w-5xl mx-auto">
-          <div className="mb-12">
-            {" "}
-            {/* Adjusted margin */}
-            <Button
-              variant="ghost"
-              size="sm"
-              asChild
-              className="text-gray-700 hover:text-gray-900 mb-8 text-sm font-medium tracking-wide rounded-lg"
-            >
-              <Link href="/dashboard">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                BACK TO DASHBOARD
-              </Link>
-            </Button>
-            <div className="inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-700 text-xs font-medium tracking-wide uppercase mb-8 rounded-md">
-              {" "}
-              {/* Adjusted style */}
-              AI-Powered Presentation Creation
+      <section className="bg-gray-50 border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
+          <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-8">
+            <div className="flex-1">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-light text-gray-900 mb-3 sm:mb-4">
+                Create Your
+                <span className="block text-gray-600 font-medium">Perfect Presentation</span>
+              </h1>
+              <p className="text-base sm:text-lg text-gray-600 max-w-xl">
+                Generate professional presentations with AI assistance. Choose between quick generation or detailed
+                planning for maximum customization.
+              </p>
             </div>
-            <h1 className="text-5xl lg:text-6xl font-light text-gray-900 mb-6 tracking-tight leading-tight">
-              {" "}
-              {/* Adjusted margin */}
-              Create Your
-              <span className="block text-gray-600">Perfect Presentation</span>
-            </h1>
-            <p className="text-xl text-gray-600 mb-12 max-w-4xl leading-relaxed font-light">
-              {" "}
-              {/* Adjusted margin & font size */}
-              Generate professional presentations with AI assistance. Choose between quick generation or detailed
-              planning for maximum customization.
-            </p>
+            {/* Mode Toggle */}
+            <div className="flex justify-center lg:justify-end">
+              <div className="inline-flex rounded-lg border border-gray-200 bg-white p-1 shadow-sm">
+                <button
+                  onClick={() => setMode("quick")}
+                  className={`px-6 py-3 text-sm font-medium rounded-md transition-all ${
+                    mode === "quick"
+                      ? "bg-gray-900 text-white"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  Quick Start
+                </button>
+                <button
+                  onClick={() => setMode("detailed")}
+                  className={`px-6 py-3 text-sm font-medium rounded-md transition-all ${
+                    mode === "detailed"
+                      ? "bg-gray-900 text-white"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  Detailed Planning
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
       {/* Content Section */}
-      <section className="py-16 lg:py-20 px-6 lg:px-8">
-        {" "}
-        {/* Adjusted padding */}
-        <div className="max-w-5xl mx-auto">
+      <section className="py-8 sm:py-12 lg:py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {mode === "quick" ? (
           <div className="space-y-12">
             {" "}
             {/* Adjusted spacing */}
             <div className="text-center mb-16">
-              {" "}
-              {/* Adjusted margin */}
-              <h2 className="text-4xl lg:text-5xl font-light text-gray-900 mb-6 tracking-tight">
-                {" "}
-                {/* Adjusted margin */}
-                Quick Start
-                <span className="block text-gray-600">with AI Prompt</span>
+              <h2 className="text-4xl lg:text-5xl font-light text-gray-900 mb-8 tracking-tight">
+                Quick Start with AI Prompt
               </h2>
-              <p className="text-lg text-gray-600 max-w-3xl mx-auto font-light">
-                {" "}
-                {/* Adjusted font size */}
-                Tell our AI what you want to present, and we'll create a professional presentation tailored to your
-                needs.
-              </p>
             </div>
-            <div className="bg-white p-8 lg:p-12 shadow-sm border border-gray-200 rounded-lg">
-              {" "}
-              {/* Adjusted padding & rounded */}
-              <div className="space-y-8">
-                {" "}
-                {/* Adjusted spacing */}
-                <div className="space-y-3">
-                  {" "}
-                  {/* Adjusted spacing */}
-                  <Label htmlFor="prompt" className={labelBaseClass}>
-                    Describe your presentation
-                  </Label>
-                  <Textarea
-                    id="prompt"
-                    placeholder="Example: Create a 15-slide presentation about Q4 sales performance for executives, focusing on revenue growth, key wins, and 2024 strategy recommendations..."
-                    value={quickPrompt}
-                    onChange={(e) => setQuickPrompt(e.target.value)}
-                    rows={8} /* Adjusted rows */
-                    className={`resize-none text-base bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-500 focus:border-gray-400 focus:ring-0 rounded-lg p-4`} /* Adjusted style */
-                  />
-                </div>
-                <div className="bg-gray-50 p-6 lg:p-8 rounded-lg">
-                  {" "}
-                  {/* Adjusted padding & rounded */}
-                  <h4 className="text-lg font-medium text-gray-900 mb-6">Best Practices for AI Generation</h4>{" "}
-                  {/* Adjusted font & margin */}
-                  <div className="grid md:grid-cols-2 gap-8">
-                    {" "}
-                    {/* Adjusted gap */}
-                    <div>
-                      <h5 className="font-medium text-gray-900 mb-3 text-base">Include These Details:</h5>{" "}
-                      {/* Adjusted font & margin */}
-                      <ul className="text-gray-600 space-y-2.5 text-sm">
-                        {" "}
-                        {/* Adjusted font & spacing */}
-                        <li className="flex items-start">
-                          <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-1.5 mr-3 flex-shrink-0"></div>Target
-                          audience
-                        </li>
-                        <li className="flex items-start">
-                          <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-1.5 mr-3 flex-shrink-0"></div>Main
-                          topic and key points
-                        </li>
-                        <li className="flex items-start">
-                          <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-1.5 mr-3 flex-shrink-0"></div>
-                          Presentation length (slides)
-                        </li>
-                      </ul>
-                    </div>
-                    <div>
-                      <h5 className="font-medium text-gray-900 mb-3 text-base">Specify Purpose:</h5>
-                      <ul className="text-gray-600 space-y-2.5 text-sm">
-                        <li className="flex items-start">
-                          <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-1.5 mr-3 flex-shrink-0"></div>Inform,
-                          persuade, or educate
-                        </li>
-                        <li className="flex items-start">
-                          <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-1.5 mr-3 flex-shrink-0"></div>Context
-                          and background
-                        </li>
-                        <li className="flex items-start">
-                          <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-1.5 mr-3 flex-shrink-0"></div>Desired
-                          tone and style
-                        </li>
-                      </ul>
-                    </div>
+            <div className="max-w-3xl mx-auto">
+              <div className="bg-white p-6 lg:p-8 shadow-sm border border-gray-200 rounded-lg">
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="prompt" className={labelBaseClass}>
+                      Describe your presentation
+                    </Label>
+                    <Textarea
+                      id="prompt"
+                      placeholder="Example: Create a 15-slide presentation about Q4 sales performance for executives, focusing on revenue growth, key wins, and 2024 strategy recommendations..."
+                      value={quickPrompt}
+                      onChange={(e) => setQuickPrompt(e.target.value)}
+                      rows={4}
+                      className={`resize-none text-base bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-500 focus:border-gray-400 focus:ring-0 rounded-lg p-4 mt-2`}
+                    />
+                  </div>
+                  <div className="text-center pt-2">
+                    <Button
+                      onClick={handleQuickGenerate}
+                      disabled={!quickPrompt.trim()}
+                      className="bg-gray-900 hover:bg-gray-800 disabled:bg-gray-300 text-white font-medium h-14 px-8 text-sm rounded-xl transition-all duration-200 hover:shadow-lg"
+                    >
+                      Generate Presentation
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                    {!quickPrompt.trim() && (
+                      <p className="text-xs text-gray-500 mt-4">Enter a description above to generate your presentation</p>
+                    )}
                   </div>
                 </div>
-                <Button
-                  onClick={handleQuickGenerate}
-                  disabled={!quickPrompt.trim()}
-                  className="w-full bg-gray-900 hover:bg-gray-800 text-white font-medium h-12 text-base tracking-wide rounded-lg" /* Adjusted height & font */
-                  size="lg"
-                >
-                  <Wand2 className="w-5 h-5 mr-2.5" /> {/* Adjusted margin */}
-                  GENERATE PRESENTATION
-                  <ArrowRight className="w-5 h-5 ml-2.5" />
-                </Button>
+              </div>
+              
+              <div className="mt-8 bg-gray-50 p-6 lg:p-8 rounded-lg">
+                <h4 className="text-lg font-medium text-gray-900 mb-6">Best Practices for AI Generation</h4>
+                <div className="grid md:grid-cols-2 gap-8">
+                  <div>
+                    <h5 className="font-medium text-gray-900 mb-3 text-base">Include These Details:</h5>
+                    <ul className="text-gray-600 space-y-2.5 text-sm">
+                      <li className="flex items-start">
+                        <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-1.5 mr-3 flex-shrink-0"></div>
+                        Target audience
+                      </li>
+                      <li className="flex items-start">
+                        <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-1.5 mr-3 flex-shrink-0"></div>
+                        Main topic and key points
+                      </li>
+                      <li className="flex items-start">
+                        <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-1.5 mr-3 flex-shrink-0"></div>
+                        Presentation length (slides)
+                      </li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h5 className="font-medium text-gray-900 mb-3 text-base">Specify Purpose:</h5>
+                    <ul className="text-gray-600 space-y-2.5 text-sm">
+                      <li className="flex items-start">
+                        <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-1.5 mr-3 flex-shrink-0"></div>
+                        Inform, persuade, or educate
+                      </li>
+                      <li className="flex items-start">
+                        <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-1.5 mr-3 flex-shrink-0"></div>
+                        Context and background
+                      </li>
+                      <li className="flex items-start">
+                        <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-1.5 mr-3 flex-shrink-0"></div>
+                        Desired tone and style
+                      </li>
+                    </ul>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-
-          <div className="flex items-center justify-center py-12">
-            {" "}
-            {/* Adjusted padding */}
-            <div className="flex items-center space-x-3">
-              {" "}
-              {/* Adjusted spacing */}
-              <div className="h-px bg-gray-200 w-20"></div> {/* Adjusted color & width */}
-              <span className="text-gray-500 text-sm font-medium tracking-wide">OR</span> {/* Adjusted font */}
-              <div className="h-px bg-gray-200 w-20"></div>
-            </div>
-          </div>
-
+          ) : (
           <div className="space-y-16">
             {" "}
             {/* Adjusted spacing */}
             <div className="text-center mb-16">
-              <h2 className="text-4xl lg:text-5xl font-light text-gray-900 mb-6 tracking-tight">
-                Detailed
-                <span className="block text-gray-600">Planning</span>
+              <h2 className="text-4xl lg:text-5xl font-light text-gray-900 mb-8 tracking-tight">
+                Detailed Planning
               </h2>
-              <p className="text-lg text-gray-600 max-w-3xl mx-auto font-light">
-                Customize every aspect of your presentation for maximum impact and precision.
-              </p>
             </div>
             {/* Sections: Basics, Content, Style & Branding */}
             {[
@@ -692,18 +660,23 @@ export default function PresentationPlannerPage() {
               </div>
             ))}
             <div className="bg-white p-8 lg:p-12 shadow-sm border border-gray-200 text-center rounded-lg">
-              <Button
-                onClick={handleDetailedGenerate}
-                disabled={!formData.title || !formData.topic}
-                className="bg-gray-900 hover:bg-gray-800 text-white font-medium h-12 px-10 text-base tracking-wide rounded-lg" /* Adjusted style */
-                size="lg"
-              >
-                <Wand2 className="w-5 h-5 mr-2.5" />
-                GENERATE DETAILED PRESENTATION
-                <ArrowRight className="w-5 h-5 ml-2.5" />
-              </Button>
+              <div className="max-w-md mx-auto">
+                <p className="text-gray-600 mb-6">Ready to create your presentation?</p>
+                <Button
+                  onClick={handleDetailedGenerate}
+                  disabled={!formData.title || !formData.topic}
+                  className="bg-gray-900 hover:bg-gray-800 disabled:bg-gray-300 text-white font-medium h-14 px-8 text-sm rounded-xl transition-all duration-200 hover:shadow-lg"
+                >
+                  Generate Presentation
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+                {(!formData.title || !formData.topic) && (
+                  <p className="text-xs text-gray-500 mt-4">Please fill in the presentation title and topic to continue</p>
+                )}
+              </div>
             </div>
           </div>
+          )}
         </div>
       </section>
     </div>

@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Clock, Share2, Download, Copy, Check, X, Edit3, MoreHorizontal, PresentationIcon } from "lucide-react"
+import { Clock, Share2, Download, Copy, Check, X, Edit3, PresentationIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -87,28 +87,31 @@ export function PresentationEditorHeader({ title, onTitleChange, isAutoSaving }:
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button size="icon" variant="ghost">
-              <MoreHorizontal className="h-5 w-5" />
+            <Button size="lg" className="h-11 bg-gray-900 hover:bg-gray-800">
+              <Share2 className="mr-2 h-4 w-4" />
+              Share & Export
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem>
+              <Share2 className="mr-2 h-4 w-4" /> Share presentation
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Copy className="mr-2 h-4 w-4" /> Copy link
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem>
               <Download className="mr-2 h-4 w-4" /> Export as PDF
             </DropdownMenuItem>
             <DropdownMenuItem>
-              <Download className="mr-2 h-4 w-4" /> Export as PPTX
+              <Download className="mr-2 h-4 w-4" /> Export as PowerPoint
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
-              <Copy className="mr-2 h-4 w-4" /> Duplicate
+              <Copy className="mr-2 h-4 w-4" /> Duplicate presentation
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-
-        <Button size="lg" className="h-11 bg-gray-900 hover:bg-gray-800">
-          <Share2 className="mr-2 h-4 w-4" />
-          Share
-        </Button>
 
         <UserDropdown showUpgrade={false} />
       </div>

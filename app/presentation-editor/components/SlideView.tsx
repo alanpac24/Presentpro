@@ -15,12 +15,17 @@ import {
   Circle,
   Bold,
   Italic,
+  Underline,
   AlignLeft,
   AlignCenter,
   AlignRight,
+  AlignJustify,
   Palette,
   Copy,
   Trash2,
+  Image,
+  Minus,
+  Plus,
 } from "lucide-react"
 
 interface SlideElement {
@@ -66,12 +71,24 @@ const colors = [
   "#9ca3af",
   "#d1d5db",
   "#f3f4f6",
+  "#ffffff",
   "#ef4444",
   "#f97316",
+  "#f59e0b",
   "#eab308",
+  "#84cc16",
   "#22c55e",
+  "#10b981",
+  "#14b8a6",
+  "#06b6d4",
+  "#0ea5e9",
   "#3b82f6",
+  "#6366f1",
   "#8b5cf6",
+  "#a855f7",
+  "#d946ef",
+  "#ec4899",
+  "#f43f5e",
 ]
 
 export function SlideView({
@@ -432,23 +449,39 @@ export function SlideView({
 
   return (
     <div className="flex-1 bg-gray-50 flex flex-col relative">
-      {selectedElementData && (
-        <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-50">
-          <Card className="shadow-lg border border-gray-200 bg-white/95 backdrop-blur-sm rounded-lg">
+      {/* Persistent Formatting Toolbar */}
+      <div className="bg-white border-b border-gray-200 px-6 py-3">
+        <div className="flex items-center justify-center">
+          <Card className="shadow-sm border border-gray-200 bg-white rounded-lg">
             <CardContent className="p-2">
               <div className="flex items-center space-x-1">
                 <div className="flex items-center space-x-0.5 pr-1 border-r border-gray-200">
-                  <Button size="icon" variant="ghost" onClick={addTextBox}>
+                  <Button 
+                    size="icon" 
+                    variant="ghost" 
+                    onClick={addTextBox}
+                    title="Add Text Box"
+                  >
                     <Type className="w-4 h-4" />
                   </Button>
-                  <Button size="icon" variant="ghost" onClick={() => addShape("rectangle")}>
+                  <Button 
+                    size="icon" 
+                    variant="ghost" 
+                    onClick={() => addShape("rectangle")}
+                    title="Add Rectangle"
+                  >
                     <Square className="w-4 h-4" />
                   </Button>
-                  <Button size="icon" variant="ghost" onClick={() => addShape("circle")}>
+                  <Button 
+                    size="icon" 
+                    variant="ghost" 
+                    onClick={() => addShape("circle")}
+                    title="Add Circle"
+                  >
                     <Circle className="w-4 h-4" />
                   </Button>
                 </div>
-                {selectedElementData.type !== "shape" && (
+                {selectedElementData && selectedElementData.type !== "shape" && (
                   <>
                     <div className="flex items-center space-x-0.5 px-1 border-r border-gray-200">
                       <Select
@@ -487,8 +520,21 @@ export function SlideView({
                             fontStyle: selectedElementData.style.fontStyle === "italic" ? "normal" : "italic",
                           })
                         }
+                        title="Italic"
                       >
                         <Italic className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant={selectedElementData.style.textDecoration === "underline" ? "secondary" : "ghost"}
+                        onClick={() =>
+                          updateElementStyle(selectedElement!, {
+                            textDecoration: selectedElementData.style.textDecoration === "underline" ? "none" : "underline",
+                          })
+                        }
+                        title="Underline"
+                      >
+                        <Underline className="w-4 h-4" />
                       </Button>
                     </div>
                     <div className="flex items-center space-x-0.5 px-1 border-r border-gray-200">
@@ -510,9 +556,35 @@ export function SlideView({
                         size="icon"
                         variant={selectedElementData.style.textAlign === "right" ? "secondary" : "ghost"}
                         onClick={() => updateElementStyle(selectedElement!, { textAlign: "right" })}
+                        title="Align Right"
                       >
                         <AlignRight className="w-4 h-4" />
                       </Button>
+                      <Button
+                        size="icon"
+                        variant={selectedElementData.style.textAlign === "justify" ? "secondary" : "ghost"}
+                        onClick={() => updateElementStyle(selectedElement!, { textAlign: "justify" })}
+                        title="Justify"
+                      >
+                        <AlignJustify className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div className="flex items-center space-x-0.5 px-1 border-r border-gray-200">
+                      <Select
+                        value={selectedElementData.style.fontFamily}
+                        onValueChange={(v) => updateElementStyle(selectedElement!, { fontFamily: v })}
+                      >
+                        <SelectTrigger className="w-32 h-9 text-xs rounded-md">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {fontFamilies.map((font) => (
+                            <SelectItem key={font} value={font} style={{ fontFamily: font }}>
+                              {font}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </>
                 )}
@@ -523,42 +595,79 @@ export function SlideView({
                         <Palette className="w-4 h-4" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-48">
-                      <div className="grid grid-cols-6 gap-2">
-                        {colors.map((c) => (
-                          <button
-                            key={c}
-                            className="w-6 h-6 rounded border"
-                            style={{ backgroundColor: c }}
-                            onClick={() =>
-                              updateElementStyle(selectedElement!, {
-                                [selectedElementData.type === "shape" ? "backgroundColor" : "color"]: c,
-                              })
-                            }
-                          />
-                        ))}
+                    <PopoverContent className="w-64">
+                      <div className="space-y-3">
+                        <div>
+                          <p className="text-xs font-medium mb-2">Text Color</p>
+                          <div className="grid grid-cols-8 gap-1">
+                            {colors.map((c) => (
+                              <button
+                                key={c}
+                                className="w-6 h-6 rounded border hover:scale-110 transition-transform"
+                                style={{ backgroundColor: c }}
+                                onClick={() =>
+                                  selectedElementData && updateElementStyle(selectedElement!, { color: c })
+                                }
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        {selectedElementData && (
+                          <div>
+                            <p className="text-xs font-medium mb-2">Background</p>
+                            <div className="grid grid-cols-8 gap-1">
+                              {colors.concat(["transparent"]).map((c) => (
+                                <button
+                                  key={c}
+                                  className="w-6 h-6 rounded border hover:scale-110 transition-transform"
+                                  style={{ 
+                                    backgroundColor: c === "transparent" ? "white" : c,
+                                    backgroundImage: c === "transparent" 
+                                      ? "linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc), linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc)"
+                                      : "none",
+                                    backgroundSize: "8px 8px",
+                                    backgroundPosition: "0 0, 4px 4px"
+                                  }}
+                                  onClick={() =>
+                                    updateElementStyle(selectedElement!, { 
+                                      backgroundColor: c === "transparent" ? "transparent" : c 
+                                    })
+                                  }
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </PopoverContent>
                   </Popover>
                 </div>
-                <div className="flex items-center space-x-0.5 pl-1">
-                  <Button size="icon" variant="ghost" onClick={duplicateElement}>
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={deleteElement}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
+                {selectedElementData && (
+                  <div className="flex items-center space-x-0.5 pl-1">
+                    <Button 
+                      size="icon" 
+                      variant="ghost" 
+                      onClick={duplicateElement}
+                      title="Duplicate"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={deleteElement}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
         </div>
-      )}
+      </div>
 
       <div
         className="flex-1 flex items-center justify-center p-12 overflow-hidden"

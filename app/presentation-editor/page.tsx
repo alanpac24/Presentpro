@@ -72,6 +72,39 @@ export default function PresentationEditorPage() {
     setTimeout(() => setIsAutoSaving(false), 1500)
   }
 
+  const handleSlidesReorder = (newSlides: typeof mockSlides) => {
+    setSlides(newSlides)
+    setIsAutoSaving(true)
+    setTimeout(() => setIsAutoSaving(false), 1500)
+  }
+
+  const handleSlideDelete = (slideId: number) => {
+    setSlides((prev) => prev.filter((slide) => slide.id !== slideId))
+    setIsAutoSaving(true)
+    setTimeout(() => setIsAutoSaving(false), 1500)
+  }
+
+  const handleSlideRename = (slideId: number, newTitle: string) => {
+    setSlides((prev) => prev.map((slide) => 
+      slide.id === slideId ? { ...slide, title: newTitle } : slide
+    ))
+    setIsAutoSaving(true)
+    setTimeout(() => setIsAutoSaving(false), 1500)
+  }
+
+  const handleSlideAdd = () => {
+    const newSlide = {
+      id: Math.max(...slides.map(s => s.id)) + 1,
+      title: `Slide ${slides.length + 1}`,
+      type: "content" as const,
+      content: "## New Slide\\n\\nClick to add content",
+    }
+    setSlides((prev) => [...prev, newSlide])
+    setCurrentSlideIndex(slides.length)
+    setIsAutoSaving(true)
+    setTimeout(() => setIsAutoSaving(false), 1500)
+  }
+
   const handleZoomChange = (newZoom: number) => {
     setZoom(Math.max(50, Math.min(200, newZoom)))
     if (newZoom <= 100) setPanOffset({ x: 0, y: 0 })
@@ -87,7 +120,7 @@ export default function PresentationEditorPage() {
   }
 
   return (
-    <div className="h-screen bg-white flex flex-col overflow-hidden">
+    <div className="h-screen bg-white flex flex-col overflow-hidden relative">
       <PresentationEditorHeader
         title={presentationTitle}
         onTitleChange={setPresentationTitle}
@@ -105,9 +138,17 @@ export default function PresentationEditorPage() {
             onZoomChange={handleZoomChange}
             onPanChange={handlePanChange}
           />
+          <SlideCarousel 
+            slides={slides} 
+            currentSlideIndex={currentSlideIndex} 
+            onSlideChange={handleSlideChange}
+            onSlidesReorder={handleSlidesReorder}
+            onSlideDelete={handleSlideDelete}
+            onSlideRename={handleSlideRename}
+            onSlideAdd={handleSlideAdd}
+          />
         </div>
       </div>
-      <SlideCarousel slides={slides} currentSlideIndex={currentSlideIndex} onSlideChange={handleSlideChange} />
     </div>
   )
 }

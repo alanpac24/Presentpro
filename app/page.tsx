@@ -6,12 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Star, Presentation, Shield, Phone, ArrowRight, BarChart3, Zap, FileText, Target } from "lucide-react"
+import { Star, Presentation, Shield, Phone, ArrowRight, BarChart3, Zap, FileText, Target, Menu, X } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 
 export default function PresentationProAI() {
   const [searchQuery, setSearchQuery] = useState("")
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     // Set smooth scrolling behavior
@@ -45,9 +46,9 @@ export default function PresentationProAI() {
   return (
     <div className="min-h-screen bg-white">
       {/* Navigation */}
-      <nav className="border-b border-gray-200 bg-white sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
+      <nav className="border-b border-gray-200 bg-white sticky top-0 z-50 backdrop-blur-lg bg-white/95">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16 sm:h-20">
             <div className="flex items-center">
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -56,7 +57,7 @@ export default function PresentationProAI() {
                 <div className="text-2xl font-light text-gray-900 tracking-wide">PRESENTPRO</div>
               </div>
             </div>
-            <div className="hidden lg:flex items-center space-x-12">
+            <div className="hidden lg:flex items-center space-x-8 xl:space-x-12">
               <a
                 href="#intelligent-generation"
                 onClick={(e) => {
@@ -98,37 +99,108 @@ export default function PresentationProAI() {
                 PRICING
               </a>
             </div>
-            <div className="flex items-center space-x-6">
-              <Link href="/signin">
+            <div className="flex items-center space-x-4">
+              <Link href="/signin" className="hidden sm:block">
                 <Button variant="ghost" className="text-gray-700 hover:text-gray-900 text-sm font-medium tracking-wide">
                   SIGN IN
                 </Button>
               </Link>
-              <Link href="/signup">
-                <Button className="bg-gray-900 hover:bg-gray-800 text-white text-sm font-medium tracking-wide px-8 h-11">
+              <Link href="/signup" className="hidden sm:block">
+                <Button className="bg-gray-900 hover:bg-gray-800 text-white text-sm font-medium tracking-wide px-6 sm:px-8 h-10 sm:h-11 btn-scale">
                   START FREE TRIAL
                 </Button>
               </Link>
+              <Button
+                variant="ghost"
+                className="lg:hidden p-2"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              >
+                {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </Button>
             </div>
           </div>
         </div>
+        
+        {/* Mobile menu */}
+        {mobileMenuOpen && (
+          <div className="lg:hidden border-t border-gray-200">
+            <div className="px-4 py-6 space-y-3">
+              <a
+                href="#intelligent-generation"
+                onClick={(e) => {
+                  e.preventDefault()
+                  document.getElementById("intelligent-generation")?.scrollIntoView({ behavior: "smooth" })
+                  setMobileMenuOpen(false)
+                }}
+                className="block py-2 text-gray-700 hover:text-gray-900 font-medium"
+              >
+                FEATURES
+              </a>
+              <a
+                href="#templates"
+                onClick={(e) => {
+                  e.preventDefault()
+                  document.getElementById("templates")?.scrollIntoView({ behavior: "smooth" })
+                  setMobileMenuOpen(false)
+                }}
+                className="block py-2 text-gray-700 hover:text-gray-900 font-medium"
+              >
+                TEMPLATES
+              </a>
+              <a
+                href="#testimonials"
+                onClick={(e) => {
+                  e.preventDefault()
+                  document.getElementById("testimonials")?.scrollIntoView({ behavior: "smooth" })
+                  setMobileMenuOpen(false)
+                }}
+                className="block py-2 text-gray-700 hover:text-gray-900 font-medium"
+              >
+                TESTIMONIALS
+              </a>
+              <a
+                href="#pricing"
+                onClick={(e) => {
+                  e.preventDefault()
+                  document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })
+                  setMobileMenuOpen(false)
+                }}
+                className="block py-2 text-gray-700 hover:text-gray-900 font-medium"
+              >
+                PRICING
+              </a>
+              <div className="pt-4 space-y-3">
+                <Link href="/signin" className="block">
+                  <Button variant="outline" className="w-full">
+                    SIGN IN
+                  </Button>
+                </Link>
+                <Link href="/signup" className="block">
+                  <Button className="w-full bg-gray-900 hover:bg-gray-800">
+                    START FREE TRIAL
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-24 px-6 lg:px-8">
+      <section className="pt-16 pb-16 sm:pt-24 sm:pb-20 lg:pt-32 lg:pb-24 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="max-w-4xl">
             <div className="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-800 text-xs font-medium tracking-wide uppercase mb-12">
               AI-Powered Presentation Generation Platform
             </div>
 
-            <h1 className="text-6xl font-light text-gray-900 mb-8 tracking-tight leading-[0.9] lg:text-7xl">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-light text-gray-900 mb-6 sm:mb-8 tracking-tight leading-[0.9]">
               Create executive-level
               <span className="block font-normal">presentations</span>
               <span className="block text-gray-600">with professional precision.</span>
             </h1>
 
-            <p className="text-xl lg:text-2xl text-gray-600 mb-16 max-w-3xl leading-relaxed font-light">
+            <p className="text-lg sm:text-xl lg:text-2xl text-gray-600 mb-10 sm:mb-12 lg:mb-16 max-w-3xl leading-relaxed font-light">
               Deliver compelling presentations that drive results with AI-powered, enterprise-grade PowerPoint decks
               tailored to your business objectives. Start creating professional presentations now.
             </p>
@@ -152,10 +224,10 @@ export default function PresentationProAI() {
             </div>
 
             {/* Key Metrics */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 lg:gap-12">
               <div className="text-center lg:text-left">
-                <div className="text-3xl lg:text-4xl font-light text-gray-900 mb-2">2.3M+</div>
-                <div className="text-gray-600 text-xs lg:text-sm font-medium tracking-wide uppercase">
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-light text-gray-900 mb-1 sm:mb-2">2.3M+</div>
+                <div className="text-gray-600 text-xs sm:text-sm font-medium tracking-wide uppercase">
                   Presentations Created
                 </div>
               </div>
@@ -284,8 +356,8 @@ export default function PresentationProAI() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
             {/* Business Review Template */}
-            <Card className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
-              <div className="relative h-72">
+            <Card className="bg-white border border-gray-200 shadow-sm card-hover overflow-hidden group">
+              <div className="relative h-64 sm:h-72 overflow-hidden">
                 <Image
                   src="/placeholder.svg?height=300&width=400"
                   alt="Business review presentation template"
@@ -323,8 +395,8 @@ export default function PresentationProAI() {
             </Card>
 
             {/* Sales Pitch Template */}
-            <Card className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
-              <div className="relative h-72">
+            <Card className="bg-white border border-gray-200 shadow-sm card-hover overflow-hidden group">
+              <div className="relative h-64 sm:h-72 overflow-hidden">
                 <Image
                   src="/placeholder.svg?height=300&width=400"
                   alt="Sales pitch presentation template"
@@ -359,8 +431,8 @@ export default function PresentationProAI() {
             </Card>
 
             {/* Strategy Template */}
-            <Card className="bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
-              <div className="relative h-72">
+            <Card className="bg-white border border-gray-200 shadow-sm card-hover overflow-hidden group">
+              <div className="relative h-64 sm:h-72 overflow-hidden">
                 <Image
                   src="/placeholder.svg?height=300&width=400"
                   alt="Strategy presentation template"
