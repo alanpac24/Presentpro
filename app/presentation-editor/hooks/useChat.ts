@@ -33,7 +33,7 @@ export function useChat({ selectedElement, onAIResponse }: UseChatProps = {}) {
       timestamp: "now",
     }
     
-    setChatHistory((prev) => [newMessage, ...prev])
+    setChatHistory((prev) => [...prev, newMessage])
     setChatMessage("")
     setIsLoading(true)
 
@@ -45,7 +45,7 @@ export function useChat({ selectedElement, onAIResponse }: UseChatProps = {}) {
         message: "Updated based on your request.",
         timestamp: "now",
       }
-      setChatHistory((prev) => [aiResponse, ...prev])
+      setChatHistory((prev) => [...prev, aiResponse])
       setIsLoading(false)
       
       if (onAIResponse) {

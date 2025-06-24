@@ -25,6 +25,7 @@ interface SlideCarouselProps {
   onSlideDelete?: (slideId: number) => void
   onSlideRename?: (slideId: number, newTitle: string) => void
   onSlideAdd?: () => void
+  sidebarWidth?: number
 }
 
 export function SlideCarousel({ 
@@ -34,7 +35,8 @@ export function SlideCarousel({
   onSlidesReorder,
   onSlideDelete,
   onSlideRename,
-  onSlideAdd
+  onSlideAdd,
+  sidebarWidth = 560
 }: SlideCarouselProps) {
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -104,8 +106,6 @@ export function SlideCarousel({
 
   return (
     <div className="h-36 bg-gray-50 border-t border-gray-200 flex items-center relative">
-      {/* Vertical separator line aligned with sidebar */}
-      <div className="absolute left-0 top-0 bottom-0 w-[432px] border-r border-gray-200 pointer-events-none" />
       <div className="flex items-center space-x-2 px-4">
         <Button 
           variant="outline" 

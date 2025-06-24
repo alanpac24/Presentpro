@@ -47,6 +47,8 @@ export default function PresentationEditorPage() {
   const [zoom, setZoom] = useState(100)
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 })
   const [isAutoSaving, setIsAutoSaving] = useState(false)
+  const [sidebarWidth, setSidebarWidth] = useState(400)
+  const [isResizing, setIsResizing] = useState(false)
 
   const currentSlide = slides[currentSlideIndex]
 
@@ -58,6 +60,37 @@ export default function PresentationEditorPage() {
     const intervalId = setInterval(autoSave, 30000)
     return () => clearInterval(intervalId)
   }, [])
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return
+      // Calculate new width based on mouse position
+      const newWidth = Math.max(400, Math.min(800, e.clientX))
+      setSidebarWidth(newWidth)
+    }
+
+    const handleMouseUp = () => {
+      setIsResizing(false)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+      // Set cursor and disable text selection for entire document
+      document.body.style.cursor = 'col-resize'
+      document.body.style.userSelect = 'none'
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+  }, [isResizing])
+
 
   const handleSlideChange = (index: number) => {
     setCurrentSlideIndex(index)
@@ -126,9 +159,19 @@ export default function PresentationEditorPage() {
         onTitleChange={setPresentationTitle}
         isAutoSaving={isAutoSaving}
       />
-      <div className="flex-1 flex overflow-hidden">
-        <SlideSidebar currentSlide={currentSlide} selectedElement={selectedElement} onSlideUpdate={handleSlideUpdate} />
-        <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex overflow-hidden relative">
+        <div style={{ width: `${sidebarWidth}px`, flexShrink: 0 }}>
+          <SlideSidebar 
+            currentSlide={currentSlide} 
+            selectedElement={selectedElement} 
+            onSlideUpdate={handleSlideUpdate}
+            width={sidebarWidth}
+            onResizeStart={() => {
+              setIsResizing(true)
+            }}
+          />
+        </div>
+        <div className="flex-1 flex flex-col" style={{ width: `calc(100% - ${sidebarWidth}px)` }}>
           <SlideView
             slide={currentSlide}
             selectedElement={selectedElement}
@@ -146,6 +189,7 @@ export default function PresentationEditorPage() {
             onSlideDelete={handleSlideDelete}
             onSlideRename={handleSlideRename}
             onSlideAdd={handleSlideAdd}
+            sidebarWidth={sidebarWidth}
           />
         </div>
       </div>

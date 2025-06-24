@@ -11,6 +11,8 @@ interface SlideSidebarProps {
   currentSlide: any
   selectedElement: string | null
   onSlideUpdate: (slideId: number, updates: any) => void
+  width?: number
+  onResizeStart?: () => void
 }
 
 const slideTypes = {
@@ -29,7 +31,13 @@ const slideCategories = {
   Data: ["chart", "timeline"],
 }
 
-export function SlideSidebar({ currentSlide, selectedElement, onSlideUpdate }: SlideSidebarProps) {
+export function SlideSidebar({ 
+  currentSlide, 
+  selectedElement, 
+  onSlideUpdate, 
+  width = 560, 
+  onResizeStart
+}: SlideSidebarProps) {
   const {
     chatMessage,
     setChatMessage,
@@ -41,7 +49,22 @@ export function SlideSidebar({ currentSlide, selectedElement, onSlideUpdate }: S
   } = useChat({ selectedElement })
 
   return (
-    <div className="w-[432px] bg-white border-r border-gray-200 flex flex-col h-full relative z-10">
+    <div 
+      className="bg-white flex flex-col h-full relative z-10 w-full"
+    >
+      {/* Resize handle */}
+      <div
+        className="absolute -right-3 top-0 bottom-0 w-6 cursor-col-resize z-50 group flex items-center justify-center"
+        onMouseDown={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          onResizeStart?.()
+        }}
+      >
+        {/* Make it more visible for debugging */}
+        <div className="absolute inset-0 bg-blue-500 opacity-0 group-hover:opacity-20 transition-opacity duration-200" />
+        <div className="w-1 h-full bg-gray-300 group-hover:bg-blue-500 transition-colors duration-200" />
+      </div>
       {/* Slide Type Section */}
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center mb-4">
