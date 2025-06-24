@@ -28,8 +28,9 @@ export function EditLimitModal({ show, userTier, usage, limit, onDismiss }: Edit
   }
 
   const handleBuyEdits = () => {
-    // Placeholder for Stripe checkout
-    alert("Stripe checkout for 100 edits - $10 (Coming soon)")
+    // TODO: Implement Stripe checkout for purchasing additional edits
+    // For now, redirect to upgrade page
+    router.push("/upgrade")
   }
 
   return (

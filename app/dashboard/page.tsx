@@ -548,7 +548,8 @@ export default function DashboardPage() {
                                 className="h-9 w-9 p-0 text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-md"
                                 title="Duplicate presentation"
                                 onClick={() => {
-                                  alert("Duplicate feature coming soon!")
+                                  // TODO: Implement duplicate presentation feature
+                                  console.log("Duplicate feature coming soon!")
                                 }}
                               >
                                 <Copy className="w-4 h-4" />
@@ -559,7 +560,8 @@ export default function DashboardPage() {
                                 className="h-9 w-9 p-0 text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-md"
                                 title="Share presentation"
                                 onClick={() => {
-                                  alert("Share feature coming soon!")
+                                  // TODO: Implement share presentation feature
+                                  console.log("Share feature coming soon!")
                                 }}
                               >
                                 <Share className="w-4 h-4" />
@@ -571,7 +573,8 @@ export default function DashboardPage() {
                                 title="Delete presentation"
                                 onClick={() => {
                                   if (confirm("Are you sure you want to delete this presentation?")) {
-                                    alert("Delete feature coming soon!")
+                                    // TODO: Implement delete presentation feature
+                                    console.log("Delete feature coming soon!")
                                   }
                                 }}
                               >

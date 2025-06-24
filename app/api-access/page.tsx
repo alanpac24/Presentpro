@@ -77,7 +77,15 @@ fetch(url, {
   body: JSON.stringify(data)
 })
 .then(response => response.json())
-.then(data => console.log(data));`
+.then(data => {
+  // Handle the response data
+  // Example: Update UI, store in state, etc.
+  return data;
+})
+.catch(error => {
+  // Handle errors appropriately
+  console.error('Error:', error);
+});`
   }
 
   return (

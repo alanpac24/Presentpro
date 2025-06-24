@@ -133,7 +133,7 @@ export function useSlideDragAndDrop({
           onSlideChange(currentSlideIndex + 1)
         }
       }
-    }, 150)
+    }, 150) // TODO: Use TIMEOUTS.SLIDE_TRANSITION from app-constants
 
     // Reset drag state
     setDragState({
