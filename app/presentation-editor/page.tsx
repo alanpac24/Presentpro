@@ -197,16 +197,16 @@ export default function PresentationEditorPage() {
   }
 
   return (
-    <div className="h-screen bg-white flex flex-col overflow-hidden relative">
+    <div className="fixed inset-0 bg-white flex flex-col overflow-hidden">
       <PresentationEditorHeader
         title={presentationTitle}
         onTitleChange={setPresentationTitle}
         isAutoSaving={isAutoSaving}
         onVersionHistory={() => setShowVersionHistory(true)}
       />
-      <div className="flex-1 flex overflow-hidden relative">
+      <div className="flex-1 flex overflow-hidden relative min-h-0">
         {!isMobile && (
-          <div style={{ width: `${sidebarWidth}px`, flexShrink: 0 }}>
+          <div style={{ width: `${sidebarWidth}px`, flexShrink: 0 }} className="overflow-hidden">
             <SlideSidebar 
               currentSlide={currentSlide} 
               selectedElement={selectedElement} 
@@ -218,7 +218,7 @@ export default function PresentationEditorPage() {
             />
           </div>
         )}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <SlideView
             slide={currentSlide}
             selectedElement={selectedElement}

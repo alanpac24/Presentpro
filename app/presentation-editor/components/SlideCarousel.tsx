@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useEffect } from "react"
+import { useRef, useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -146,15 +146,16 @@ export function SlideCarousel({
         </Button>
       </div>
 
-      <div className="flex-1 px-2 sm:px-4 overflow-x-auto overflow-y-hidden" ref={scrollContainerRef}>
-        <ScrollArea 
-          className="w-full h-full" 
+      <div className="flex-1 px-2 sm:px-4 overflow-hidden" ref={scrollContainerRef}>
+        <div 
+          className="h-full overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100" 
           ref={scrollAreaRef}
           onWheel={(e) => {
-            if (scrollContainerRef.current) {
+            if (scrollAreaRef.current) {
               e.preventDefault()
+              e.stopPropagation()
               const scrollAmount = e.deltaY
-              scrollContainerRef.current.scrollBy({
+              scrollAreaRef.current.scrollBy({
                 left: scrollAmount,
                 behavior: 'smooth'
               })
@@ -162,7 +163,7 @@ export function SlideCarousel({
           }}
         >
           <div 
-            className="slides-container flex items-center gap-2 sm:gap-4 py-2 sm:py-4 px-2 relative"
+            className="slides-container flex items-center gap-2 sm:gap-4 h-full py-2 sm:py-4 px-2 relative"
             onDragOver={(e) => e.preventDefault()}
             onDrop={handleDrop}
           >
@@ -279,7 +280,7 @@ export function SlideCarousel({
               </div>
             </button>
           </div>
-        </ScrollArea>
+        </div>
       </div>
 
       <div className="px-2 sm:px-4 lg:px-6 text-xs sm:text-sm text-gray-600 whitespace-nowrap">

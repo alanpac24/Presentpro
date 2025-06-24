@@ -1168,7 +1168,7 @@ export function SlideView({
   }
 
   return (
-    <div className="flex-1 bg-gray-50 flex flex-col relative">
+    <div className="flex-1 bg-gray-50 flex flex-col relative overflow-hidden min-h-0">
       {/* Persistent Formatting Toolbar */}
       <div className="bg-white border-b border-gray-200 px-6 py-3">
         <div className="flex items-center justify-center">
@@ -1698,10 +1698,11 @@ export function SlideView({
       </div>
 
       <div
-        className="flex-1 flex items-center justify-center p-4 sm:p-8 lg:p-12 overflow-hidden"
+        className="flex-1 flex items-center justify-center p-4 sm:p-8 lg:p-12 overflow-hidden min-h-0"
         onMouseDown={handleSlideMouseDown}
         onMouseMove={handleSlideMouseMove}
         onMouseUp={handleSlideMouseUp}
+        onWheel={(e) => e.stopPropagation()}
         style={{ cursor: zoom > 100 && !draggedElement ? (isDragging ? "grabbing" : "grab") : "default" }}
       >
         <div className="relative" style={{ maxWidth: '100%', maxHeight: '100%' }}>
