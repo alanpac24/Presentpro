@@ -73,7 +73,7 @@ export function useEditUsage() {
     loadUsage()
   }, [])
 
-  const userTier = mockUser.tier
+  const userTier = mockUser.tier || 'Free'
   const limit = EDIT_LIMITS[userTier] || EDIT_LIMITS.Free
   const percentage = usage ? (usage.count / limit) * 100 : 0
   const remaining = Math.max(0, limit - (usage?.count || 0))

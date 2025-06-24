@@ -106,7 +106,7 @@ export default function SettingsPage() {
                   <Label htmlFor="theme" className="font-medium">Theme</Label>
                   <Select
                     value={settings.theme}
-                    onValueChange={(value) => handleSettingChange("theme", value)}
+                    onValueChange={(value) => handleSettingChange("theme", value as "light" | "dark" | "system")}
                   >
                     <SelectTrigger id="theme" className="w-full">
                       <SelectValue>

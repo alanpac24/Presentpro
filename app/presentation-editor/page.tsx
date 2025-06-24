@@ -8,6 +8,7 @@ import { SlideCarousel } from "./components/SlideCarousel"
 import { useEditUsage } from "@/hooks/useEditUsage"
 import { EditUsageToast } from "@/components/edit-usage-toast"
 import { EditLimitModal } from "@/components/edit-limit-modal"
+import { VersionHistoryModal } from "@/components/version-history-modal"
 
 const mockSlides = [
   {
@@ -52,6 +53,7 @@ export default function PresentationEditorPage() {
   const [isAutoSaving, setIsAutoSaving] = useState(false)
   const [sidebarWidth, setSidebarWidth] = useState(400)
   const [isResizing, setIsResizing] = useState(false)
+  const [showVersionHistory, setShowVersionHistory] = useState(false)
   
   // Edit usage tracking
   const {
@@ -179,7 +181,7 @@ export default function PresentationEditorPage() {
         title={presentationTitle}
         onTitleChange={setPresentationTitle}
         isAutoSaving={isAutoSaving}
-        editUsage={{ usage, limit, isUnlimited }}
+        onVersionHistory={() => setShowVersionHistory(true)}
       />
       <div className="flex-1 flex overflow-hidden relative">
         <div style={{ width: `${sidebarWidth}px`, flexShrink: 0 }}>
@@ -215,6 +217,37 @@ export default function PresentationEditorPage() {
           />
         </div>
       </div>
+      
+      {showToast && (
+        <EditUsageToast 
+          show={showToast}
+          usage={usage}
+          limit={limit}
+          remaining={remaining}
+        />
+      )}
+      
+      <EditLimitModal
+        show={showModal}
+        onDismiss={dismissModal}
+        userTier={userTier || "Free"}
+        usage={usage}
+        limit={limit}
+      />
+      
+      <VersionHistoryModal
+        open={showVersionHistory}
+        onOpenChange={setShowVersionHistory}
+        presentationTitle={presentationTitle}
+        versions={[]}
+        onRestore={(versionId) => {
+          console.log("Restoring version:", versionId)
+          setShowVersionHistory(false)
+        }}
+        onPreview={(versionId) => {
+          console.log("Previewing version:", versionId)
+        }}
+      />
     </div>
   )
 }

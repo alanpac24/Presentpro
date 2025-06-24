@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Clock, Share2, Download, Copy, Check, X, Edit3, PresentationIcon } from "lucide-react"
+import { Clock, Share2, Download, Copy, Check, X, Edit3, PresentationIcon, History } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,14 +19,10 @@ interface PresentationEditorHeaderProps {
   title: string
   onTitleChange: (title: string) => void
   isAutoSaving: boolean
-  editUsage?: {
-    usage: number
-    limit: number
-    isUnlimited: boolean
-  }
+  onVersionHistory?: () => void
 }
 
-export function PresentationEditorHeader({ title, onTitleChange, isAutoSaving, editUsage }: PresentationEditorHeaderProps) {
+export function PresentationEditorHeader({ title, onTitleChange, isAutoSaving, onVersionHistory }: PresentationEditorHeaderProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [draft, setDraft] = useState(title)
 
@@ -85,16 +81,14 @@ export function PresentationEditorHeader({ title, onTitleChange, isAutoSaving, e
       </div>
 
       <div className="flex items-center space-x-3">
-        {editUsage && !editUsage.isUnlimited && (
-          <div className="flex items-center space-x-2 text-sm text-gray-500 px-3 py-1.5 bg-gray-50 rounded-md">
-            <span>{editUsage.usage} / {editUsage.limit} edits</span>
-          </div>
-        )}
-        
-        <div className="flex items-center space-x-2 text-sm text-gray-600">
+        <button
+          onClick={onVersionHistory}
+          className="flex items-center space-x-2 text-sm text-gray-600 hover:text-gray-900 transition-colors px-3 py-1.5 rounded-md hover:bg-gray-100"
+          title="View version history"
+        >
           <Clock className={`h-4 w-4 ${isAutoSaving ? "animate-spin" : ""}`} />
-          <span>{isAutoSaving ? "Saving…" : "Saved"}</span>
-        </div>
+          <span>{isAutoSaving ? "Saving…" : "Version history"}</span>
+        </button>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -106,6 +100,10 @@ export function PresentationEditorHeader({ title, onTitleChange, isAutoSaving, e
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuItem>
               <Share2 className="mr-2 h-4 w-4" /> Share presentation
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={onVersionHistory}>
+              <History className="mr-2 h-4 w-4" /> Version history
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>

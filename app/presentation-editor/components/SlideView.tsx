@@ -1284,7 +1284,7 @@ export function SlideView({
                               }
                             }}
                             title="Bullet List"
-                            disabled={!selectedElement || (selectedElementData?.type === "shape")}
+                            disabled={!selectedElement}
                           >
                             <List className="w-4 h-4" />
                           </Button>
@@ -1300,7 +1300,7 @@ export function SlideView({
                               }
                             }}
                             title="Numbered List"
-                            disabled={!selectedElement || (selectedElementData?.type === "shape")}
+                            disabled={!selectedElement}
                           >
                             <ListOrdered className="w-4 h-4" />
                           </Button>

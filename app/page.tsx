@@ -31,6 +31,48 @@ const testimonials = [
     name: "Carlos Rodriguez",
     title: "CEO, TechVentures",
     initials: "CR"
+  },
+  {
+    id: 4,
+    quote: "As a consultant, I create dozens of presentations monthly. PresentPro's templates are exactly what top-tier firms use. It's like having McKinsey's best practices built-in.",
+    name: "Sarah Chen",
+    title: "Senior Partner, Boston Consulting Group",
+    initials: "SC"
+  },
+  {
+    id: 5,
+    quote: "The quality of insights and data visualization is remarkable. Our board presentations have never been more impactful. ROI on PresentPro paid for itself in the first week.",
+    name: "David Thompson",
+    title: "CFO, Fortune 500 Tech Company",
+    initials: "DT"
+  },
+  {
+    id: 6,
+    quote: "I've tried every presentation tool out there. PresentPro is the only one that truly understands business context and creates slides that tell a compelling story.",
+    name: "Jennifer Wu",
+    title: "Head of Product, Stripe",
+    initials: "JW"
+  },
+  {
+    id: 7,
+    quote: "Our sales team closed 40% more deals after switching to PresentPro. The professional polish and strategic narrative structure make all the difference.",
+    name: "Robert Martinez",
+    title: "VP of Sales, Oracle",
+    initials: "RM"
+  },
+  {
+    id: 8,
+    quote: "PresentPro saved our IPO roadshow. We created 50+ investor presentations in record time, each tailored perfectly to different audiences. Absolutely invaluable.",
+    name: "Lisa Anderson",
+    title: "CEO, NextGen Robotics",
+    initials: "LA"
+  },
+  {
+    id: 9,
+    quote: "The AI's ability to create industry-specific content is uncanny. It knows healthcare compliance, regulations, and best practices better than most consultants.",
+    name: "Dr. James Park",
+    title: "Chief Medical Officer, Kaiser Permanente",
+    initials: "JP"
   }
 ]
 
@@ -500,8 +542,9 @@ export default function PresentationProAI() {
   useEffect(() => {
     if (isPaused) return
 
+    const totalGroups = Math.ceil(testimonials.length / 3)
     const interval = setInterval(() => {
-      setCurrentTestimonial((prev) => (prev + 1) % testimonials.length)
+      setCurrentTestimonial((prev) => (prev + 1) % totalGroups)
     }, 5000) // Change every 5 seconds
 
     return () => clearInterval(interval)
@@ -1049,20 +1092,14 @@ export default function PresentationProAI() {
           <div className="relative">
             {/* Testimonial Carousel */}
             <div 
-              className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12"
               onMouseEnter={() => setIsPaused(true)}
               onMouseLeave={() => setIsPaused(false)}
             >
-              {testimonials.map((testimonial, index) => (
+              {testimonials.slice(currentTestimonial * 3, (currentTestimonial * 3) + 3).map((testimonial, index) => (
                 <Card
                   key={testimonial.id}
-                  className={`bg-white border-0 shadow-sm p-10 transition-all duration-500 ${
-                    Math.abs(index - currentTestimonial) <= 2 || 
-                    (currentTestimonial === 0 && index === testimonials.length - 1) ||
-                    (currentTestimonial === testimonials.length - 1 && index === 0)
-                      ? 'opacity-100 transform scale-100'
-                      : 'opacity-0 transform scale-95 absolute invisible'
-                  }`}
+                  className="bg-white border-0 shadow-sm p-10 transition-all duration-500 opacity-100 transform scale-100"
                 >
                   <CardContent className="p-0">
                     <div className="flex items-center mb-8">
@@ -1091,8 +1128,8 @@ export default function PresentationProAI() {
             </div>
             
             {/* Navigation Dots */}
-            <div className="flex justify-center mt-8 space-x-2">
-              {testimonials.map((_, index) => (
+            <div className="flex justify-center mt-12 space-x-2">
+              {Array.from({ length: Math.ceil(testimonials.length / 3) }).map((_, index) => (
                 <button
                   key={index}
                   onClick={() => setCurrentTestimonial(index)}
@@ -1101,7 +1138,7 @@ export default function PresentationProAI() {
                       ? 'bg-gray-900 w-8'
                       : 'bg-gray-300 hover:bg-gray-400'
                   }`}
-                  aria-label={`Go to testimonial ${index + 1}`}
+                  aria-label={`Go to testimonial group ${index + 1}`}
                 />
               ))}
             </div>

@@ -1,6 +1,6 @@
 import { useEffect, RefObject } from "react"
 
-export function useHorizontalScroll(scrollContainerRef: RefObject<HTMLDivElement>) {
+export function useHorizontalScroll(scrollContainerRef: RefObject<HTMLDivElement | null>) {
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
       if (scrollContainerRef.current && scrollContainerRef.current.contains(e.target as Node)) {

@@ -60,8 +60,8 @@ export function usePresentationUsage() {
     loadUsage()
   }, [])
 
-  const userTier = mockUser.tier
-  const limit = PRESENTATION_LIMITS[userTier] || PRESENTATION_LIMITS.Free
+  const userTier = mockUser.tier || 'Free'
+  const limit = PRESENTATION_LIMITS[userTier as keyof typeof PRESENTATION_LIMITS] || PRESENTATION_LIMITS.Free
   const remaining = Math.max(0, limit - (usage?.count || 0))
   const isUnlimited = limit === Infinity
 
