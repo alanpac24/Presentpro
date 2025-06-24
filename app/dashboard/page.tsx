@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -36,6 +36,7 @@ import {
   Clock,
   FileSlidersIcon as Slides,
   ArrowRight,
+  FileText,
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -102,6 +103,33 @@ const mockTemplates = [
     thumbnail: "/placeholder.svg?height=120&width=160&text=Business+Review",
     category: "Business",
     slideCount: 25,
+    slideContent: [
+      "Title & Agenda",
+      "Executive Summary",
+      "Company Overview",
+      "Key Performance Indicators",
+      "Financial Performance",
+      "Revenue Analysis",
+      "Cost Structure",
+      "Market Analysis",
+      "Competitive Landscape",
+      "Product Performance",
+      "Customer Insights",
+      "Sales Pipeline",
+      "Marketing Initiatives",
+      "Operational Efficiency",
+      "Team Performance",
+      "Strategic Initiatives",
+      "Risk Assessment",
+      "Opportunities",
+      "Challenges",
+      "Action Plan",
+      "Timeline & Milestones",
+      "Resource Requirements",
+      "Next Steps",
+      "Q&A",
+      "Appendix"
+    ]
   },
   {
     id: 2,
@@ -110,6 +138,26 @@ const mockTemplates = [
     thumbnail: "/placeholder.svg?height=120&width=160&text=Sales+Pitch",
     category: "Sales",
     slideCount: 18,
+    slideContent: [
+      "Title Slide",
+      "Problem Statement",
+      "Market Opportunity",
+      "Our Solution",
+      "Value Proposition",
+      "Product Demo",
+      "Key Features",
+      "Benefits Overview",
+      "Customer Success Stories",
+      "Case Study 1",
+      "Case Study 2",
+      "ROI Analysis",
+      "Implementation Process",
+      "Pricing Options",
+      "Comparison Chart",
+      "Why Choose Us",
+      "Next Steps",
+      "Contact Information"
+    ]
   },
   {
     id: 3,
@@ -118,6 +166,28 @@ const mockTemplates = [
     thumbnail: "/placeholder.svg?height=120&width=160&text=Roadmap",
     category: "Product",
     slideCount: 20,
+    slideContent: [
+      "Product Vision",
+      "Executive Summary",
+      "Product Strategy",
+      "Market Analysis",
+      "User Research Insights",
+      "Current State",
+      "Future State Vision",
+      "Q1 Initiatives",
+      "Q2 Initiatives",
+      "Q3 Initiatives",
+      "Q4 Initiatives",
+      "Feature Prioritization",
+      "Technical Architecture",
+      "Dependencies",
+      "Resource Planning",
+      "Risk Mitigation",
+      "Success Metrics",
+      "Stakeholder Alignment",
+      "Communication Plan",
+      "Questions & Discussion"
+    ]
   },
   {
     id: 4,
@@ -126,6 +196,36 @@ const mockTemplates = [
     thumbnail: "/placeholder.svg?height=120&width=160&text=Financial",
     category: "Finance",
     slideCount: 28,
+    slideContent: [
+      "Financial Overview",
+      "Executive Summary",
+      "Revenue Summary",
+      "Revenue by Segment",
+      "Revenue by Region",
+      "Year-over-Year Growth",
+      "Expense Analysis",
+      "Operating Expenses",
+      "Capital Expenditures",
+      "Profit & Loss Statement",
+      "Balance Sheet",
+      "Cash Flow Statement",
+      "Key Financial Ratios",
+      "Budget vs Actual",
+      "Variance Analysis",
+      "Forecast Update",
+      "Investment Portfolio",
+      "Debt Analysis",
+      "Working Capital",
+      "Tax Summary",
+      "Audit Findings",
+      "Risk Assessment",
+      "Compliance Status",
+      "Strategic Initiatives",
+      "Financial Projections",
+      "Recommendations",
+      "Q&A Session",
+      "Appendices"
+    ]
   },
   {
     id: 5,
@@ -134,6 +234,30 @@ const mockTemplates = [
     thumbnail: "/placeholder.svg?height=120&width=160&text=Marketing",
     category: "Marketing",
     slideCount: 22,
+    slideContent: [
+      "Campaign Overview",
+      "Campaign Objectives",
+      "Target Audience",
+      "Market Research",
+      "Competitive Analysis",
+      "Campaign Strategy",
+      "Creative Concept",
+      "Channel Strategy",
+      "Digital Marketing Plan",
+      "Social Media Strategy",
+      "Content Calendar",
+      "Budget Allocation",
+      "Timeline & Phases",
+      "Launch Plan",
+      "Performance Metrics",
+      "Analytics Dashboard",
+      "ROI Analysis",
+      "A/B Test Results",
+      "Lessons Learned",
+      "Optimization Plan",
+      "Next Steps",
+      "Appendix"
+    ]
   },
   {
     id: 6,
@@ -142,6 +266,24 @@ const mockTemplates = [
     thumbnail: "/placeholder.svg?height=120&width=160&text=Project",
     category: "Business",
     slideCount: 16,
+    slideContent: [
+      "Project Title",
+      "Executive Summary",
+      "Project Background",
+      "Problem Statement",
+      "Proposed Solution",
+      "Project Objectives",
+      "Scope & Deliverables",
+      "Timeline Overview",
+      "Milestone Schedule",
+      "Resource Requirements",
+      "Budget Breakdown",
+      "Risk Analysis",
+      "Success Criteria",
+      "Stakeholder Map",
+      "Communication Plan",
+      "Next Steps"
+    ]
   },
   {
     id: 7,
@@ -150,6 +292,38 @@ const mockTemplates = [
     thumbnail: "/placeholder.svg?height=120&width=160&text=All+Hands",
     category: "Business",
     slideCount: 30,
+    slideContent: [
+      "Welcome & Agenda",
+      "Company Mission & Vision",
+      "CEO Update",
+      "Company Performance",
+      "Financial Highlights",
+      "Key Achievements",
+      "Product Updates",
+      "Engineering Progress",
+      "Sales Performance",
+      "Marketing Initiatives",
+      "Customer Success Stories",
+      "New Team Members",
+      "Team Spotlight",
+      "Culture & Values",
+      "Employee Recognition",
+      "Upcoming Events",
+      "Office Updates",
+      "Policy Changes",
+      "Benefits Update",
+      "Learning & Development",
+      "Diversity & Inclusion",
+      "Sustainability Efforts",
+      "Strategic Priorities",
+      "OKR Progress",
+      "Challenges Ahead",
+      "Innovation Pipeline",
+      "Partner Updates",
+      "Industry Trends",
+      "Q&A Session",
+      "Closing Remarks"
+    ]
   },
   {
     id: 8,
@@ -158,6 +332,28 @@ const mockTemplates = [
     thumbnail: "/placeholder.svg?height=120&width=160&text=Investor",
     category: "Finance",
     slideCount: 20,
+    slideContent: [
+      "Title & Vision",
+      "The Problem",
+      "Market Opportunity",
+      "Our Solution",
+      "Product Overview",
+      "Unique Value Prop",
+      "Business Model",
+      "Market Strategy",
+      "Traction & Metrics",
+      "Customer Testimonials",
+      "Revenue Projections",
+      "Unit Economics",
+      "Competition Analysis",
+      "Competitive Advantage",
+      "Team & Advisors",
+      "Funding History",
+      "Use of Funds",
+      "Investment Ask",
+      "Exit Strategy",
+      "Contact Info"
+    ]
   },
 ]
 
@@ -346,16 +542,6 @@ export default function DashboardPage() {
 
                           <div className="flex items-center justify-between pt-3 sm:pt-4 border-t border-gray-100">
                             <div className="flex items-center space-x-1 sm:space-x-2">
-                              <Link href="/presentation-editor">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-9 w-9 p-0 text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-md"
-                                  title="Edit presentation"
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                              </Link>
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -484,7 +670,7 @@ export default function DashboardPage() {
 
           <Card className="bg-white border border-gray-100 shadow-sm">
             <CardContent className="p-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
                 {mockTemplates
                   .filter((template) => {
                     const matchesSearch = template.title.toLowerCase().includes(templateSearchQuery.toLowerCase()) ||
@@ -495,28 +681,44 @@ export default function DashboardPage() {
                   .map((template) => (
                   <Card
                     key={template.id}
-                    className="cursor-pointer transition-all duration-300 hover:shadow-lg border border-gray-200 shadow-sm"
+                    className="bg-white border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden group relative"
                     onClick={() => router.push("/presentation-editor")}
                   >
-                    <div className="relative">
-                      <div className="aspect-[4/3] overflow-hidden rounded-t-lg">
-                        <Image
-                          src={template.thumbnail || "/placeholder.svg"}
-                          alt={template.title}
-                          width={160}
-                          height={120}
-                          className="w-full h-full object-cover"
-                        />
+                    <div className="relative h-64 sm:h-72 overflow-hidden">
+                      <Image
+                        src={template.thumbnail || "/placeholder.svg"}
+                        alt={template.title}
+                        fill
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                      
+                      {/* Hover overlay with slide outline */}
+                      <div className="absolute inset-0 bg-gray-900/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-6 overflow-y-auto">
+                        <h4 className="text-white font-semibold mb-4 text-sm uppercase tracking-wide">Presentation Outline</h4>
+                        <div className="space-y-2">
+                          {template.slideContent?.map((slide, idx) => (
+                            <div key={idx} className="flex items-start text-xs">
+                              <span className="text-gray-400 mr-3 font-mono text-[10px] mt-0.5">
+                                {(idx + 1).toString().padStart(2, '0')}
+                              </span>
+                              <span className="text-gray-200 leading-relaxed">{slide}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
-                    <CardContent className="p-6">
-                      <h3 className="font-medium text-gray-900 mb-2">{template.title}</h3>
-                      <p className="text-sm text-gray-600 mb-4">{template.description}</p>
-                      <div className="flex items-center justify-between text-sm text-gray-500">
-                        <span>{template.slideCount} slides</span>
-                        <Badge variant="secondary" className="bg-gray-100 text-gray-700 border-0">
-                          {template.category}
-                        </Badge>
+                    <CardHeader className="p-8">
+                      <CardTitle className="text-gray-900 text-xl font-medium mb-3">{template.title}</CardTitle>
+                      <CardDescription className="text-gray-600 leading-relaxed">
+                        {template.description}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="px-8 pb-8 pt-0">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center text-gray-600">
+                          <FileText className="w-4 h-4 mr-2" />
+                          <span className="font-medium">{template.slideCount} Slides</span>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>

@@ -124,12 +124,14 @@ export function useSlideDragAndDrop({
       onSlidesReorder(newSlides)
       
       // Update current slide index if needed
-      if (currentSlideIndex === dragState.draggedSlide) {
-        onSlideChange(adjustedIndex)
-      } else if (dragState.draggedSlide < currentSlideIndex && adjustedIndex >= currentSlideIndex) {
-        onSlideChange(currentSlideIndex - 1)
-      } else if (dragState.draggedSlide > currentSlideIndex && adjustedIndex <= currentSlideIndex) {
-        onSlideChange(currentSlideIndex + 1)
+      if (dragState.draggedSlide !== null) {
+        if (currentSlideIndex === dragState.draggedSlide) {
+          onSlideChange(adjustedIndex)
+        } else if (dragState.draggedSlide < currentSlideIndex && adjustedIndex >= currentSlideIndex) {
+          onSlideChange(currentSlideIndex - 1)
+        } else if (dragState.draggedSlide > currentSlideIndex && adjustedIndex <= currentSlideIndex) {
+          onSlideChange(currentSlideIndex + 1)
+        }
       }
     }, 150)
 

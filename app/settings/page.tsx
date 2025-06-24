@@ -28,7 +28,10 @@ export default function SettingsPage() {
     theme: "system" as "light" | "dark" | "system",
   })
 
-  const handleSettingChange = (key: string, value: any) => {
+  const handleSettingChange = <K extends keyof typeof settings>(
+    key: K,
+    value: typeof settings[K]
+  ) => {
     setSettings((prev) => ({ ...prev, [key]: value }))
   }
 
@@ -38,7 +41,8 @@ export default function SettingsPage() {
 
   const handleDeleteAccount = () => {
     // In a real app, this would call an API to delete the account
-    alert("Account deletion request submitted. You will receive a confirmation email.")
+    // TODO: Replace with proper toast notification
+    console.log("Account deletion request submitted")
     router.push("/signin")
   }
 

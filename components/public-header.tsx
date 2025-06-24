@@ -53,7 +53,7 @@ export function PublicHeader() {
             </Link>
             <Link href="/signup">
               <Button className="bg-gray-900 hover:bg-gray-800 text-white text-sm font-medium tracking-wide px-8 h-11">
-                START FREE TRIAL
+                GENERATE PRESENTATION
               </Button>
             </Link>
           </div>

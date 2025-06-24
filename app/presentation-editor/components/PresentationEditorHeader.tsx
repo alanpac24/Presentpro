@@ -19,9 +19,14 @@ interface PresentationEditorHeaderProps {
   title: string
   onTitleChange: (title: string) => void
   isAutoSaving: boolean
+  editUsage?: {
+    usage: number
+    limit: number
+    isUnlimited: boolean
+  }
 }
 
-export function PresentationEditorHeader({ title, onTitleChange, isAutoSaving }: PresentationEditorHeaderProps) {
+export function PresentationEditorHeader({ title, onTitleChange, isAutoSaving, editUsage }: PresentationEditorHeaderProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [draft, setDraft] = useState(title)
 
@@ -80,6 +85,12 @@ export function PresentationEditorHeader({ title, onTitleChange, isAutoSaving }:
       </div>
 
       <div className="flex items-center space-x-3">
+        {editUsage && !editUsage.isUnlimited && (
+          <div className="flex items-center space-x-2 text-sm text-gray-500 px-3 py-1.5 bg-gray-50 rounded-md">
+            <span>{editUsage.usage} / {editUsage.limit} edits</span>
+          </div>
+        )}
+        
         <div className="flex items-center space-x-2 text-sm text-gray-600">
           <Clock className={`h-4 w-4 ${isAutoSaving ? "animate-spin" : ""}`} />
           <span>{isAutoSaving ? "Saving…" : "Saved"}</span>

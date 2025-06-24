@@ -12,44 +12,62 @@ import { mockUser } from "@/lib/constants"
 const plans = [
   {
     name: "Free",
-    price: "$0",
-    period: "forever",
+    basePrice: 0,
+    period: "per month",
     description: "For getting started",
-    current: false,
+    current: mockUser.tier === "Free",
     popular: false,
     features: [
-      { name: "3 presentations", included: true },
+      { name: "3 presentations/month", included: true },
       { name: "Basic templates", included: true },
-      { name: "Standard export", included: true },
-      { name: "Community support", included: true },
-      { name: "Advanced AI features", included: false },
+      { name: "PDF export", included: true },
+      { name: "Email support", included: true },
+      { name: "PowerPoint export", included: false },
+      { name: "Premium templates", included: false },
+      { name: "AI chat assistance", included: false },
       { name: "Custom branding", included: false },
-      { name: "Team collaboration", included: false },
+    ],
+  },
+  {
+    name: "Pro",
+    basePrice: 29,
+    period: "per month",
+    description: "For regular users",
+    current: mockUser.tier === "Pro",
+    popular: true,
+    features: [
+      { name: "10 presentations/month", included: true },
+      { name: "Basic templates", included: true },
+      { name: "PDF & PowerPoint export", included: true },
+      { name: "Email support", included: true },
+      { name: "Premium templates", included: false },
+      { name: "AI chat assistance", included: false },
+      { name: "Custom branding", included: false },
       { name: "Priority support", included: false },
     ],
   },
   {
     name: "Professional",
-    price: "$19",
-    period: "/ month",
-    description: "For professionals",
-    current: true,
-    popular: true,
+    basePrice: 79,
+    period: "per month",
+    description: "For power users",
+    current: mockUser.tier === "Professional",
+    popular: false,
     features: [
-      { name: "100 presentations", included: true },
-      { name: "Premium templates", included: true },
-      { name: "All export formats", included: true },
-      { name: "Email support", included: true },
-      { name: "Advanced AI features", included: true },
+      { name: "50 presentations/month", included: true },
+      { name: "Premium templates (500+)", included: true },
+      { name: "PDF & PowerPoint export", included: true },
+      { name: "Priority support", included: true },
+      { name: "AI chat assistance", included: true },
       { name: "Custom branding", included: true },
-      { name: "Team collaboration", included: false },
-      { name: "Priority support", included: false },
+      { name: "Advanced analytics", included: true },
+      { name: "Early access features", included: true },
     ],
   },
   {
     name: "Enterprise",
-    price: "$49",
-    period: "/ month",
+    basePrice: 49,
+    period: "per user / month",
     description: "For large teams",
     current: false,
     popular: false,
@@ -92,7 +110,7 @@ const testimonials = [
 
 export default function UpgradePage() {
   const router = useRouter()
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly")
+  const [isYearly, setIsYearly] = useState(false)
 
   const handleLogout = () => {
     router.push("/signin")
@@ -117,23 +135,35 @@ export default function UpgradePage() {
           </div>
 
           <div className="flex items-center justify-center mb-12">
-            <div className="bg-gray-200 p-1 rounded-lg">
-              <Button
-                variant={billingCycle === "monthly" ? "default" : "ghost"}
-                onClick={() => setBillingCycle("monthly")}
-                className={billingCycle === "monthly" ? "bg-white text-gray-900 shadow-sm" : "text-gray-600"}
+            <div className="bg-gray-100 p-1 rounded-full inline-flex">
+              <button
+                onClick={() => setIsYearly(false)}
+                className={`px-8 py-3 rounded-full text-sm font-medium transition-colors ${
+                  !isYearly 
+                    ? 'bg-white text-gray-900 shadow-sm' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
               >
                 Monthly
-              </Button>
-              <Button
-                variant={billingCycle === "yearly" ? "default" : "ghost"}
-                onClick={() => setBillingCycle("yearly")}
-                className={billingCycle === "yearly" ? "bg-white text-gray-900 shadow-sm" : "text-gray-600"}
+              </button>
+              <button
+                onClick={() => setIsYearly(true)}
+                className={`px-8 py-3 rounded-full text-sm font-medium transition-colors ${
+                  isYearly 
+                    ? 'bg-white text-gray-900 shadow-sm' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
               >
-                Yearly <Badge className="ml-2 bg-green-100 text-green-700">Save 20%</Badge>
-              </Button>
+                Yearly <span className="text-green-600 ml-1">Save 20%</span>
+              </button>
             </div>
           </div>
+
+          {isYearly && (
+            <p className="text-center text-gray-600 mb-8">
+              All plans are billed yearly with a 20% discount
+            </p>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {plans.map((plan) => (
@@ -150,8 +180,12 @@ export default function UpgradePage() {
                   <CardTitle className="text-2xl font-medium text-gray-900 mb-2">{plan.name}</CardTitle>
                   <p className="text-gray-600">{plan.description}</p>
                   <div className="mt-4">
-                    <span className="text-4xl font-light text-gray-900">{plan.price}</span>
-                    <span className="text-gray-600">{plan.period}</span>
+                    <span className="text-4xl font-light text-gray-900">
+                      ${isYearly && plan.basePrice > 0 ? Math.round(plan.basePrice * 0.8) : plan.basePrice}
+                    </span>
+                    <span className="text-gray-600">
+                      {plan.name === "Free" ? " per month" : isYearly ? "/month" : " per month"}
+                    </span>
                   </div>
                 </CardHeader>
                 <CardContent className="flex-1 flex flex-col justify-between">

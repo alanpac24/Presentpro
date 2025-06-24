@@ -11,5 +11,13 @@ export const mockUser: User = {
 
 export const mockStats = {
   presentationsCreated: 2,
-  monthlyLimit: 3,
+  monthlyLimit: 3, // Free tier limit
+}
+
+// Presentation limits by tier
+export const PRESENTATION_LIMITS = {
+  Free: 3,
+  Pro: 10,
+  Professional: 50,
+  Enterprise: Infinity,
 }

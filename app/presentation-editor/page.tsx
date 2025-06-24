@@ -5,6 +5,9 @@ import { PresentationEditorHeader } from "./components/PresentationEditorHeader"
 import { SlideSidebar } from "./components/SlideSidebar"
 import { SlideView } from "./components/SlideView"
 import { SlideCarousel } from "./components/SlideCarousel"
+import { useEditUsage } from "@/hooks/useEditUsage"
+import { EditUsageToast } from "@/components/edit-usage-toast"
+import { EditLimitModal } from "@/components/edit-limit-modal"
 
 const mockSlides = [
   {
@@ -49,6 +52,19 @@ export default function PresentationEditorPage() {
   const [isAutoSaving, setIsAutoSaving] = useState(false)
   const [sidebarWidth, setSidebarWidth] = useState(400)
   const [isResizing, setIsResizing] = useState(false)
+  
+  // Edit usage tracking
+  const {
+    usage,
+    limit,
+    remaining,
+    showToast,
+    showModal,
+    incrementUsage,
+    dismissModal,
+    userTier,
+    isUnlimited
+  } = useEditUsage()
 
   const currentSlide = slides[currentSlideIndex]
 
@@ -126,6 +142,11 @@ export default function PresentationEditorPage() {
   }
 
   const handleSlideAdd = () => {
+    // Check edit limit
+    if (!incrementUsage()) {
+      return // Edit blocked
+    }
+    
     const newSlide = {
       id: Math.max(...slides.map(s => s.id)) + 1,
       title: `Slide ${slides.length + 1}`,
@@ -158,6 +179,7 @@ export default function PresentationEditorPage() {
         title={presentationTitle}
         onTitleChange={setPresentationTitle}
         isAutoSaving={isAutoSaving}
+        editUsage={{ usage, limit, isUnlimited }}
       />
       <div className="flex-1 flex overflow-hidden relative">
         <div style={{ width: `${sidebarWidth}px`, flexShrink: 0 }}>
