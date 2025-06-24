@@ -54,6 +54,7 @@ export default function PresentationEditorPage() {
   const [sidebarWidth, setSidebarWidth] = useState(400)
   const [isResizing, setIsResizing] = useState(false)
   const [showVersionHistory, setShowVersionHistory] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   
   // Edit usage tracking
   const {
@@ -79,11 +80,31 @@ export default function PresentationEditorPage() {
     return () => clearInterval(intervalId)
   }, [])
 
+  // Check for mobile viewport
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+      if (window.innerWidth < 768) {
+        setSidebarWidth(0) // Hide sidebar on mobile
+      } else if (window.innerWidth < 1024) {
+        setSidebarWidth(320) // Smaller sidebar on tablet
+      } else {
+        setSidebarWidth(400) // Default on desktop
+      }
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isResizing) return
       // Calculate new width based on mouse position
-      const newWidth = Math.max(400, Math.min(800, e.clientX))
+      const minWidth = window.innerWidth < 1024 ? 280 : 400
+      const maxWidth = window.innerWidth < 1024 ? 400 : 800
+      const newWidth = Math.max(minWidth, Math.min(maxWidth, e.clientX))
       setSidebarWidth(newWidth)
     }
 
@@ -184,18 +205,20 @@ export default function PresentationEditorPage() {
         onVersionHistory={() => setShowVersionHistory(true)}
       />
       <div className="flex-1 flex overflow-hidden relative">
-        <div style={{ width: `${sidebarWidth}px`, flexShrink: 0 }}>
-          <SlideSidebar 
-            currentSlide={currentSlide} 
-            selectedElement={selectedElement} 
-            onSlideUpdate={handleSlideUpdate}
-            width={sidebarWidth}
-            onResizeStart={() => {
-              setIsResizing(true)
-            }}
-          />
-        </div>
-        <div className="flex-1 flex flex-col" style={{ width: `calc(100% - ${sidebarWidth}px)` }}>
+        {!isMobile && (
+          <div style={{ width: `${sidebarWidth}px`, flexShrink: 0 }}>
+            <SlideSidebar 
+              currentSlide={currentSlide} 
+              selectedElement={selectedElement} 
+              onSlideUpdate={handleSlideUpdate}
+              width={sidebarWidth}
+              onResizeStart={() => {
+                setIsResizing(true)
+              }}
+            />
+          </div>
+        )}
+        <div className="flex-1 flex flex-col">
           <SlideView
             slide={currentSlide}
             selectedElement={selectedElement}

@@ -138,14 +138,18 @@ export function SlideView({
   const [lastSelectedElement, setLastSelectedElement] = useState<string | null>(null)
   const slideRef = useRef<HTMLDivElement>(null)
   const textAreaRef = useRef<HTMLTextAreaElement>(null)
+  const [canvasSize, setCanvasSize] = useState({ width: 800, height: 450 })
 
-  const [elements, setElements] = useState<SlideElement[]>([
-    {
+  const [elements, setElements] = useState<SlideElement[]>([])
+
+  // Initialize elements with responsive sizes
+  useEffect(() => {
+    const titleElement: SlideElement = {
       id: "title",
       type: "title",
       content: slide.title || "Click to edit title",
-      position: { x: 60, y: 60 },
-      size: { width: 680, height: 80 },
+      position: { x: canvasSize.width * 0.075, y: canvasSize.height * 0.133 },
+      size: { width: canvasSize.width * 0.85, height: canvasSize.height * 0.178 },
       style: {
         fontSize: 32,
         fontWeight: "300",
@@ -161,13 +165,14 @@ export function SlideView({
         borderRadius: 0,
       },
       zIndex: 1,
-    },
-    {
+    }
+    
+    const contentElement: SlideElement = {
       id: "content",
       type: "text",
       content: slide.content || "Click to edit content",
-      position: { x: 60, y: 160 },
-      size: { width: 680, height: 180 },
+      position: { x: canvasSize.width * 0.075, y: canvasSize.height * 0.356 },
+      size: { width: canvasSize.width * 0.85, height: canvasSize.height * 0.4 },
       style: {
         fontSize: 16,
         fontWeight: "400",
@@ -183,10 +188,44 @@ export function SlideView({
         borderRadius: 0,
       },
       zIndex: 2,
-    },
-  ])
+    }
+    
+    setElements([titleElement, contentElement])
+  }, [slide.title, slide.content, canvasSize])
 
   const selectedElementData = elements.find((el) => el.id === selectedElement)
+
+  // Update canvas size based on viewport
+  useEffect(() => {
+    const updateCanvasSize = () => {
+      const viewportWidth = window.innerWidth
+      const viewportHeight = window.innerHeight
+      
+      // Calculate available space (accounting for header, toolbar, etc.)
+      const availableWidth = viewportWidth - 100 // padding
+      const availableHeight = viewportHeight - 350 // header + carousel + padding
+      
+      // Maintain 16:9 aspect ratio
+      let width = Math.min(800, availableWidth * 0.9)
+      let height = width * 9 / 16
+      
+      // If height is too large, calculate from height instead
+      if (height > availableHeight * 0.9) {
+        height = availableHeight * 0.9
+        width = height * 16 / 9
+      }
+      
+      // Set minimum sizes
+      width = Math.max(400, width)
+      height = Math.max(225, height)
+      
+      setCanvasSize({ width: Math.round(width), height: Math.round(height) })
+    }
+    
+    updateCanvasSize()
+    window.addEventListener('resize', updateCanvasSize)
+    return () => window.removeEventListener('resize', updateCanvasSize)
+  }, [])
   const hasMultiSelection = multiSelectedElements.size > 0
   const isAnyElementSelected = selectedElementData || hasMultiSelection
 
@@ -1659,48 +1698,53 @@ export function SlideView({
       </div>
 
       <div
-        className="flex-1 flex items-center justify-center p-12 overflow-hidden"
+        className="flex-1 flex items-center justify-center p-4 sm:p-8 lg:p-12 overflow-hidden"
         onMouseDown={handleSlideMouseDown}
         onMouseMove={handleSlideMouseMove}
         onMouseUp={handleSlideMouseUp}
         style={{ cursor: zoom > 100 && !draggedElement ? (isDragging ? "grabbing" : "grab") : "default" }}
       >
-        <div
-          ref={slideRef}
-          className="bg-white rounded-lg shadow-lg relative overflow-hidden"
-          style={{
-            width: "800px",
-            height: "450px",
-            transform: `scale(${zoom / 100}) translate(${panOffset.x}px, ${panOffset.y}px)`,
-            transformOrigin: "center",
-          }}
-          onClick={(e) => {
-            // Only deselect if clicking directly on the slide background
-            if (e.target === e.currentTarget) {
-              onElementSelect(null)
-              setMultiSelectedElements(new Set())
-              setLastSelectedElement(null)
-            }
-          }}
-        >
+        <div className="relative" style={{ maxWidth: '100%', maxHeight: '100%' }}>
+          <div
+            ref={slideRef}
+            className="bg-white rounded-lg shadow-lg relative overflow-hidden"
+            style={{
+              width: `${canvasSize.width}px`,
+              height: `${canvasSize.height}px`,
+              maxWidth: '100%',
+              maxHeight: '100%',
+              transform: `scale(${zoom / 100}) translate(${panOffset.x}px, ${panOffset.y}px)`,
+              transformOrigin: "center",
+              aspectRatio: '16/9',
+            }}
+            onClick={(e) => {
+              // Only deselect if clicking directly on the slide background
+              if (e.target === e.currentTarget) {
+                onElementSelect(null)
+                setMultiSelectedElements(new Set())
+                setLastSelectedElement(null)
+              }
+            }}
+          >
           {elements.sort((a, b) => a.zIndex - b.zIndex).map(renderElement)}
-          <div className="absolute bottom-4 left-6 right-6 border-t border-gray-200 pt-2 flex justify-between items-center text-xs text-gray-400">
+          <div className="absolute bottom-2 sm:bottom-4 left-4 sm:left-6 right-4 sm:right-6 border-t border-gray-200 pt-1 sm:pt-2 flex justify-between items-center text-[10px] sm:text-xs text-gray-400">
             <span className="font-medium">PRESENTPRO</span>
             <span>{new Date().toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' })}</span>
           </div>
         </div>
+        </div>
       </div>
 
-      <div className="absolute bottom-6 right-6 flex items-center space-x-3">
+      <div className="absolute bottom-4 sm:bottom-6 right-4 sm:right-6 flex items-center space-x-3">
         <Card className="shadow-lg border border-gray-200 rounded-lg">
-          <CardContent className="p-1.5">
+          <CardContent className="p-1 sm:p-1.5">
             <div className="flex items-center space-x-1">
-              <Button variant="ghost" size="icon" onClick={() => onZoomChange(zoom - 25)} disabled={zoom <= 75}>
-                <ZoomOut className="w-4 h-4" />
+              <Button variant="ghost" size="icon" onClick={() => onZoomChange(zoom - 25)} disabled={zoom <= 75} className="h-8 w-8 sm:h-9 sm:w-9">
+                <ZoomOut className="w-3 h-3 sm:w-4 sm:h-4" />
               </Button>
-              <span className="text-sm font-medium text-gray-700 min-w-[3rem] text-center">{Math.round((zoom / 1.5) * 100) / 100}%</span>
-              <Button variant="ghost" size="icon" onClick={() => onZoomChange(zoom + 25)} disabled={zoom >= 300}>
-                <ZoomIn className="w-4 h-4" />
+              <span className="text-xs sm:text-sm font-medium text-gray-700 min-w-[2.5rem] sm:min-w-[3rem] text-center">{Math.round((zoom / 1.5) * 100) / 100}%</span>
+              <Button variant="ghost" size="icon" onClick={() => onZoomChange(zoom + 25)} disabled={zoom >= 300} className="h-8 w-8 sm:h-9 sm:w-9">
+                <ZoomIn className="w-3 h-3 sm:w-4 sm:h-4" />
               </Button>
             </div>
           </CardContent>
