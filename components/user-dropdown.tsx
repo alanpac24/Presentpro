@@ -15,7 +15,8 @@ import { User, Settings, LogOut, LifeBuoy, Crown } from "lucide-react"
 
 interface UserDropdownProps {
   user?: {
-    name: string
+    firstName: string
+    lastName: string
     email: string
     initials: string
     tier?: string
@@ -26,7 +27,8 @@ interface UserDropdownProps {
 }
 
 const defaultUser = {
-  name: "John Doe",
+  firstName: "John",
+  lastName: "Doe",
   email: "john.doe@company.com",
   initials: "JD",
   tier: "Professional",
@@ -53,7 +55,7 @@ export function UserDropdown({
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-12 w-12 rounded-full">
           <Avatar className="h-12 w-12 border-2 border-transparent hover:border-gray-200">
-            {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
+            {user.avatar && <AvatarImage src={user.avatar} alt={`${user.firstName} ${user.lastName}`} />}
             <AvatarFallback className="bg-gray-900 text-white font-medium text-sm">
               {user.initials}
             </AvatarFallback>
@@ -63,7 +65,7 @@ export function UserDropdown({
       <DropdownMenuContent className="w-64 p-2" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1 p-2">
-            <p className="text-sm font-medium leading-none">{user.name}</p>
+            <p className="text-sm font-medium leading-none">{user.firstName} {user.lastName}</p>
             <p className="text-xs leading-none text-gray-500">{user.email}</p>
             {user.tier && (
               <p className="text-xs leading-none text-gray-500 mt-1">{user.tier} Tier</p>

@@ -44,7 +44,7 @@ export default function PresentationEditorPage() {
   const [slides, setSlides] = useState(mockSlides)
   const [presentationTitle, setPresentationTitle] = useState("Q4 Performance Overview")
   const [selectedElement, setSelectedElement] = useState<string | null>(null)
-  const [zoom, setZoom] = useState(100)
+  const [zoom, setZoom] = useState(150)
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 })
   const [isAutoSaving, setIsAutoSaving] = useState(false)
   const [sidebarWidth, setSidebarWidth] = useState(400)
@@ -139,12 +139,12 @@ export default function PresentationEditorPage() {
   }
 
   const handleZoomChange = (newZoom: number) => {
-    setZoom(Math.max(50, Math.min(200, newZoom)))
-    if (newZoom <= 100) setPanOffset({ x: 0, y: 0 })
+    setZoom(Math.max(75, Math.min(300, newZoom)))
+    if (newZoom <= 150) setPanOffset({ x: 0, y: 0 })
   }
 
   const handlePanChange = (deltaX: number, deltaY: number) => {
-    if (zoom > 100) {
+    if (zoom > 150) {
       setPanOffset((prev) => ({
         x: Math.max(-100, Math.min(100, prev.x + deltaX)),
         y: Math.max(-100, Math.min(100, prev.y + deltaY)),

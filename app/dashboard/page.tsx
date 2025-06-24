@@ -207,7 +207,7 @@ export default function DashboardPage() {
           <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-8">
             <div className="flex-1">
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-light text-gray-900 mb-3 sm:mb-4">
-                Welcome back, <span className="font-medium">{mockUser.name.split(" ")[0]}</span>
+                Welcome back, <span className="font-medium">{mockUser.firstName}</span>
               </h1>
               <p className="text-base sm:text-lg text-gray-600 max-w-xl">
                 Create professional presentations that drive results. Start with a template or build from scratch.

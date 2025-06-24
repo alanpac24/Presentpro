@@ -1695,11 +1695,11 @@ export function SlideView({
         <Card className="shadow-lg border border-gray-200 rounded-lg">
           <CardContent className="p-1.5">
             <div className="flex items-center space-x-1">
-              <Button variant="ghost" size="icon" onClick={() => onZoomChange(zoom - 25)} disabled={zoom <= 50}>
+              <Button variant="ghost" size="icon" onClick={() => onZoomChange(zoom - 25)} disabled={zoom <= 75}>
                 <ZoomOut className="w-4 h-4" />
               </Button>
-              <span className="text-sm font-medium text-gray-700 min-w-[3rem] text-center">{zoom}%</span>
-              <Button variant="ghost" size="icon" onClick={() => onZoomChange(zoom + 25)} disabled={zoom >= 200}>
+              <span className="text-sm font-medium text-gray-700 min-w-[3rem] text-center">{Math.round((zoom / 1.5) * 100) / 100}%</span>
+              <Button variant="ghost" size="icon" onClick={() => onZoomChange(zoom + 25)} disabled={zoom >= 300}>
                 <ZoomIn className="w-4 h-4" />
               </Button>
             </div>
