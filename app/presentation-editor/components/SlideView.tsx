@@ -44,6 +44,17 @@ import {
   ArrowDown,
   ArrowUpRight,
   ArrowDownRight,
+  AlignStartVertical,
+  AlignCenterVertical,
+  AlignEndVertical,
+  AlignVerticalJustifyStart,
+  AlignVerticalJustifyCenter,
+  AlignVerticalJustifyEnd,
+  AlignHorizontalJustifyStart,
+  AlignHorizontalJustifyCenter,
+  AlignHorizontalJustifyEnd,
+  Columns3,
+  Rows3,
 } from "lucide-react"
 
 interface SlideElement {
@@ -316,148 +327,240 @@ export function SlideView({
       } else if (!isEditing && e.key === 'Delete' && selectedElement) {
         e.preventDefault()
         deleteElement()
-      } else if ((e.metaKey || e.ctrlKey) && e.key === 'a' && isEditing) {
-        // Allow select all in text editing mode
-        // Don't prevent default - let the browser handle it
+      } else if ((e.metaKey || e.ctrlKey) && e.key === 'a') {
+        if (isEditing) {
+          // Allow select all in text editing mode
+          // Don't prevent default - let the browser handle it
+        } else {
+          // Select all elements when not editing
+          e.preventDefault()
+          const allElementIds = new Set(elements.map(el => el.id))
+          setMultiSelectedElements(allElementIds)
+          if (elements.length > 0) {
+            onElementSelect(elements[0].id)
+          }
+        }
+      } else if (!isEditing && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        // Arrow key nudging
+        e.preventDefault()
+        const nudgeAmount = e.shiftKey ? 10 : 1
+        let deltaX = 0
+        let deltaY = 0
+        
+        switch (e.key) {
+          case 'ArrowUp':
+            deltaY = -nudgeAmount
+            break
+          case 'ArrowDown':
+            deltaY = nudgeAmount
+            break
+          case 'ArrowLeft':
+            deltaX = -nudgeAmount
+            break
+          case 'ArrowRight':
+            deltaX = nudgeAmount
+            break
+        }
+        
+        // Move selected elements
+        if (selectedElement || multiSelectedElements.size > 0) {
+          addToUndoStack()
+          const elementsToMove = multiSelectedElements.size > 0 
+            ? Array.from(multiSelectedElements)
+            : selectedElement ? [selectedElement] : []
+          
+          setElements(prev => prev.map(el => 
+            elementsToMove.includes(el.id)
+              ? {
+                  ...el,
+                  position: {
+                    x: Math.max(0, Math.min(canvasSize.width - el.size.width, el.position.x + deltaX)),
+                    y: Math.max(0, Math.min(canvasSize.height - el.size.height, el.position.y + deltaY))
+                  }
+                }
+              : el
+          ))
+        }
       }
     }
     
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [handleUndo, handleRedo, selectedElement, elements, copiedElement, isEditingText, deleteElement])
+  }, [handleUndo, handleRedo, selectedElement, elements, copiedElement, isEditingText, deleteElement, multiSelectedElements, onElementSelect, addToUndoStack, canvasSize])
 
   const formatText = (action: string) => {
-    const targetId = isEditingText || selectedElement
-    if (!targetId) return
-    
-    const element = elements.find(el => el.id === targetId)
-    if (!element || element.type === 'shape') return
-
-    let content = element.content
-    let textarea = textAreaRef.current
-    let start = 0
-    let end = content.length
-    
-    // If we have a textarea reference, use its selection
-    if (textarea) {
-      start = textarea.selectionStart
-      end = textarea.selectionEnd
-    }
-    
-    const selectedText = content.substring(start, end)
-    const beforeText = content.substring(0, start)
-    const afterText = content.substring(end)
-
     addToUndoStack()
-
-    let newText = content
-    let newStart = start
-    let newEnd = end
-
-    switch (action) {
-      case "bullet":
-        // If not in editing mode or no selection, apply to all content
-        if (!textarea || (start === end)) {
-          const lines = content.split('\n')
-          const formattedLines = lines.map(line => {
-            if (line.trim() === '') return line // Keep empty lines
-            if (line.trim().startsWith('•')) return line
-            return '• ' + line
-          })
-          newText = formattedLines.join('\n')
-          newEnd = newText.length
-        } else if (start !== end && selectedText.includes('\n')) {
-          // Handle multiple lines if text is selected
-          const lines = selectedText.split('\n')
-          const formattedLines = lines.map(line => {
-            // Don't add bullet if line already has one
-            if (line.trim().startsWith('•')) return line
-            return '• ' + line
-          })
-          newText = beforeText + formattedLines.join('\n') + afterText
-          newEnd = beforeText.length + formattedLines.join('\n').length
-        } else {
-          // Single line or cursor position
-          if (start === 0 || beforeText.endsWith('\n')) {
-            newText = beforeText + "• " + selectedText + afterText
-            newStart = start + 2
-            newEnd = end + 2
-          } else {
-            const lastNewline = beforeText.lastIndexOf('\n')
-            const lineStart = lastNewline + 1
-            const currentLine = beforeText.substring(lineStart)
-            // Don't add bullet if line already has one
-            if (!currentLine.trim().startsWith('•')) {
-              newText = beforeText.substring(0, lineStart) + "• " + currentLine + selectedText + afterText
-              newStart = start + 2
-              newEnd = end + 2
-            }
-          }
-        }
-        break
-      
-      case "numberedList":
-        // If not in editing mode or no selection, apply to all content
-        if (!textarea || (start === end)) {
-          const lines = content.split('\n')
-          let lineNumber = 1
-          const formattedLines = lines.map((line) => {
-            if (line.trim() === '') return line // Keep empty lines
-            if (line.trim().match(/^\d+\./)) return line // Already numbered
-            const numberedLine = `${lineNumber}. ${line}`
-            lineNumber++
-            return numberedLine
-          })
-          newText = formattedLines.join('\n')
-          newEnd = newText.length
-        } else if (start !== end && selectedText.includes('\n')) {
-          // Handle multiple lines if text is selected
-          const lines = selectedText.split('\n')
-          let lineNumber = 1
-          const formattedLines = lines.map((line) => {
-            if (line.trim() === '') return line // Keep empty lines
-            if (line.trim().match(/^\d+\./)) return line // Already numbered
-            const numberedLine = `${lineNumber}. ${line}`
-            lineNumber++
-            return numberedLine
-          })
-          newText = beforeText + formattedLines.join('\n') + afterText
-          newEnd = beforeText.length + formattedLines.join('\n').length
-        } else {
-          // Single line or cursor position
-          if (start === 0 || beforeText.endsWith('\n')) {
-            newText = beforeText + "1. " + selectedText + afterText
-            newStart = start + 3
-            newEnd = end + 3
-          } else {
-            const lastNewline = beforeText.lastIndexOf('\n')
-            const lineStart = lastNewline + 1
-            const currentLine = beforeText.substring(lineStart)
-            // Don't add number if line already has one
-            if (!currentLine.trim().match(/^\d+\./)) {
-              newText = beforeText.substring(0, lineStart) + "1. " + currentLine + selectedText + afterText
-              newStart = start + 3
-              newEnd = end + 3
-            }
-          }
-        }
-        break
-    }
-
-    updateElement(targetId, { content: newText })
     
-    // Restore selection after state update
-    setTimeout(() => {
-      if (textAreaRef.current && isEditingText) {
-        textAreaRef.current.setSelectionRange(newStart, newEnd)
-        textAreaRef.current.focus()
+    // Get all text elements to format (either multi-selected or single selected)
+    let elementsToFormat: string[] = []
+    
+    if (multiSelectedElements.size > 0) {
+      // Filter only text elements from multi-selection
+      elementsToFormat = Array.from(multiSelectedElements).filter(id => {
+        const el = elements.find(e => e.id === id)
+        return el && el.type !== 'shape'
+      })
+    } else if (selectedElement) {
+      const el = elements.find(e => e.id === selectedElement)
+      if (el && el.type !== 'shape') {
+        elementsToFormat = [selectedElement]
       }
-    }, 0)
+    }
+    
+    if (elementsToFormat.length === 0) return
+    
+    // Format each text element
+    elementsToFormat.forEach(elementId => {
+      const element = elements.find(el => el.id === elementId)
+      if (!element || element.type === 'shape') return
+      
+      let content = element.content
+      let textarea = isEditingText === elementId ? textAreaRef.current : null
+      let start = 0
+      let end = content.length
+      
+      // If we have a textarea reference for this element, use its selection
+      if (textarea) {
+        start = textarea.selectionStart
+        end = textarea.selectionEnd
+      }
+      
+      const selectedText = content.substring(start, end)
+      const beforeText = content.substring(0, start)
+      const afterText = content.substring(end)
+      
+      let newText = content
+      let newStart = start
+      let newEnd = end
+      
+      // Helper function to check if all lines have bullets/numbers
+      const checkAllLinesHaveFormat = (text: string, format: 'bullet' | 'number'): boolean => {
+        const lines = text.split('\n').filter(line => line.trim() !== '')
+        if (lines.length === 0) return false
+        
+        if (format === 'bullet') {
+          return lines.every(line => line.trim().startsWith('•'))
+        } else {
+          return lines.every(line => line.trim().match(/^\d+\./))
+        }
+      }
+      
+      // Helper function to remove bullets/numbers
+      const removeFormat = (text: string, format: 'bullet' | 'number'): string => {
+        const lines = text.split('\n')
+        return lines.map(line => {
+          if (format === 'bullet') {
+            return line.replace(/^(\s*)• /, '$1')
+          } else {
+            return line.replace(/^(\s*)\d+\. /, '$1')
+          }
+        }).join('\n')
+      }
+      
+      switch (action) {
+        case "bullet":
+          // Check the relevant text
+          const bulletCheckText = (start === end) ? content : selectedText
+          const hasBullets = checkAllLinesHaveFormat(bulletCheckText, 'bullet')
+          
+          if (hasBullets) {
+            // Remove bullets
+            if (start === end) {
+              newText = removeFormat(content, 'bullet')
+            } else {
+              newText = beforeText + removeFormat(selectedText, 'bullet') + afterText
+            }
+          } else {
+            // Add bullets
+            if (!textarea || (start === end)) {
+              const lines = content.split('\n')
+              const formattedLines = lines.map(line => {
+                if (line.trim() === '') return line
+                if (line.trim().startsWith('•')) return line
+                // Remove numbers if present before adding bullets
+                const cleanLine = line.replace(/^(\s*)\d+\. /, '$1')
+                return cleanLine.replace(/^(\s*)/, '$1• ')
+              })
+              newText = formattedLines.join('\n')
+            } else {
+              const lines = selectedText.split('\n')
+              const formattedLines = lines.map(line => {
+                if (line.trim() === '') return line
+                if (line.trim().startsWith('•')) return line
+                // Remove numbers if present before adding bullets
+                const cleanLine = line.replace(/^(\s*)\d+\. /, '$1')
+                return cleanLine.replace(/^(\s*)/, '$1• ')
+              })
+              newText = beforeText + formattedLines.join('\n') + afterText
+            }
+          }
+          break
+          
+        case "numberedList":
+          // Check the relevant text
+          const numberCheckText = (start === end) ? content : selectedText
+          const hasNumbers = checkAllLinesHaveFormat(numberCheckText, 'number')
+          
+          if (hasNumbers) {
+            // Remove numbers
+            if (start === end) {
+              newText = removeFormat(content, 'number')
+            } else {
+              newText = beforeText + removeFormat(selectedText, 'number') + afterText
+            }
+          } else {
+            // Add numbers
+            if (!textarea || (start === end)) {
+              const lines = content.split('\n')
+              let lineNumber = 1
+              const formattedLines = lines.map((line) => {
+                if (line.trim() === '') return line
+                if (line.trim().match(/^\d+\./)) {
+                  lineNumber++
+                  return line
+                }
+                // Remove bullets if present before adding numbers
+                const cleanLine = line.replace(/^(\s*)• /, '$1')
+                const numberedLine = cleanLine.replace(/^(\s*)/, `$1${lineNumber}. `)
+                lineNumber++
+                return numberedLine
+              })
+              newText = formattedLines.join('\n')
+            } else {
+              const lines = selectedText.split('\n')
+              let lineNumber = 1
+              const formattedLines = lines.map((line) => {
+                if (line.trim() === '') return line
+                if (line.trim().match(/^\d+\./)) {
+                  lineNumber++
+                  return line
+                }
+                // Remove bullets if present before adding numbers
+                const cleanLine = line.replace(/^(\s*)• /, '$1')
+                const numberedLine = cleanLine.replace(/^(\s*)/, `$1${lineNumber}. `)
+                lineNumber++
+                return numberedLine
+              })
+              newText = beforeText + formattedLines.join('\n') + afterText
+            }
+          }
+          break
+      }
+      
+      updateElement(elementId, { content: newText })
+      
+      // Restore selection after state update for the editing element
+      if (textarea && isEditingText === elementId) {
+        setTimeout(() => {
+          textarea.setSelectionRange(newStart, newEnd)
+          textarea.focus()
+        }, 0)
+      }
+    })
   }
 
   const updateElement = (elementId: string | null, updates: Partial<SlideElement>) => {
     if (!elementId) return
-    addToUndoStack()
     
     // Update all multi-selected elements or just the single element
     const elementsToUpdate = multiSelectedElements.size > 0 && multiSelectedElements.has(elementId)
@@ -602,6 +705,138 @@ export function SlideView({
     }
   }
 
+  // Alignment functions
+  const alignElements = (alignment: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => {
+    const selectedIds = multiSelectedElements.size > 0 
+      ? Array.from(multiSelectedElements)
+      : selectedElement ? [selectedElement] : []
+    
+    if (selectedIds.length < 2) return // Need at least 2 elements to align
+    
+    addToUndoStack()
+    
+    // Get bounding box of all selected elements
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+    
+    selectedIds.forEach(id => {
+      const el = elements.find(e => e.id === id)
+      if (el) {
+        minX = Math.min(minX, el.position.x)
+        minY = Math.min(minY, el.position.y)
+        maxX = Math.max(maxX, el.position.x + el.size.width)
+        maxY = Math.max(maxY, el.position.y + el.size.height)
+      }
+    })
+    
+    const centerX = (minX + maxX) / 2
+    const centerY = (minY + maxY) / 2
+    
+    setElements(prev => prev.map(el => {
+      if (!selectedIds.includes(el.id)) return el
+      
+      let newX = el.position.x
+      let newY = el.position.y
+      
+      switch (alignment) {
+        case 'left':
+          newX = minX
+          break
+        case 'center':
+          newX = centerX - el.size.width / 2
+          break
+        case 'right':
+          newX = maxX - el.size.width
+          break
+        case 'top':
+          newY = minY
+          break
+        case 'middle':
+          newY = centerY - el.size.height / 2
+          break
+        case 'bottom':
+          newY = maxY - el.size.height
+          break
+      }
+      
+      return {
+        ...el,
+        position: { x: newX, y: newY }
+      }
+    }))
+  }
+  
+  // Distribution functions
+  const distributeElements = (direction: 'horizontal' | 'vertical') => {
+    const selectedIds = multiSelectedElements.size > 0 
+      ? Array.from(multiSelectedElements)
+      : selectedElement ? [selectedElement] : []
+    
+    if (selectedIds.length < 3) return // Need at least 3 elements to distribute
+    
+    addToUndoStack()
+    
+    // Get elements and sort by position
+    const selectedElements = selectedIds
+      .map(id => elements.find(e => e.id === id))
+      .filter(el => el !== undefined) as SlideElement[]
+    
+    if (direction === 'horizontal') {
+      // Sort by x position
+      selectedElements.sort((a, b) => a.position.x - b.position.x)
+      
+      const firstEl = selectedElements[0]
+      const lastEl = selectedElements[selectedElements.length - 1]
+      const totalWidth = selectedElements.reduce((sum, el) => sum + el.size.width, 0)
+      const totalSpace = (lastEl.position.x + lastEl.size.width) - firstEl.position.x
+      const gapSpace = totalSpace - totalWidth
+      const gap = gapSpace / (selectedElements.length - 1)
+      
+      let currentX = firstEl.position.x
+      
+      setElements(prev => prev.map(el => {
+        const index = selectedElements.findIndex(e => e.id === el.id)
+        if (index === -1) return el
+        
+        if (index === 0) return el // Keep first element in place
+        
+        const prevEl = selectedElements[index - 1]
+        currentX = currentX + prevEl.size.width + gap
+        
+        return {
+          ...el,
+          position: { ...el.position, x: currentX }
+        }
+      }))
+    } else {
+      // Sort by y position
+      selectedElements.sort((a, b) => a.position.y - b.position.y)
+      
+      const firstEl = selectedElements[0]
+      const lastEl = selectedElements[selectedElements.length - 1]
+      const totalHeight = selectedElements.reduce((sum, el) => sum + el.size.height, 0)
+      const totalSpace = (lastEl.position.y + lastEl.size.height) - firstEl.position.y
+      const gapSpace = totalSpace - totalHeight
+      const gap = gapSpace / (selectedElements.length - 1)
+      
+      let currentY = firstEl.position.y
+      
+      setElements(prev => prev.map(el => {
+        const index = selectedElements.findIndex(e => e.id === el.id)
+        if (index === -1) return el
+        
+        if (index === 0) return el // Keep first element in place
+        
+        const prevEl = selectedElements[index - 1]
+        currentY = currentY + prevEl.size.height + gap
+        
+        return {
+          ...el,
+          position: { ...el.position, y: currentY }
+        }
+      }))
+    }
+  }
+
   const handleSlideMouseDown = (e: React.MouseEvent) => {
     if (zoom > 100 && !draggedElement && !resizingElement) {
       setIsDragging(true)
@@ -723,8 +958,8 @@ export function SlideView({
                 ? {
                     ...el,
                     position: {
-                      x: Math.max(0, Math.min(750, el.position.x + deltaX)),
-                      y: Math.max(0, Math.min(400, el.position.y + deltaY)),
+                      x: Math.max(0, Math.min(canvasSize.width - el.size.width, el.position.x + deltaX)),
+                      y: Math.max(0, Math.min(canvasSize.height - el.size.height, el.position.y + deltaY)),
                     },
                   }
                 : el,
@@ -734,7 +969,7 @@ export function SlideView({
         })
       }
     },
-    [draggedElement, dragStart, zoom, multiSelectedElements],
+    [draggedElement, dragStart, zoom, multiSelectedElements, canvasSize],
   )
 
   // Global mouse event handlers
@@ -1003,7 +1238,7 @@ export function SlideView({
           width: element.size.width,
           height: element.size.height,
           zIndex: element.zIndex,
-          cursor: isEditing ? 'auto' : (isDragging ? 'grabbing' : 'default'),
+          cursor: isEditing ? 'text' : (isDragging ? 'grabbing' : (isSelected ? 'move' : 'default')),
           willChange: isDragging || isResizing ? 'transform' : 'auto'
         }}
         onClick={(e) => {
@@ -1014,18 +1249,16 @@ export function SlideView({
         }}
         onMouseDown={(e) => {
           e.stopPropagation()
-          // For shapes, start dragging immediately
-          if (element.type === 'shape' && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+          // For all elements, start dragging if selected and not editing
+          if (isSelected && !isEditing && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
             setDraggedElement(element.id)
             setDragStart({ x: e.clientX, y: e.clientY })
           }
-          // For text elements, only drag if already selected and not clicking on text
-          else if (isSelected && !isEditing && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
-            const target = e.target as HTMLElement
-            if (!target.classList.contains('text-content-area')) {
-              setDraggedElement(element.id)
-              setDragStart({ x: e.clientX, y: e.clientY })
-            }
+          // For shapes that aren't selected, select and start dragging immediately
+          else if (element.type === 'shape' && !isSelected && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+            handleElementClick(element.id, e)
+            setDraggedElement(element.id)
+            setDragStart({ x: e.clientX, y: e.clientY })
           }
         }}
       >
@@ -1112,16 +1345,19 @@ export function SlideView({
                 borderRadius: element.style.borderRadius,
                 opacity: element.style.opacity,
                 lineHeight: 1.5,
-                cursor: isSelected ? 'text' : 'default',
+                cursor: isSelected ? 'move' : 'default',
               }}
               onClick={(e) => {
                 e.stopPropagation()
-                // If not selected, select it first
+                // Single click only selects, doesn't enter edit mode
                 if (!isSelected) {
                   handleElementClick(element.id, e)
-                } 
-                // If already selected, enter edit mode
-                else if (element.type !== "shape") {
+                }
+              }}
+              onDoubleClick={(e) => {
+                e.stopPropagation()
+                // Double click enters edit mode for text elements
+                if (element.type !== "shape" && !isEditing) {
                   setIsEditingText(element.id)
                 }
               }}
@@ -1359,6 +1595,7 @@ export function SlideView({
                             size="icon"
                             variant={selectedElementData?.style.textAlign === "left" ? "secondary" : "ghost"}
                             onClick={() => updateElementStyle(selectedElement!, { textAlign: "left" })}
+                            title="Align Left"
                             className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
                           >
                             <AlignLeft className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -1367,6 +1604,7 @@ export function SlideView({
                             size="icon"
                             variant={selectedElementData.style.textAlign === "center" ? "secondary" : "ghost"}
                             onClick={() => updateElementStyle(selectedElement!, { textAlign: "center" })}
+                            title="Align Center"
                             className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
                           >
                             <AlignCenter className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -1685,6 +1923,93 @@ export function SlideView({
                 </div>
                   </>
                 ) : null}
+                
+                {/* Alignment controls - show when 2+ elements selected */}
+                {(multiSelectedElements.size > 1) && (
+                  <>
+                    <div className="flex items-center space-x-0.5 px-1 border-r border-gray-200">
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        onClick={() => alignElements('left')}
+                        title="Align Left"
+                        className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
+                      >
+                        <AlignHorizontalJustifyStart className="w-3 h-3 sm:w-4 sm:h-4" />
+                      </Button>
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        onClick={() => alignElements('center')}
+                        title="Align Center"
+                        className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
+                      >
+                        <AlignHorizontalJustifyCenter className="w-3 h-3 sm:w-4 sm:h-4" />
+                      </Button>
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        onClick={() => alignElements('right')}
+                        title="Align Right"
+                        className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
+                      >
+                        <AlignHorizontalJustifyEnd className="w-3 h-3 sm:w-4 sm:h-4" />
+                      </Button>
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        onClick={() => alignElements('top')}
+                        title="Align Top"
+                        className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
+                      >
+                        <AlignVerticalJustifyStart className="w-3 h-3 sm:w-4 sm:h-4" />
+                      </Button>
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        onClick={() => alignElements('middle')}
+                        title="Align Middle"
+                        className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
+                      >
+                        <AlignVerticalJustifyCenter className="w-3 h-3 sm:w-4 sm:h-4" />
+                      </Button>
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        onClick={() => alignElements('bottom')}
+                        title="Align Bottom"
+                        className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
+                      >
+                        <AlignVerticalJustifyEnd className="w-3 h-3 sm:w-4 sm:h-4" />
+                      </Button>
+                    </div>
+                  </>
+                )}
+                
+                {/* Distribution controls - show when 3+ elements selected */}
+                {(multiSelectedElements.size > 2) && (
+                  <div className="flex items-center space-x-0.5 px-1 border-r border-gray-200">
+                    <Button 
+                      size="icon" 
+                      variant="ghost" 
+                      onClick={() => distributeElements('horizontal')}
+                      title="Distribute Horizontally"
+                      className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
+                    >
+                      <Columns3 className="w-3 h-3 sm:w-4 sm:h-4" />
+                    </Button>
+                    <Button 
+                      size="icon" 
+                      variant="ghost" 
+                      onClick={() => distributeElements('vertical')}
+                      title="Distribute Vertically"
+                      className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
+                    >
+                      <Rows3 className="w-3 h-3 sm:w-4 sm:h-4" />
+                    </Button>
+                  </div>
+                )}
+                
                 {isAnyElementSelected && (
                   <div className="flex items-center space-x-0.5 pl-1">
                     <Button 
@@ -1734,16 +2059,88 @@ export function SlideView({
               transformOrigin: "center",
               aspectRatio: '16/9',
             }}
-            onClick={(e) => {
-              // Only deselect if clicking directly on the slide background
-              if (e.target === e.currentTarget) {
+            onMouseDown={(e) => {
+              // Start marquee selection if clicking on empty canvas
+              if (e.target === e.currentTarget && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                setIsSelecting(true)
+                const rect = slideRef.current?.getBoundingClientRect()
+                if (rect) {
+                  const x = (e.clientX - rect.left) / (zoom / 100)
+                  const y = (e.clientY - rect.top) / (zoom / 100)
+                  setSelectionBox({ 
+                    start: { x, y }, 
+                    end: { x, y } 
+                  })
+                }
+                // Clear selections when starting marquee
                 onElementSelect(null)
                 setMultiSelectedElements(new Set())
                 setLastSelectedElement(null)
               }
             }}
+            onMouseMove={(e) => {
+              // Update marquee selection box
+              if (isSelecting && selectionBox) {
+                const rect = slideRef.current?.getBoundingClientRect()
+                if (rect) {
+                  const x = (e.clientX - rect.left) / (zoom / 100)
+                  const y = (e.clientY - rect.top) / (zoom / 100)
+                  setSelectionBox({
+                    ...selectionBox,
+                    end: { x, y }
+                  })
+                }
+              }
+            }}
+            onMouseUp={(e) => {
+              // Complete marquee selection
+              if (isSelecting && selectionBox) {
+                const minX = Math.min(selectionBox.start.x, selectionBox.end.x)
+                const maxX = Math.max(selectionBox.start.x, selectionBox.end.x)
+                const minY = Math.min(selectionBox.start.y, selectionBox.end.y)
+                const maxY = Math.max(selectionBox.start.y, selectionBox.end.y)
+                
+                // Select all elements within the selection box
+                const selected = new Set<string>()
+                elements.forEach(element => {
+                  const elLeft = element.position.x
+                  const elRight = element.position.x + element.size.width
+                  const elTop = element.position.y
+                  const elBottom = element.position.y + element.size.height
+                  
+                  // Check if element intersects with selection box
+                  if (elRight >= minX && elLeft <= maxX && 
+                      elBottom >= minY && elTop <= maxY) {
+                    selected.add(element.id)
+                  }
+                })
+                
+                if (selected.size > 0) {
+                  setMultiSelectedElements(selected)
+                  // Select the first element as the primary selection
+                  const firstId = Array.from(selected)[0]
+                  onElementSelect(firstId)
+                }
+                
+                setIsSelecting(false)
+                setSelectionBox(null)
+              }
+            }}
           >
           {elements.sort((a, b) => a.zIndex - b.zIndex).map(renderElement)}
+          
+          {/* Marquee Selection Box */}
+          {isSelecting && selectionBox && (
+            <div
+              className="absolute border-2 border-blue-500 border-dashed bg-blue-500 bg-opacity-10 pointer-events-none"
+              style={{
+                left: Math.min(selectionBox.start.x, selectionBox.end.x),
+                top: Math.min(selectionBox.start.y, selectionBox.end.y),
+                width: Math.abs(selectionBox.end.x - selectionBox.start.x),
+                height: Math.abs(selectionBox.end.y - selectionBox.start.y),
+              }}
+            />
+          )}
           <div className="absolute bottom-2 sm:bottom-3 md:bottom-4 left-3 sm:left-4 md:left-6 right-3 sm:right-4 md:right-6 border-t border-gray-200 pt-1 sm:pt-2 flex justify-between items-center text-[9px] sm:text-[10px] md:text-xs text-gray-400">
             <span className="font-medium">PRESENTPRO</span>
             <span>{new Date().toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' })}</span>
