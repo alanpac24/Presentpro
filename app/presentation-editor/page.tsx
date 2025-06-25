@@ -264,11 +264,11 @@ export default function PresentationEditorPage() {
         presentationTitle={presentationTitle}
         versions={[]}
         onRestore={(versionId) => {
-          console.log("Restoring version:", versionId)
+          // TODO: Implement version restore functionality
           setShowVersionHistory(false)
         }}
         onPreview={(versionId) => {
-          console.log("Previewing version:", versionId)
+          // TODO: Implement version preview functionality
         }}
       />
     </div>

@@ -14,7 +14,6 @@ export default function UpgradePage() {
 
   const handleUpgrade = (planName: string) => {
     // In a real app, this would initiate the payment flow
-    console.log(`Upgrading to ${planName} plan`)
     // For now, just redirect to dashboard
     router.push("/dashboard")
   }

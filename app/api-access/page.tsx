@@ -84,7 +84,7 @@ fetch(url, {
 })
 .catch(error => {
   // Handle errors appropriately
-  console.error('Error:', error);
+  // In production, send to error tracking service
 });`
   }
 

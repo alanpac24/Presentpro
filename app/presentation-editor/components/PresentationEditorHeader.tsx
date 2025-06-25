@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { UserDropdown } from "@/components/user-dropdown"
+import { validatePresentationTitle } from "@/lib/validation"
 
 interface PresentationEditorHeaderProps {
   title: string
@@ -25,10 +26,19 @@ interface PresentationEditorHeaderProps {
 export function PresentationEditorHeader({ title, onTitleChange, isAutoSaving, onVersionHistory }: PresentationEditorHeaderProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [draft, setDraft] = useState(title)
+  const [error, setError] = useState<string | null>(null)
 
   const saveTitle = () => {
-    onTitleChange(draft.trim() || "Untitled presentation")
+    const validation = validatePresentationTitle(draft)
+    
+    if (!validation.isValid) {
+      setError(validation.error || "Invalid title")
+      return
+    }
+    
+    onTitleChange(validation.sanitized)
     setIsEditing(false)
+    setError(null)
   }
 
   return (
@@ -43,30 +53,47 @@ export function PresentationEditorHeader({ title, onTitleChange, isAutoSaving, o
 
         <div className="flex-1 flex justify-center">
         {isEditing ? (
-          <div className="flex items-center space-x-2">
-            <Input
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") saveTitle()
-                if (e.key === "Escape") setIsEditing(false)
-              }}
-              className="h-10 w-72 bg-gray-50 border-gray-200 text-center text-base font-medium rounded-lg"
-              autoFocus
-            />
-            <Button size="icon" variant="ghost" onClick={saveTitle}>
-              <Check className="h-5 w-5" />
-            </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => {
-                setDraft(title)
-                setIsEditing(false)
-              }}
-            >
-              <X className="h-5 w-5" />
-            </Button>
+          <div className="relative">
+            <div className="flex items-center space-x-2">
+              <Input
+                value={draft}
+                onChange={(e) => {
+                  setDraft(e.target.value)
+                  setError(null)
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") saveTitle()
+                  if (e.key === "Escape") {
+                    setDraft(title)
+                    setIsEditing(false)
+                    setError(null)
+                  }
+                }}
+                className={`h-10 w-72 bg-gray-50 border-gray-200 text-center text-base font-medium rounded-lg ${
+                  error ? "border-red-500 focus:border-red-500" : ""
+                }`}
+                autoFocus
+              />
+              <Button size="icon" variant="ghost" onClick={saveTitle}>
+                <Check className="h-5 w-5" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => {
+                  setDraft(title)
+                  setIsEditing(false)
+                  setError(null)
+                }}
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+            {error && (
+              <p className="absolute top-full left-0 mt-1 text-sm text-red-600">
+                {error}
+              </p>
+            )}
           </div>
         ) : (
           <button

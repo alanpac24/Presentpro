@@ -7,26 +7,11 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { 
-  Presentation, ArrowLeft, ArrowRight, Search, Filter, Star, Clock, TrendingUp, 
-  Users, Briefcase, GraduationCap, BarChart, Lightbulb, Target,
-  Heart, Globe, Palette, Megaphone, FileText
+  Presentation, ArrowLeft, ArrowRight, Search, Filter, FileText
 } from "lucide-react"
 import { PublicHeader } from "@/components/public-header"
 import Image from "next/image"
-
-// Define gradient classes to ensure Tailwind includes them
-const gradientClasses = {
-  blue: "from-blue-400 to-blue-600",
-  purple: "from-purple-400 to-purple-600",
-  green: "from-green-400 to-green-600",
-  orange: "from-orange-400 to-orange-600",
-  yellow: "from-yellow-400 to-yellow-600",
-  red: "from-red-400 to-red-600",
-  indigo: "from-indigo-400 to-indigo-600",
-  pink: "from-pink-400 to-pink-600"
-}
 
 const templates = [
   {

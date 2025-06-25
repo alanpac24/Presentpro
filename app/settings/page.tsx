@@ -42,7 +42,7 @@ export default function SettingsPage() {
   const handleDeleteAccount = () => {
     // In a real app, this would call an API to delete the account
     // TODO: Replace with proper toast notification
-    console.log("Account deletion request submitted")
+    alert("Account deletion request submitted")
     router.push("/signin")
   }
 

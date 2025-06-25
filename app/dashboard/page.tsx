@@ -28,7 +28,6 @@ import {
   Settings,
   LogOut,
   Plus,
-  Edit,
   Copy,
   Share,
   Trash2,
@@ -363,6 +362,7 @@ export default function DashboardPage() {
   const [templateSearchQuery, setTemplateSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("All")
   const [currentPage, setCurrentPage] = useState(1)
+  const [operationError, setOperationError] = useState<string | null>(null)
   const presentationsPerPage = 6
 
   // Filter presentations based on search
@@ -468,6 +468,21 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Error Message */}
+      {operationError && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center justify-between">
+            <p className="text-red-800">{operationError}</p>
+            <button
+              onClick={() => setOperationError(null)}
+              className="text-red-500 hover:text-red-700"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
         {/* Recent Presentations Section */}
@@ -549,7 +564,8 @@ export default function DashboardPage() {
                                 title="Duplicate presentation"
                                 onClick={() => {
                                   // TODO: Implement duplicate presentation feature
-                                  console.log("Duplicate feature coming soon!")
+                                  setOperationError("Duplicate feature coming soon!")
+                                  setTimeout(() => setOperationError(null), 3000)
                                 }}
                               >
                                 <Copy className="w-4 h-4" />
@@ -561,7 +577,8 @@ export default function DashboardPage() {
                                 title="Share presentation"
                                 onClick={() => {
                                   // TODO: Implement share presentation feature
-                                  console.log("Share feature coming soon!")
+                                  setOperationError("Share feature coming soon!")
+                                  setTimeout(() => setOperationError(null), 3000)
                                 }}
                               >
                                 <Share className="w-4 h-4" />
@@ -574,7 +591,8 @@ export default function DashboardPage() {
                                 onClick={() => {
                                   if (confirm("Are you sure you want to delete this presentation?")) {
                                     // TODO: Implement delete presentation feature
-                                    console.log("Delete feature coming soon!")
+                                    setOperationError("Delete feature coming soon!")
+                                    setTimeout(() => setOperationError(null), 3000)
                                   }
                                 }}
                               >
