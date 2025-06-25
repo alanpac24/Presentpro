@@ -124,8 +124,8 @@ export function SlideCarousel({
 
 
   return (
-    <div className="h-32 sm:h-36 bg-gray-50 border-t border-gray-200 flex items-center relative">
-      <div className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4">
+    <div className="h-28 sm:h-32 md:h-36 bg-gray-50 border-t border-gray-200 flex items-center relative">
+      <div className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 lg:px-4">
         <Button 
           variant="outline" 
           size="icon" 
@@ -146,7 +146,7 @@ export function SlideCarousel({
         </Button>
       </div>
 
-      <div className="flex-1 px-2 sm:px-4 overflow-hidden" ref={scrollContainerRef}>
+      <div className="flex-1 px-2 sm:px-3 lg:px-4 overflow-hidden" ref={scrollContainerRef}>
         <div 
           className="h-full overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100" 
           ref={scrollAreaRef}
@@ -163,7 +163,7 @@ export function SlideCarousel({
           }}
         >
           <div 
-            className="slides-container flex items-center gap-2 sm:gap-4 h-full py-2 sm:py-4 px-2 relative"
+            className="slides-container flex items-center gap-2 sm:gap-3 lg:gap-4 h-full py-2 sm:py-3 lg:py-4 px-2 relative"
             onDragOver={(e) => e.preventDefault()}
             onDrop={handleDrop}
           >
@@ -178,8 +178,8 @@ export function SlideCarousel({
                   transition: 'left 200ms ease-out'
                 }}
               >
-                <Card className="w-32 h-20 sm:w-40 sm:h-24 lg:w-48 lg:h-28 border-2 border-blue-500 bg-blue-50 shadow-lg ghost-preview">
-                  <CardContent className="p-2 sm:p-3 lg:p-4 h-full flex flex-col">
+                <Card className="w-28 h-18 sm:w-32 sm:h-20 md:w-40 md:h-24 lg:w-48 lg:h-28 border-2 border-blue-500 bg-blue-50 shadow-lg ghost-preview">
+                  <CardContent className="p-1.5 sm:p-2 md:p-3 lg:p-4 h-full flex flex-col">
                     <div className="text-sm font-semibold text-blue-700 mb-2 opacity-70">
                       {dragState.dropIndicatorIndex === 0 
                         ? 1 
@@ -216,14 +216,14 @@ export function SlideCarousel({
                 style={getSlideStyle(index)}
               >
                 <Card
-                  className={`slide-card relative flex-shrink-0 w-32 h-20 sm:w-40 sm:h-24 lg:w-48 lg:h-28 cursor-pointer transition-all duration-200 ${
+                  className={`slide-card relative flex-shrink-0 w-28 h-18 sm:w-32 sm:h-20 md:w-40 md:h-24 lg:w-48 lg:h-28 cursor-pointer transition-all duration-200 ${
                     index === currentSlideIndex
                       ? "ring-2 ring-gray-900 shadow-lg border-gray-900 transform scale-105 z-10"
                       : "border-gray-200 hover:border-gray-400"
                   } ${dragState.isDragging && index === dragState.draggedSlide ? 'dragging cursor-grabbing' : 'cursor-grab'}`}
                   onClick={() => onSlideChange(index)}
                 >
-                  <CardContent className="p-2 sm:p-3 lg:p-4 h-full flex flex-col">
+                  <CardContent className="p-1.5 sm:p-2 md:p-3 lg:p-4 h-full flex flex-col">
                     {/* Drag handle */}
                     <div className="absolute top-1 left-1 sm:top-2 sm:left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-move">
                       <GripVertical className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
@@ -272,7 +272,7 @@ export function SlideCarousel({
             {/* Add New Slide Button */}
             <button
               onClick={handleAddSlide}
-              className="flex-shrink-0 w-32 h-20 sm:w-40 sm:h-24 lg:w-48 lg:h-28 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center hover:border-gray-400 hover:bg-gray-50 transition-all duration-200 group"
+              className="flex-shrink-0 w-28 h-18 sm:w-32 sm:h-20 md:w-40 md:h-24 lg:w-48 lg:h-28 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center hover:border-gray-400 hover:bg-gray-50 transition-all duration-200 group"
             >
               <div className="text-center">
                 <Plus className="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-gray-400 mx-auto mb-0.5 sm:mb-1 group-hover:text-gray-600" />

@@ -1170,11 +1170,11 @@ export function SlideView({
   return (
     <div className="flex-1 bg-gray-50 flex flex-col relative overflow-hidden min-h-0">
       {/* Persistent Formatting Toolbar */}
-      <div className="bg-white border-b border-gray-200 px-6 py-3">
-        <div className="flex items-center justify-center">
+      <div className="bg-white border-b border-gray-200 px-2 sm:px-3 md:px-4 lg:px-6 py-1.5 sm:py-2 md:py-2.5 lg:py-3">
+        <div className="flex items-center justify-center overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
           <Card className="shadow-sm border border-gray-200 bg-white rounded-lg">
-            <CardContent className="p-2">
-              <div className="flex items-center space-x-1">
+            <CardContent className="p-0.5 sm:p-1 md:p-1.5 lg:p-2">
+              <div className="flex items-center space-x-0.5 sm:space-x-1">
                 {hasMultiSelection && multiSelectedElements.size > 1 && (
                   <div className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-medium mr-2">
                     {multiSelectedElements.size} selected
@@ -1186,8 +1186,9 @@ export function SlideView({
                     variant="ghost" 
                     onClick={addTextBox}
                     title="Add Text Box"
+                    className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
                   >
-                    <Type className="w-4 h-4" />
+                    <Type className="w-3 h-3 sm:w-4 sm:h-4" />
                   </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -1195,30 +1196,31 @@ export function SlideView({
                         size="icon" 
                         variant="ghost"
                         title="Add Shape"
+                        className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
                       >
-                        <Shapes className="w-4 h-4" />
+                        <Shapes className="w-3 h-3 sm:w-4 sm:h-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start">
                       <DropdownMenuItem onClick={() => addShape("rectangle")}>
-                        <Square className="w-4 h-4" />
-                        <span>Rectangle</span>
+                        <Square className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                        <span className="text-xs sm:text-sm">Rectangle</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => addShape("circle")}>
-                        <Circle className="w-4 h-4" />
-                        <span>Circle</span>
+                        <Circle className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                        <span className="text-xs sm:text-sm">Circle</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => addShape("triangle")}>
-                        <Triangle className="w-4 h-4" />
-                        <span>Triangle</span>
+                        <Triangle className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                        <span className="text-xs sm:text-sm">Triangle</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => addShape("line")}>
-                        <Minus className="w-4 h-4" />
-                        <span>Line</span>
+                        <Minus className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                        <span className="text-xs sm:text-sm">Line</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => addShape("arrow")}>
-                        <ArrowRight className="w-4 h-4" />
-                        <span>Arrow</span>
+                        <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                        <span className="text-xs sm:text-sm">Arrow</span>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -1233,8 +1235,9 @@ export function SlideView({
                         onClick={handleUndo}
                         disabled={undoStack.length === 0}
                         title="Undo (Ctrl+Z)"
+                        className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
                       >
-                        <Undo className="w-4 h-4" />
+                        <Undo className="w-3 h-3 sm:w-4 sm:h-4" />
                       </Button>
                       <Button 
                         size="icon" 
@@ -1242,8 +1245,9 @@ export function SlideView({
                         onClick={handleRedo}
                         disabled={redoStack.length === 0}
                         title="Redo (Ctrl+Y)"
+                        className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
                       >
-                        <Redo className="w-4 h-4" />
+                        <Redo className="w-3 h-3 sm:w-4 sm:h-4" />
                       </Button>
                     </div>
                     
@@ -1255,7 +1259,7 @@ export function SlideView({
                             value={selectedElementData?.style.fontSize.toString() || "16"}
                             onValueChange={(v) => updateElementStyle(selectedElement!, { fontSize: Number(v) })}
                           >
-                            <SelectTrigger className="w-16 h-9 text-xs rounded-md">
+                            <SelectTrigger className="w-12 sm:w-14 md:w-16 h-7 sm:h-8 md:h-9 text-[10px] sm:text-xs rounded-md">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -1276,8 +1280,9 @@ export function SlideView({
                                 fontWeight: selectedElementData?.style.fontWeight === "600" ? "400" : "600",
                               })
                             }
+                            className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
                           >
-                            <Bold className="w-4 h-4" />
+                            <Bold className="w-3 h-3 sm:w-4 sm:h-4" />
                           </Button>
                           <Button
                             size="icon"
@@ -1288,8 +1293,9 @@ export function SlideView({
                               })
                             }
                             title="Italic"
+                            className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
                           >
-                            <Italic className="w-4 h-4" />
+                            <Italic className="w-3 h-3 sm:w-4 sm:h-4" />
                           </Button>
                           <Button
                             size="icon"
@@ -1300,8 +1306,9 @@ export function SlideView({
                               })
                             }
                             title="Underline"
+                            className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
                           >
-                            <Underline className="w-4 h-4" />
+                            <Underline className="w-3 h-3 sm:w-4 sm:h-4" />
                           </Button>
                         </div>
                       </>
@@ -1324,8 +1331,9 @@ export function SlideView({
                             }}
                             title="Bullet List"
                             disabled={!selectedElement}
+                            className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
                           >
-                            <List className="w-4 h-4" />
+                            <List className="w-3 h-3 sm:w-4 sm:h-4" />
                           </Button>
                           <Button
                             size="icon"
@@ -1340,8 +1348,9 @@ export function SlideView({
                             }}
                             title="Numbered List"
                             disabled={!selectedElement}
+                            className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
                           >
-                            <ListOrdered className="w-4 h-4" />
+                            <ListOrdered className="w-3 h-3 sm:w-4 sm:h-4" />
                           </Button>
                         </div>
                         
@@ -1350,31 +1359,35 @@ export function SlideView({
                             size="icon"
                             variant={selectedElementData?.style.textAlign === "left" ? "secondary" : "ghost"}
                             onClick={() => updateElementStyle(selectedElement!, { textAlign: "left" })}
+                            className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
                           >
-                            <AlignLeft className="w-4 h-4" />
+                            <AlignLeft className="w-3 h-3 sm:w-4 sm:h-4" />
                           </Button>
                           <Button
                             size="icon"
                             variant={selectedElementData.style.textAlign === "center" ? "secondary" : "ghost"}
                             onClick={() => updateElementStyle(selectedElement!, { textAlign: "center" })}
+                            className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
                           >
-                            <AlignCenter className="w-4 h-4" />
+                            <AlignCenter className="w-3 h-3 sm:w-4 sm:h-4" />
                           </Button>
                           <Button
                             size="icon"
                             variant={selectedElementData.style.textAlign === "right" ? "secondary" : "ghost"}
                             onClick={() => updateElementStyle(selectedElement!, { textAlign: "right" })}
                             title="Align Right"
+                            className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
                           >
-                            <AlignRight className="w-4 h-4" />
+                            <AlignRight className="w-3 h-3 sm:w-4 sm:h-4" />
                           </Button>
                           <Button
                             size="icon"
                             variant={selectedElementData.style.textAlign === "justify" ? "secondary" : "ghost"}
                             onClick={() => updateElementStyle(selectedElement!, { textAlign: "justify" })}
                             title="Justify"
+                            className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
                           >
-                            <AlignJustify className="w-4 h-4" />
+                            <AlignJustify className="w-3 h-3 sm:w-4 sm:h-4" />
                           </Button>
                         </div>
                         <div className="flex items-center space-x-0.5 px-1 border-r border-gray-200">
@@ -1382,7 +1395,7 @@ export function SlideView({
                             value={selectedElementData.style.fontFamily}
                             onValueChange={(v) => updateElementStyle(selectedElement!, { fontFamily: v })}
                           >
-                            <SelectTrigger className="w-32 h-9 text-xs rounded-md">
+                            <SelectTrigger className="w-24 sm:w-28 md:w-32 h-7 sm:h-8 md:h-9 text-[10px] sm:text-xs rounded-md">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -1407,11 +1420,12 @@ export function SlideView({
                                 size="icon" 
                                 variant="ghost"
                                 title="Line Orientation"
+                                className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
                               >
-                                {selectedElementData.lineOrientation === "horizontal" && <ArrowRight className="w-4 h-4" />}
-                                {selectedElementData.lineOrientation === "vertical" && <ArrowDown className="w-4 h-4" />}
-                                {selectedElementData.lineOrientation === "diagonal-up" && <ArrowUpRight className="w-4 h-4" />}
-                                {selectedElementData.lineOrientation === "diagonal-down" && <ArrowDownRight className="w-4 h-4" />}
+                                {selectedElementData.lineOrientation === "horizontal" && <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4" />}
+                                {selectedElementData.lineOrientation === "vertical" && <ArrowDown className="w-3 h-3 sm:w-4 sm:h-4" />}
+                                {selectedElementData.lineOrientation === "diagonal-up" && <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4" />}
+                                {selectedElementData.lineOrientation === "diagonal-down" && <ArrowDownRight className="w-3 h-3 sm:w-4 sm:h-4" />}
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="start">
@@ -1437,7 +1451,7 @@ export function SlideView({
                         
                         {/* Line Style */}
                         <div className="flex items-center space-x-1 px-1 border-r border-gray-200">
-                          <span className="text-xs text-gray-500">Style:</span>
+                          <span className="text-[10px] sm:text-xs text-gray-500 hidden sm:inline">Style:</span>
                           <Select
                             value={selectedElementData.style.lineStyle || "solid"}
                             onValueChange={(value) => 
@@ -1446,7 +1460,7 @@ export function SlideView({
                               })
                             }
                           >
-                            <SelectTrigger className="w-20 h-7 text-xs">
+                            <SelectTrigger className="w-16 sm:w-20 h-6 sm:h-7 text-[10px] sm:text-xs">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -1459,7 +1473,7 @@ export function SlideView({
                         
                         {/* Line Thickness */}
                         <div className="flex items-center space-x-1 px-1 border-r border-gray-200">
-                          <span className="text-xs text-gray-500">Thickness:</span>
+                          <span className="text-[10px] sm:text-xs text-gray-500 hidden md:inline">Thickness:</span>
                           <input
                             type="range"
                             min="1"
@@ -1468,10 +1482,10 @@ export function SlideView({
                             onChange={(e) => updateElementStyle(selectedElement!, { 
                               lineThickness: parseInt(e.target.value) 
                             })}
-                            className="w-20"
+                            className="w-12 sm:w-16 md:w-20"
                             title={`${selectedElementData.style.lineThickness || 4}px`}
                           />
-                          <span className="text-xs w-6 text-right">
+                          <span className="text-[10px] sm:text-xs w-6 text-right hidden lg:inline">
                             {selectedElementData.style.lineThickness || 4}
                           </span>
                         </div>
@@ -1489,8 +1503,9 @@ export function SlideView({
                             updateElement(selectedElement!, { rotation: (currentRotation + 45) % 360 })
                           }}
                           title="Rotate 45°"
+                          className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
                         >
-                          <RotateCw className="w-4 h-4" />
+                          <RotateCw className="w-3 h-3 sm:w-4 sm:h-4" />
                         </Button>
                       </div>
                     )}
@@ -1498,23 +1513,23 @@ export function SlideView({
                     {/* Size controls for shapes */}
                     {selectedElementData && selectedElementData.type === "shape" && (
                       <div className="flex items-center space-x-1 px-1 border-r border-gray-200">
-                        <span className="text-xs text-gray-500">W:</span>
+                        <span className="text-[10px] sm:text-xs text-gray-500 hidden sm:inline">W:</span>
                         <input
                           type="number"
                           value={selectedElementData.size.width}
                           onChange={(e) => updateElement(selectedElement!, { 
                             size: { ...selectedElementData.size, width: Math.max(10, parseInt(e.target.value) || 0) }
                           })}
-                          className="w-16 h-7 px-2 text-xs border rounded"
+                          className="w-12 sm:w-14 md:w-16 h-6 sm:h-7 px-1 sm:px-2 text-[10px] sm:text-xs border rounded"
                         />
-                        <span className="text-xs text-gray-500">H:</span>
+                        <span className="text-[10px] sm:text-xs text-gray-500 hidden sm:inline">H:</span>
                         <input
                           type="number"
                           value={selectedElementData.size.height}
                           onChange={(e) => updateElement(selectedElement!, { 
                             size: { ...selectedElementData.size, height: Math.max(10, parseInt(e.target.value) || 0) }
                           })}
-                          className="w-16 h-7 px-2 text-xs border rounded"
+                          className="w-12 sm:w-14 md:w-16 h-6 sm:h-7 px-1 sm:px-2 text-[10px] sm:text-xs border rounded"
                         />
                       </div>
                     )}
@@ -1522,8 +1537,8 @@ export function SlideView({
                     <div className="flex items-center space-x-0.5 px-1 border-r border-gray-200">
                       <Popover>
                     <PopoverTrigger asChild>
-                      <Button size="icon" variant="ghost">
-                        <Palette className="w-4 h-4" />
+                      <Button size="icon" variant="ghost" className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9">
+                        <Palette className="w-3 h-3 sm:w-4 sm:h-4" />
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-64">
@@ -1677,17 +1692,18 @@ export function SlideView({
                       variant="ghost" 
                       onClick={duplicateElement}
                       title="Duplicate"
+                      className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
                     >
-                      <Copy className="w-4 h-4" />
+                      <Copy className="w-3 h-3 sm:w-4 sm:h-4" />
                     </Button>
                     <Button
                       size="icon"
                       variant="ghost"
                       onClick={deleteElement}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9 text-red-600 hover:text-red-700 hover:bg-red-50"
                       title="Delete"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                     </Button>
                   </div>
                 )}
@@ -1698,7 +1714,7 @@ export function SlideView({
       </div>
 
       <div
-        className="flex-1 flex items-center justify-center p-4 sm:p-8 lg:p-12 overflow-hidden min-h-0"
+        className="flex-1 flex items-center justify-center p-3 sm:p-4 md:p-6 lg:p-8 xl:p-12 overflow-hidden min-h-0"
         onMouseDown={handleSlideMouseDown}
         onMouseMove={handleSlideMouseMove}
         onMouseUp={handleSlideMouseUp}
@@ -1728,7 +1744,7 @@ export function SlideView({
             }}
           >
           {elements.sort((a, b) => a.zIndex - b.zIndex).map(renderElement)}
-          <div className="absolute bottom-2 sm:bottom-4 left-4 sm:left-6 right-4 sm:right-6 border-t border-gray-200 pt-1 sm:pt-2 flex justify-between items-center text-[10px] sm:text-xs text-gray-400">
+          <div className="absolute bottom-2 sm:bottom-3 md:bottom-4 left-3 sm:left-4 md:left-6 right-3 sm:right-4 md:right-6 border-t border-gray-200 pt-1 sm:pt-2 flex justify-between items-center text-[9px] sm:text-[10px] md:text-xs text-gray-400">
             <span className="font-medium">PRESENTPRO</span>
             <span>{new Date().toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' })}</span>
           </div>
@@ -1736,15 +1752,15 @@ export function SlideView({
         </div>
       </div>
 
-      <div className="absolute bottom-4 sm:bottom-6 right-4 sm:right-6 flex items-center space-x-3">
+      <div className="absolute bottom-3 sm:bottom-4 md:bottom-6 right-3 sm:right-4 md:right-6 flex items-center space-x-2 sm:space-x-3">
         <Card className="shadow-lg border border-gray-200 rounded-lg">
           <CardContent className="p-1 sm:p-1.5">
-            <div className="flex items-center space-x-1">
-              <Button variant="ghost" size="icon" onClick={() => onZoomChange(zoom - 25)} disabled={zoom <= 75} className="h-8 w-8 sm:h-9 sm:w-9">
+            <div className="flex items-center space-x-0.5 sm:space-x-1">
+              <Button variant="ghost" size="icon" onClick={() => onZoomChange(zoom - 25)} disabled={zoom <= 75} className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9">
                 <ZoomOut className="w-3 h-3 sm:w-4 sm:h-4" />
               </Button>
-              <span className="text-xs sm:text-sm font-medium text-gray-700 min-w-[2.5rem] sm:min-w-[3rem] text-center">{Math.round((zoom / 1.5) * 100) / 100}%</span>
-              <Button variant="ghost" size="icon" onClick={() => onZoomChange(zoom + 25)} disabled={zoom >= 300} className="h-8 w-8 sm:h-9 sm:w-9">
+              <span className="text-[10px] sm:text-xs md:text-sm font-medium text-gray-700 min-w-[2rem] sm:min-w-[2.5rem] md:min-w-[3rem] text-center">{Math.round((zoom / 1.5) * 100) / 100}%</span>
+              <Button variant="ghost" size="icon" onClick={() => onZoomChange(zoom + 25)} disabled={zoom >= 300} className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9">
                 <ZoomIn className="w-3 h-3 sm:w-4 sm:h-4" />
               </Button>
             </div>
