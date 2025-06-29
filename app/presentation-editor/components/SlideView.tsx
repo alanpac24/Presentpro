@@ -55,11 +55,48 @@ import {
   AlignHorizontalJustifyEnd,
   Columns3,
   Rows3,
+  Table,
+  TableProperties,
+  BarChart3,
+  LineChart,
+  PieChart,
+  TrendingUp,
+  X,
+  Sparkles,
 } from "lucide-react"
+import { AIAssistant } from "./AIAssistant"
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+} from 'chart.js'
+import { Bar, Line, Pie, Doughnut } from 'react-chartjs-2'
+
+// Register Chart.js components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+)
 
 interface SlideElement {
   id: string
-  type: "title" | "text" | "shape" | "chart" | "timeline" | "image"
+  type: "title" | "text" | "shape" | "chart" | "timeline" | "image" | "table"
   content: string
   position: { x: number; y: number }
   size: { width: number; height: number }
@@ -83,6 +120,112 @@ interface SlideElement {
   rotation?: number // Add rotation support
   lineOrientation?: "horizontal" | "vertical" | "diagonal-up" | "diagonal-down" // For line shapes
   zIndex: number
+  // Table-specific properties
+  rows?: number
+  columns?: number
+  cells?: string[][]
+  cellStyles?: {
+    backgroundColor?: string
+    color?: string
+    fontWeight?: string
+    fontStyle?: string
+    textDecoration?: string
+    fontSize?: number
+    fontFamily?: string
+    textAlign?: "left" | "center" | "right"
+    verticalAlign?: "top" | "middle" | "bottom"
+  }[][]
+  columnWidths?: number[]
+  rowHeights?: number[]
+  headerRow?: boolean
+  borderStyle?: {
+    color: string
+    width: number
+    style: "solid" | "dashed" | "dotted" | "none"
+  }
+  cellBorders?: {
+    top?: { color: string; width: number; style: "solid" | "dashed" | "dotted" | "none" }
+    right?: { color: string; width: number; style: "solid" | "dashed" | "dotted" | "none" }
+    bottom?: { color: string; width: number; style: "solid" | "dashed" | "dotted" | "none" }
+    left?: { color: string; width: number; style: "solid" | "dashed" | "dotted" | "none" }
+  }[][]
+  // Chart-specific properties
+  chartType?: "bar" | "line" | "pie" | "doughnut" | "column" | "waterfall" | "funnel"
+  chartData?: {
+    labels: string[]
+    datasets: {
+      label: string
+      data: number[]
+      backgroundColor?: string | string[]
+      borderColor?: string | string[]
+      borderWidth?: number
+      fill?: boolean
+      stack?: string // For stacking
+      // Waterfall-specific properties
+      waterfall?: {
+        categories?: ('increase' | 'decrease' | 'total' | 'subtotal')[]
+        cumulative?: number[]
+        deltas?: number[]
+        connectorColor?: string
+        totalColor?: string
+        increaseColor?: string
+        decreaseColor?: string
+      }
+    }[]
+  }
+  // Advanced chart settings
+  chartSettings?: {
+    stacked?: boolean
+    stackedType?: 'normal' | '100%'
+    showTotals?: boolean
+    showCAGR?: boolean
+    cagrStartIndex?: number
+    cagrEndIndex?: number
+  }
+  chartOptions?: {
+    responsive?: boolean
+    maintainAspectRatio?: boolean
+    plugins?: {
+      legend?: {
+        display?: boolean
+        position?: "top" | "bottom" | "left" | "right"
+      }
+      title?: {
+        display?: boolean
+        text?: string
+      }
+      datalabels?: {
+        display?: boolean
+        anchor?: 'center' | 'start' | 'end'
+        align?: 'center' | 'start' | 'end' | 'right' | 'left' | 'top' | 'bottom'
+        formatter?: any
+        font?: {
+          size?: number
+          weight?: string
+        }
+      }
+    }
+    scales?: {
+      x?: any
+      y?: any
+    }
+  }
+  // Smart label configuration
+  smartLabels?: {
+    enabled: boolean
+    format: 'number' | 'currency' | 'percentage'
+    decimals: number
+    prefix?: string
+    suffix?: string
+    template: string // e.g., "{value} ({percentage}%)"
+    showValue: boolean
+    showPercentage: boolean
+    showDelta: boolean
+    position: 'auto' | 'inside' | 'outside' | 'center' | 'end'
+    connectorLines: boolean
+    fontSize?: number
+    fontWeight?: string
+  }
 }
 
 interface SlideViewProps {
@@ -147,9 +290,22 @@ export function SlideView({
   const [isSelecting, setIsSelecting] = useState(false)
   const [selectionBox, setSelectionBox] = useState<{ start: { x: number; y: number }; end: { x: number; y: number } } | null>(null)
   const [lastSelectedElement, setLastSelectedElement] = useState<string | null>(null)
+  const [editingCell, setEditingCell] = useState<{ elementId: string; row: number; col: number } | null>(null)
+  const [selectedCells, setSelectedCells] = useState<Set<string>>(new Set())
+  const [tableSelectionStart, setTableSelectionStart] = useState<{ elementId: string; row: number; col: number } | null>(null)
+  const [tableSelectionEnd, setTableSelectionEnd] = useState<{ elementId: string; row: number; col: number } | null>(null)
+  const [isTableSelecting, setIsTableSelecting] = useState(false)
+  const [resizingColumn, setResizingColumn] = useState<{ elementId: string; colIndex: number } | null>(null)
+  const [resizingRow, setResizingRow] = useState<{ elementId: string; rowIndex: number } | null>(null)
+  const [resizeStartPos, setResizeStartPos] = useState<{ x: number; y: number } | null>(null)
+  const [editingCellValue, setEditingCellValue] = useState<string>("")
+  const [editingChart, setEditingChart] = useState<string | null>(null)
+  const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false)
   const slideRef = useRef<HTMLDivElement>(null)
   const textAreaRef = useRef<HTMLTextAreaElement>(null)
+  const tableCellRef = useRef<HTMLTextAreaElement>(null)
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 450 })
+  const chartEditorRef = useRef<HTMLDivElement>(null)
 
   const [elements, setElements] = useState<SlideElement[]>([])
 
@@ -203,8 +359,1164 @@ export function SlideView({
     
     setElements([titleElement, contentElement])
   }, [slide.title, slide.content, canvasSize])
+  
+  // Handle click outside for chart editor
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (chartEditorRef.current && !chartEditorRef.current.contains(event.target as Node)) {
+        // Check if clicking on a chart element
+        const clickedElement = (event.target as HTMLElement).closest('[data-chart-element]')
+        if (!clickedElement) {
+          setEditingChart(null)
+        }
+      }
+    }
+    
+    if (editingChart) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside)
+      }
+    }
+  }, [editingChart])
 
   const selectedElementData = elements.find((el) => el.id === selectedElement)
+  
+  // Helper function to render chart editor content
+  const renderChartEditorContent = (chartElement: SlideElement) => {
+    if (!chartElement || !chartElement.chartData) return null
+    
+    return (
+      <>
+        {/* Chart Title */}
+        <div>
+          <p className="text-xs font-medium mb-2">Chart Title</p>
+          <input
+            type="text"
+            value={chartElement.chartData?.datasets[0].label || ''}
+            onChange={(e) => {
+              const newData = JSON.parse(JSON.stringify(chartElement.chartData))
+              newData.datasets[0].label = e.target.value
+              updateElement(chartElement.id, { chartData: newData })
+            }}
+            className="w-full h-8 px-2 text-xs border rounded"
+            placeholder="Enter chart title"
+          />
+        </div>
+        
+        {/* Chart Type */}
+        <div>
+          <p className="text-xs font-medium mb-2">Chart Type</p>
+          <Select
+            value={chartElement.chartType}
+            onValueChange={(value) => {
+              const chartType = value as SlideElement['chartType']
+              let defaultData: SlideElement['chartData']
+              
+              switch (chartType) {
+                case 'pie':
+                case 'doughnut':
+                  defaultData = {
+                    labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+                    datasets: [{
+                      label: 'Quarterly Revenue',
+                      data: [30, 25, 20, 25],
+                      backgroundColor: [
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(34, 197, 94, 0.8)', 
+                        'rgba(251, 146, 60, 0.8)',
+                        'rgba(168, 85, 247, 0.8)'
+                      ],
+                      borderWidth: 2,
+                      borderColor: '#fff'
+                    }]
+                  }
+                  break
+                case 'line':
+                  defaultData = {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                      label: 'Monthly Growth',
+                      data: [12, 19, 15, 25, 22, 30],
+                      borderColor: 'rgba(59, 130, 246, 1)',
+                      backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                      borderWidth: 2,
+                      fill: true
+                    }]
+                  }
+                  break
+                case 'waterfall':
+                  defaultData = getDefaultChartData('waterfall')
+                  break
+                default: // bar, column
+                  defaultData = {
+                    labels: ['Product A', 'Product B', 'Product C', 'Product D'],
+                    datasets: [{
+                      label: 'Sales by Product',
+                      data: [65, 45, 80, 55],
+                      backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                      borderColor: 'rgba(59, 130, 246, 1)',
+                      borderWidth: 1
+                    }]
+                  }
+              }
+              
+              updateElement(chartElement.id, { 
+                chartType: chartType,
+                chartData: defaultData
+              })
+            }}
+          >
+            <SelectTrigger className="w-full h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="bar">Bar Chart</SelectItem>
+              <SelectItem value="column">Column Chart</SelectItem>
+              <SelectItem value="line">Line Chart</SelectItem>
+              <SelectItem value="pie">Pie Chart</SelectItem>
+              <SelectItem value="doughnut">Doughnut Chart</SelectItem>
+              <SelectItem value="waterfall">Waterfall Chart</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        {/* Color Customization - moved up for better visibility */}
+        <div>
+          <p className="text-xs font-medium mb-2">Chart Colors</p>
+          <div className="space-y-2">
+            {chartElement.chartType === 'waterfall' ? (
+              // For waterfall charts, show increase/decrease/total colors
+              <div className="space-y-2">
+                {[
+                  { label: 'Increase', key: 'increaseColor', default: 'rgba(34, 197, 94, 0.8)' },
+                  { label: 'Decrease', key: 'decreaseColor', default: 'rgba(239, 68, 68, 0.8)' },
+                  { label: 'Total', key: 'totalColor', default: 'rgba(107, 114, 128, 0.8)' },
+                ].map(({ label, key, default: defaultColor }) => {
+                  const waterfall = chartElement.chartData?.datasets[0].waterfall
+                  const currentColor = waterfall?.[key as keyof typeof waterfall] || defaultColor
+                  
+                  return (
+                    <div key={key} className="flex items-center justify-between">
+                      <span className="text-xs text-gray-600">{label}</span>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 w-20 p-1"
+                          >
+                            <div
+                              className="w-full h-full rounded"
+                              style={{ backgroundColor: currentColor as string }}
+                            />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-48 p-2">
+                          <div className="grid grid-cols-6 gap-1">
+                            {[
+                              'rgba(34, 197, 94, 0.8)', // Green
+                              'rgba(239, 68, 68, 0.8)', // Red
+                              'rgba(107, 114, 128, 0.8)', // Gray
+                              'rgba(59, 130, 246, 0.8)', // Blue
+                              'rgba(251, 146, 60, 0.8)', // Orange
+                              'rgba(168, 85, 247, 0.8)', // Purple
+                              'rgba(245, 158, 11, 0.8)', // Amber
+                              'rgba(16, 185, 129, 0.8)', // Emerald
+                              'rgba(139, 92, 246, 0.8)', // Violet
+                              'rgba(236, 72, 153, 0.8)', // Pink
+                              'rgba(99, 102, 241, 0.8)', // Indigo
+                              'rgba(20, 184, 166, 0.8)', // Teal
+                            ].map((color) => (
+                              <button
+                                key={color}
+                                className="w-6 h-6 rounded border border-gray-300 hover:scale-110 transition-transform"
+                                style={{ backgroundColor: color }}
+                                onClick={() => {
+                                  const newData = JSON.parse(JSON.stringify(chartElement.chartData))
+                                  if (!newData.datasets[0].waterfall) {
+                                    newData.datasets[0].waterfall = {
+                                      categories: [],
+                                      connectorColor: 'rgba(0, 0, 0, 0.3)',
+                                      totalColor: 'rgba(107, 114, 128, 0.8)',
+                                      increaseColor: 'rgba(34, 197, 94, 0.8)',
+                                      decreaseColor: 'rgba(239, 68, 68, 0.8)',
+                                    }
+                                  }
+                                  newData.datasets[0].waterfall[key] = color
+                                  updateElement(chartElement.id, { chartData: newData })
+                                  addToUndoStack()
+                                }}
+                              />
+                            ))}
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (chartElement.chartType === 'pie' || chartElement.chartType === 'doughnut') ? (
+              // For pie/doughnut charts, show color for each data point
+              chartElement.chartData?.labels.map((label, index) => {
+                const currentColor = Array.isArray(chartElement.chartData?.datasets[0].backgroundColor) 
+                  ? chartElement.chartData.datasets[0].backgroundColor[index] 
+                  : 'rgba(59, 130, 246, 0.8)'
+                
+                return (
+                  <div key={index} className="flex items-center justify-between">
+                    <span className="text-xs text-gray-600 truncate max-w-[120px]">{label}</span>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 w-16 p-1"
+                        >
+                          <div
+                            className="w-full h-full rounded"
+                            style={{ backgroundColor: currentColor }}
+                          />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-48 p-2">
+                        <div className="grid grid-cols-6 gap-1">
+                          {[
+                            'rgba(59, 130, 246, 0.8)', // Blue
+                            'rgba(34, 197, 94, 0.8)', // Green
+                            'rgba(251, 146, 60, 0.8)', // Orange
+                            'rgba(168, 85, 247, 0.8)', // Purple
+                            'rgba(239, 68, 68, 0.8)', // Red
+                            'rgba(245, 158, 11, 0.8)', // Amber
+                            'rgba(16, 185, 129, 0.8)', // Emerald
+                            'rgba(139, 92, 246, 0.8)', // Violet
+                            'rgba(236, 72, 153, 0.8)', // Pink
+                            'rgba(99, 102, 241, 0.8)', // Indigo
+                            'rgba(14, 165, 233, 0.8)', // Sky
+                            'rgba(20, 184, 166, 0.8)', // Teal
+                          ].map((color) => (
+                            <button
+                              key={color}
+                              className="w-6 h-6 rounded border border-gray-300 hover:scale-110 transition-transform"
+                              style={{ backgroundColor: color }}
+                              onClick={() => {
+                                const newData = JSON.parse(JSON.stringify(chartElement.chartData))
+                                if (!Array.isArray(newData.datasets[0].backgroundColor)) {
+                                  newData.datasets[0].backgroundColor = Array(newData.labels.length).fill('rgba(59, 130, 246, 0.8)')
+                                }
+                                newData.datasets[0].backgroundColor[index] = color
+                                updateElement(chartElement.id, { chartData: newData })
+                                addToUndoStack()
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                )
+              })
+            ) : (
+              // For bar/line/column charts, show single color selector
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-600">Primary Color</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 w-20 p-1"
+                    >
+                      <div
+                        className="w-full h-full rounded"
+                        style={{ 
+                          backgroundColor: chartElement.chartType === 'line' 
+                            ? chartElement.chartData?.datasets[0].borderColor || 'rgba(59, 130, 246, 1)'
+                            : chartElement.chartData?.datasets[0].backgroundColor || 'rgba(59, 130, 246, 0.8)'
+                        }}
+                      />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-48 p-2">
+                    <div className="grid grid-cols-6 gap-1">
+                      {[
+                        { bg: 'rgba(59, 130, 246, 0.8)', border: 'rgba(59, 130, 246, 1)' }, // Blue
+                        { bg: 'rgba(34, 197, 94, 0.8)', border: 'rgba(34, 197, 94, 1)' }, // Green
+                        { bg: 'rgba(251, 146, 60, 0.8)', border: 'rgba(251, 146, 60, 1)' }, // Orange
+                        { bg: 'rgba(168, 85, 247, 0.8)', border: 'rgba(168, 85, 247, 1)' }, // Purple
+                        { bg: 'rgba(239, 68, 68, 0.8)', border: 'rgba(239, 68, 68, 1)' }, // Red
+                        { bg: 'rgba(245, 158, 11, 0.8)', border: 'rgba(245, 158, 11, 1)' }, // Amber
+                        { bg: 'rgba(16, 185, 129, 0.8)', border: 'rgba(16, 185, 129, 1)' }, // Emerald
+                        { bg: 'rgba(139, 92, 246, 0.8)', border: 'rgba(139, 92, 246, 1)' }, // Violet
+                        { bg: 'rgba(236, 72, 153, 0.8)', border: 'rgba(236, 72, 153, 1)' }, // Pink
+                        { bg: 'rgba(99, 102, 241, 0.8)', border: 'rgba(99, 102, 241, 1)' }, // Indigo
+                        { bg: 'rgba(14, 165, 233, 0.8)', border: 'rgba(14, 165, 233, 1)' }, // Sky
+                        { bg: 'rgba(20, 184, 166, 0.8)', border: 'rgba(20, 184, 166, 1)' }, // Teal
+                      ].map((colorSet) => (
+                        <button
+                          key={colorSet.bg}
+                          className="w-6 h-6 rounded border border-gray-300 hover:scale-110 transition-transform"
+                          style={{ backgroundColor: colorSet.bg }}
+                          onClick={() => {
+                            const newData = JSON.parse(JSON.stringify(chartElement.chartData))
+                            if (chartElement.chartType === 'line') {
+                              newData.datasets[0].borderColor = colorSet.border
+                              newData.datasets[0].backgroundColor = colorSet.bg.replace('0.8', '0.1')
+                            } else {
+                              newData.datasets[0].backgroundColor = colorSet.bg
+                              newData.datasets[0].borderColor = colorSet.border
+                            }
+                            updateElement(chartElement.id, { chartData: newData })
+                            addToUndoStack()
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {/* Waterfall-specific controls */}
+        {chartElement.chartType === 'waterfall' && (
+          <div>
+            <p className="text-xs font-medium mb-2">Category Types</p>
+            <div className="space-y-2 max-h-36 overflow-y-auto">
+              {chartElement.chartData?.labels.map((label, index) => {
+                const waterfall = chartElement.chartData?.datasets[0].waterfall
+                const category = waterfall?.categories?.[index] || 'increase'
+                
+                return (
+                  <div key={index} className="flex items-center justify-between">
+                    <span className="text-xs text-gray-600 truncate max-w-[100px]">{label}</span>
+                    <Select
+                      value={category}
+                      onValueChange={(value) => {
+                        const newData = JSON.parse(JSON.stringify(chartElement.chartData))
+                        if (!newData.datasets[0].waterfall) {
+                          newData.datasets[0].waterfall = {
+                            categories: [],
+                            connectorColor: 'rgba(0, 0, 0, 0.3)',
+                            totalColor: 'rgba(107, 114, 128, 0.8)',
+                            increaseColor: 'rgba(34, 197, 94, 0.8)',
+                            decreaseColor: 'rgba(239, 68, 68, 0.8)',
+                          }
+                        }
+                        if (!newData.datasets[0].waterfall.categories) {
+                          newData.datasets[0].waterfall.categories = Array(newData.labels.length).fill('increase')
+                        }
+                        newData.datasets[0].waterfall.categories[index] = value
+                        updateElement(chartElement.id, { chartData: newData })
+                      }}
+                    >
+                      <SelectTrigger className="w-24 h-6 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="increase">Increase</SelectItem>
+                        <SelectItem value="decrease">Decrease</SelectItem>
+                        <SelectItem value="total">Total</SelectItem>
+                        <SelectItem value="subtotal">Subtotal</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+        
+        {/* Chart Data Editor */}
+        <div>
+          <p className="text-xs font-medium mb-2">Data Points</p>
+          <div className="space-y-2 max-h-48 overflow-y-auto">
+            {chartElement.chartData?.labels.map((label, index) => (
+              <div key={index} className="flex items-center space-x-2">
+                <input
+                  type="text"
+                  value={label}
+                  onChange={(e) => {
+                    const newData = JSON.parse(JSON.stringify(chartElement.chartData))
+                    newData.labels[index] = e.target.value
+                    updateElement(chartElement.id, { chartData: newData })
+                  }}
+                  className="flex-1 h-7 px-2 text-xs border rounded"
+                  placeholder="Label"
+                />
+                <input
+                  type="number"
+                  value={chartElement.chartData?.datasets[0].data[index] || 0}
+                  onChange={(e) => {
+                    const newData = JSON.parse(JSON.stringify(chartElement.chartData))
+                    newData.datasets[0].data[index] = parseFloat(e.target.value) || 0
+                    updateElement(chartElement.id, { chartData: newData })
+                  }}
+                  className="w-20 h-7 px-2 text-xs border rounded"
+                  placeholder="Value"
+                />
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => {
+                    const newData = JSON.parse(JSON.stringify(chartElement.chartData))
+                    newData.labels.splice(index, 1)
+                    newData.datasets[0].data.splice(index, 1)
+                    if (chartElement.chartType === 'pie' || chartElement.chartType === 'doughnut') {
+                      if (Array.isArray(newData.datasets[0].backgroundColor)) {
+                        newData.datasets[0].backgroundColor.splice(index, 1)
+                      }
+                    }
+                    if (chartElement.chartType === 'waterfall' && newData.datasets[0].waterfall?.categories) {
+                      newData.datasets[0].waterfall.categories.splice(index, 1)
+                    }
+                    updateElement(chartElement.id, { chartData: newData })
+                  }}
+                  className="h-6 w-6"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </Button>
+              </div>
+            ))}
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              const newData = JSON.parse(JSON.stringify(chartElement.chartData))
+              newData.labels.push(`Item ${newData.labels.length + 1}`)
+              newData.datasets[0].data.push(50)
+              if (chartElement.chartType === 'pie' || chartElement.chartType === 'doughnut') {
+                if (Array.isArray(newData.datasets[0].backgroundColor)) {
+                  const colors = [
+                    'rgba(239, 68, 68, 0.8)',
+                    'rgba(245, 158, 11, 0.8)',
+                    'rgba(16, 185, 129, 0.8)',
+                    'rgba(139, 92, 246, 0.8)',
+                    'rgba(236, 72, 153, 0.8)',
+                  ]
+                  newData.datasets[0].backgroundColor.push(colors[newData.labels.length % colors.length])
+                }
+              }
+              if (chartElement.chartType === 'waterfall') {
+                if (newData.datasets[0].waterfall?.categories) {
+                  // Default new items to 'increase' category
+                  newData.datasets[0].waterfall.categories.push('increase')
+                }
+              }
+              updateElement(chartElement.id, { chartData: newData })
+            }}
+            className="w-full mt-2 h-7 text-xs"
+          >
+            <Plus className="w-3 h-3 mr-1" />
+            Add Data Point
+          </Button>
+        </div>
+        
+        {/* Smart Labels Configuration */}
+        <div className="space-y-3 border-t pt-3">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-medium">Smart Labels</p>
+            <Button
+              size="sm"
+              variant={chartElement.smartLabels?.enabled ? "secondary" : "ghost"}
+              onClick={() => {
+                const currentLabels = chartElement.smartLabels || {
+                  enabled: true,
+                  format: 'number',
+                  decimals: 0,
+                  template: '{value}',
+                  showValue: true,
+                  showPercentage: false,
+                  position: 'auto',
+                  fontSize: 11
+                }
+                updateElement(chartElement.id, { 
+                  smartLabels: { ...currentLabels, enabled: !currentLabels.enabled }
+                })
+              }}
+              className="h-6 px-2 text-xs"
+            >
+              {chartElement.smartLabels?.enabled ? 'On' : 'Off'}
+            </Button>
+          </div>
+          
+          {chartElement.smartLabels?.enabled && (
+            <>
+              {/* Label Format */}
+              <div className="space-y-1">
+                <p className="text-xs text-gray-600">Format</p>
+                <Select
+                  value={chartElement.smartLabels?.format || 'number'}
+                  onValueChange={(value) => {
+                    updateElement(chartElement.id, {
+                      smartLabels: { ...chartElement.smartLabels!, format: value as any }
+                    })
+                  }}
+                >
+                  <SelectTrigger className="h-7 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="number">Number</SelectItem>
+                    <SelectItem value="currency">Currency ($)</SelectItem>
+                    <SelectItem value="percentage">Percentage</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {/* Decimals */}
+              <div className="space-y-1">
+                <p className="text-xs text-gray-600">Decimal Places</p>
+                <input
+                  type="number"
+                  min="0"
+                  max="4"
+                  value={chartElement.smartLabels?.decimals || 0}
+                  onChange={(e) => {
+                    updateElement(chartElement.id, {
+                      smartLabels: { ...chartElement.smartLabels!, decimals: parseInt(e.target.value) || 0 }
+                    })
+                  }}
+                  className="w-full h-7 px-2 text-xs border rounded"
+                />
+              </div>
+              
+              {/* Template */}
+              <div className="space-y-1">
+                <p className="text-xs text-gray-600">Template</p>
+                <Select
+                  value={chartElement.smartLabels?.template || '{value}'}
+                  onValueChange={(value) => {
+                    updateElement(chartElement.id, {
+                      smartLabels: { ...chartElement.smartLabels!, template: value }
+                    })
+                  }}
+                >
+                  <SelectTrigger className="h-7 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="{value}">Value Only</SelectItem>
+                    <SelectItem value="{value} ({percentage}%)">Value (Percentage)</SelectItem>
+                    <SelectItem value="{percentage}%">Percentage Only</SelectItem>
+                    <SelectItem value="${value}">With Dollar Sign</SelectItem>
+                    <SelectItem value="{value}k">Thousands (k)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {/* Show Options */}
+              <div className="space-y-2">
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={chartElement.smartLabels?.showPercentage || false}
+                    onChange={(e) => {
+                      updateElement(chartElement.id, {
+                        smartLabels: { ...chartElement.smartLabels!, showPercentage: e.target.checked }
+                      })
+                    }}
+                    className="h-3 w-3"
+                  />
+                  <span className="text-xs">Show Percentage</span>
+                </label>
+                {chartElement.chartType === 'waterfall' && (
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={chartElement.smartLabels?.showDelta || false}
+                      onChange={(e) => {
+                        updateElement(chartElement.id, {
+                          smartLabels: { ...chartElement.smartLabels!, showDelta: e.target.checked }
+                        })
+                      }}
+                      className="h-3 w-3"
+                    />
+                    <span className="text-xs">Show +/- Signs</span>
+                  </label>
+                )}
+              </div>
+
+              {/* Position Control */}
+              <div>
+                <p className="text-xs font-medium mb-2">Label Position</p>
+                <Select
+                  value={chartElement.smartLabels?.position || 'auto'}
+                  onValueChange={(value) => {
+                    updateElement(chartElement.id, {
+                      smartLabels: {
+                        ...chartElement.smartLabels,
+                        position: value as 'auto' | 'inside' | 'outside' | 'center' | 'end'
+                      }
+                    })
+                  }}
+                >
+                  <SelectTrigger className="h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="auto">Auto</SelectItem>
+                    <SelectItem value="center">Center</SelectItem>
+                    <SelectItem value="inside">Inside</SelectItem>
+                    <SelectItem value="outside">Outside</SelectItem>
+                    <SelectItem value="end">End</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Font Size Control */}
+              <div>
+                <p className="text-xs font-medium mb-2">Font Size</p>
+                <input
+                  type="range"
+                  min="8"
+                  max="24"
+                  value={chartElement.smartLabels?.fontSize || 12}
+                  onChange={(e) => {
+                    updateElement(chartElement.id, {
+                      smartLabels: {
+                        ...chartElement.smartLabels,
+                        fontSize: parseInt(e.target.value)
+                      }
+                    })
+                  }}
+                  className="w-full"
+                />
+                <span className="text-xs text-gray-500">{chartElement.smartLabels?.fontSize || 12}px</span>
+              </div>
+
+              {/* Font Weight Control */}
+              <div>
+                <p className="text-xs font-medium mb-2">Font Weight</p>
+                <Select
+                  value={chartElement.smartLabels?.fontWeight || 'normal'}
+                  onValueChange={(value) => {
+                    updateElement(chartElement.id, {
+                      smartLabels: {
+                        ...chartElement.smartLabels,
+                        fontWeight: value
+                      }
+                    })
+                  }}
+                >
+                  <SelectTrigger className="h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="normal">Normal</SelectItem>
+                    <SelectItem value="bold">Bold</SelectItem>
+                    <SelectItem value="600">Semi Bold</SelectItem>
+                    <SelectItem value="300">Light</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Prefix/Suffix Controls */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <p className="text-xs font-medium mb-1">Prefix</p>
+                  <input
+                    type="text"
+                    value={chartElement.smartLabels?.prefix || ''}
+                    onChange={(e) => {
+                      updateElement(chartElement.id, {
+                        smartLabels: {
+                          ...chartElement.smartLabels,
+                          prefix: e.target.value
+                        }
+                      })
+                    }}
+                    placeholder="e.g., $"
+                    className="w-full px-2 py-1 text-xs border rounded"
+                  />
+                </div>
+                <div>
+                  <p className="text-xs font-medium mb-1">Suffix</p>
+                  <input
+                    type="text"
+                    value={chartElement.smartLabels?.suffix || ''}
+                    onChange={(e) => {
+                      updateElement(chartElement.id, {
+                        smartLabels: {
+                          ...chartElement.smartLabels,
+                          suffix: e.target.value
+                        }
+                      })
+                    }}
+                    placeholder="e.g., %"
+                    className="w-full px-2 py-1 text-xs border rounded"
+                  />
+                </div>
+              </div>
+
+              {/* Connector Lines Toggle */}
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={chartElement.smartLabels?.connectorLines || false}
+                  onChange={(e) => {
+                    updateElement(chartElement.id, {
+                      smartLabels: {
+                        ...chartElement.smartLabels,
+                        connectorLines: e.target.checked
+                      }
+                    })
+                  }}
+                  className="h-3 w-3"
+                />
+                <span className="text-xs">Show Connector Lines</span>
+              </label>
+            </>
+          )}
+        </div>
+        
+        {/* Legend Toggle */}
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-medium">Show Legend</p>
+          <Button
+            size="sm"
+            variant={chartElement.chartOptions?.plugins?.legend?.display ? "secondary" : "ghost"}
+            onClick={() => {
+              const newOptions = { ...chartElement.chartOptions }
+              if (!newOptions.plugins) newOptions.plugins = {}
+              if (!newOptions.plugins.legend) newOptions.plugins.legend = {}
+              newOptions.plugins.legend.display = !newOptions.plugins.legend.display
+              updateElement(chartElement.id, { chartOptions: newOptions })
+            }}
+            className="h-7 px-3 text-xs"
+          >
+            {chartElement.chartOptions?.plugins?.legend?.display ? 'On' : 'Off'}
+          </Button>
+        </div>
+
+        {/* Stacked Chart Settings - Only for Bar and Column charts */}
+        {(chartElement.chartType === 'bar' || chartElement.chartType === 'column') && (
+          <div className="space-y-3 pt-3 border-t">
+            <p className="text-xs font-semibold text-gray-700">Stacking Options</p>
+            
+            {/* Enable Stacking */}
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-medium">Enable Stacking</p>
+              <Button
+                size="sm"
+                variant={chartElement.chartSettings?.stacked ? "secondary" : "ghost"}
+                onClick={() => {
+                  updateElement(chartElement.id, {
+                    chartSettings: {
+                      ...chartElement.chartSettings,
+                      stacked: !chartElement.chartSettings?.stacked
+                    }
+                  })
+                }}
+                className="h-7 px-3 text-xs"
+              >
+                {chartElement.chartSettings?.stacked ? 'On' : 'Off'}
+              </Button>
+            </div>
+
+            {/* Stack Type - Only show if stacking is enabled */}
+            {chartElement.chartSettings?.stacked && (
+              <>
+                <div>
+                  <p className="text-xs font-medium mb-2">Stack Type</p>
+                  <Select
+                    value={chartElement.chartSettings?.stackedType || 'normal'}
+                    onValueChange={(value) => {
+                      updateElement(chartElement.id, {
+                        chartSettings: {
+                          ...chartElement.chartSettings,
+                          stackedType: value as 'normal' | '100%'
+                        }
+                      })
+                    }}
+                  >
+                    <SelectTrigger className="h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="normal">Normal</SelectItem>
+                      <SelectItem value="100%">100% Stacked</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Show Totals */}
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={chartElement.chartSettings?.showTotals || false}
+                    onChange={(e) => {
+                      updateElement(chartElement.id, {
+                        chartSettings: {
+                          ...chartElement.chartSettings,
+                          showTotals: e.target.checked
+                        }
+                      })
+                    }}
+                    className="h-3 w-3"
+                  />
+                  <span className="text-xs">Show Totals on Top</span>
+                </label>
+              </>
+            )}
+
+            {/* CAGR (Compound Annual Growth Rate) */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={chartElement.chartSettings?.showCAGR || false}
+                  onChange={(e) => {
+                    updateElement(chartElement.id, {
+                      chartSettings: {
+                        ...chartElement.chartSettings,
+                        showCAGR: e.target.checked
+                      }
+                    })
+                  }}
+                  className="h-3 w-3"
+                />
+                <span className="text-xs">Show CAGR Line</span>
+              </label>
+
+              {/* CAGR Period Selection - Only show if CAGR is enabled */}
+              {chartElement.chartSettings?.showCAGR && chartElement.chartData && (
+                <div className="grid grid-cols-2 gap-2 ml-5">
+                  <div>
+                    <p className="text-xs font-medium mb-1">Start Period</p>
+                    <Select
+                      value={chartElement.chartSettings?.cagrStartIndex?.toString() || '0'}
+                      onValueChange={(value) => {
+                        updateElement(chartElement.id, {
+                          chartSettings: {
+                            ...chartElement.chartSettings,
+                            cagrStartIndex: parseInt(value)
+                          }
+                        })
+                      }}
+                    >
+                      <SelectTrigger className="h-7">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {chartElement.chartData.labels?.map((label, idx) => (
+                          <SelectItem key={idx} value={idx.toString()}>
+                            {label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium mb-1">End Period</p>
+                    <Select
+                      value={chartElement.chartSettings?.cagrEndIndex?.toString() || 
+                             ((chartElement.chartData.labels?.length || 1) - 1).toString()}
+                      onValueChange={(value) => {
+                        updateElement(chartElement.id, {
+                          chartSettings: {
+                            ...chartElement.chartSettings,
+                            cagrEndIndex: parseInt(value)
+                          }
+                        })
+                      }}
+                    >
+                      <SelectTrigger className="h-7">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {chartElement.chartData.labels?.map((label, idx) => (
+                          <SelectItem key={idx} value={idx.toString()}>
+                            {label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </>
+    )
+  }
+
+  // Helper function to sanitize cell content
+  const sanitizeCellContent = (content: any): string => {
+    if (content === null || content === undefined) return ''
+    if (typeof content === 'string') return content
+    if (typeof content === 'number') return content.toString()
+    if (typeof content === 'boolean') return content ? 'true' : 'false'
+    return String(content)
+  }
+
+  // Helper function to process waterfall chart data
+  const processWaterfallData = (data: number[], categories?: ('increase' | 'decrease' | 'total' | 'subtotal')[]) => {
+    const cumulative: number[] = []
+    const invisible: number[] = []
+    const visible: number[] = []
+    
+    let runningTotal = 0
+    
+    data.forEach((value, index) => {
+      const category = categories?.[index] || (value >= 0 ? 'increase' : 'decrease')
+      
+      if (category === 'total' || category === 'subtotal') {
+        // For totals, show the bar from 0 to the running total
+        invisible[index] = 0
+        visible[index] = runningTotal
+        cumulative[index] = runningTotal
+      } else {
+        // For increases/decreases, show the bar from the previous total
+        invisible[index] = runningTotal
+        visible[index] = value
+        runningTotal += value
+        cumulative[index] = runningTotal
+      }
+    })
+    
+    return { invisible, visible, cumulative }
+  }
+
+  // Smart label formatting function
+  const formatChartLabel = (value: number, options?: {
+    format?: 'number' | 'currency' | 'percentage'
+    decimals?: number
+    prefix?: string
+    suffix?: string
+    template?: string
+    showPercentage?: boolean
+    total?: number
+  }) => {
+    const {
+      format = 'number',
+      decimals = 0,
+      prefix = '',
+      suffix = '',
+      template = '{value}',
+      showPercentage = false,
+      total = 0
+    } = options || {}
+    
+    let formattedValue = ''
+    
+    switch (format) {
+      case 'currency':
+        formattedValue = `$${value.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`
+        break
+      case 'percentage':
+        formattedValue = `${(value * 100).toFixed(decimals)}%`
+        break
+      default:
+        formattedValue = value.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
+    }
+    
+    let result = template.replace('{value}', prefix + formattedValue + suffix)
+    
+    if (showPercentage && total > 0) {
+      const percentage = ((value / total) * 100).toFixed(1)
+      result = result.replace('{percentage}', percentage)
+    }
+    
+    return result
+  }
+
+  // Calculate label positions to avoid overlaps
+  const calculateLabelPositions = (labels: { x: number, y: number, width: number, height: number }[]) => {
+    const positioned = [...labels]
+    const padding = 5
+    
+    // Sort by y position
+    positioned.sort((a, b) => a.y - b.y)
+    
+    // Adjust positions to avoid overlaps
+    for (let i = 1; i < positioned.length; i++) {
+      const prev = positioned[i - 1]
+      const curr = positioned[i]
+      
+      // Check for vertical overlap
+      if (curr.y < prev.y + prev.height + padding) {
+        // Move current label down
+        curr.y = prev.y + prev.height + padding
+      }
+    }
+    
+    return positioned
+  }
+
+  // Calculate CAGR (Compound Annual Growth Rate)
+  const calculateCAGR = (startValue: number, endValue: number, periods: number) => {
+    if (startValue <= 0 || endValue <= 0 || periods <= 0) return 0
+    return (Math.pow(endValue / startValue, 1 / periods) - 1) * 100
+  }
+
+  // Transform data for 100% stacked charts
+  const transformTo100Stacked = (datasets: any[]) => {
+    if (!datasets || datasets.length === 0) return datasets
+    
+    const numPoints = datasets[0].data.length
+    const totals = new Array(numPoints).fill(0)
+    
+    // Calculate totals for each stack
+    datasets.forEach(dataset => {
+      dataset.data.forEach((value: number, index: number) => {
+        totals[index] += value
+      })
+    })
+    
+    // Convert to percentages
+    const transformedDatasets = datasets.map(dataset => ({
+      ...dataset,
+      data: dataset.data.map((value: number, index: number) => 
+        totals[index] > 0 ? (value / totals[index]) * 100 : 0
+      ),
+      originalData: dataset.data // Store original values for tooltips
+    }))
+    
+    return transformedDatasets
+  }
+
+  // Calculate totals for stacked charts
+  const calculateStackTotals = (datasets: any[]) => {
+    if (!datasets || datasets.length === 0) return []
+    
+    const numPoints = datasets[0].data.length
+    const totals = new Array(numPoints).fill(0)
+    
+    datasets.forEach(dataset => {
+      dataset.data.forEach((value: number, index: number) => {
+        totals[index] += value
+      })
+    })
+    
+    return totals
+  }
+
+  // Helper function to calculate cells in selection range
+  const calculateSelectedCells = (elementId: string, start: { row: number; col: number }, end: { row: number; col: number }) => {
+    const minRow = Math.min(start.row, end.row)
+    const maxRow = Math.max(start.row, end.row)
+    const minCol = Math.min(start.col, end.col)
+    const maxCol = Math.max(start.col, end.col)
+    
+    const cells = new Set<string>()
+    for (let row = minRow; row <= maxRow; row++) {
+      for (let col = minCol; col <= maxCol; col++) {
+        cells.add(`${elementId}-${row}-${col}`)
+      }
+    }
+    return cells
+  }
+
+  // Helper function to update styles for selected table cells
+  const updateSelectedCellStyles = (styleUpdates: Partial<typeof elements[0]['style']>) => {
+    if (selectedCells.size === 0) return
+    
+    // Find the table element that contains the selected cells
+    const cellId = Array.from(selectedCells)[0]
+    const [elementId] = cellId.split('-')
+    const element = elements.find(el => el.id === elementId)
+    
+    if (!element || element.type !== 'table' || !element.cells) return
+    
+    // Initialize cellStyles if it doesn't exist
+    const cellStyles = element.cellStyles || Array(element.rows).fill(null).map(() => 
+      Array(element.columns).fill({})
+    )
+    
+    // Update styles for each selected cell
+    selectedCells.forEach(cellId => {
+      const [, rowStr, colStr] = cellId.split('-')
+      const row = parseInt(rowStr)
+      const col = parseInt(colStr)
+      
+      if (!isNaN(row) && !isNaN(col)) {
+        cellStyles[row][col] = {
+          ...cellStyles[row][col],
+          ...styleUpdates
+        }
+      }
+    })
+    
+    updateElement(element.id, { cellStyles })
+  }
+
+  // Helper function to format table cells with bullets or numbers
+  const formatTableCells = (action: 'bullet' | 'numberedList') => {
+    if (selectedCells.size === 0) return
+    
+    // Find the table element
+    const cellId = Array.from(selectedCells)[0]
+    const [elementId] = cellId.split('-')
+    const element = elements.find(el => el.id === elementId)
+    
+    if (!element || element.type !== 'table' || !element.cells) return
+    
+    const newCells = [...element.cells]
+    
+    // Process each selected cell
+    selectedCells.forEach(cellId => {
+      const [, rowStr, colStr] = cellId.split('-')
+      const row = parseInt(rowStr)
+      const col = parseInt(colStr)
+      
+      if (!isNaN(row) && !isNaN(col)) {
+        const content = newCells[row][col]
+        const lines = content.split('\n')
+        
+        if (action === 'bullet') {
+          // Toggle bullets
+          const hasBullets = lines.every(line => line.trim() === '' || line.trim().startsWith('•'))
+          
+          if (hasBullets) {
+            // Remove bullets
+            newCells[row][col] = lines.map(line => 
+              line.replace(/^(\s*)• /, '$1')
+            ).join('\n')
+          } else {
+            // Add bullets
+            newCells[row][col] = lines.map(line => {
+              if (line.trim() === '') return line
+              if (line.trim().startsWith('•')) return line
+              // Remove numbers if present
+              const cleanLine = line.replace(/^(\s*)\d+\. /, '$1')
+              return cleanLine.replace(/^(\s*)/, '$1• ')
+            }).join('\n')
+          }
+        } else if (action === 'numberedList') {
+          // Toggle numbered list
+          const hasNumbers = lines.every(line => line.trim() === '' || line.trim().match(/^\d+\./))
+          
+          if (hasNumbers) {
+            // Remove numbers
+            newCells[row][col] = lines.map(line => 
+              line.replace(/^(\s*)\d+\. /, '$1')
+            ).join('\n')
+          } else {
+            // Add numbers
+            let lineNumber = 1
+            newCells[row][col] = lines.map(line => {
+              if (line.trim() === '') return line
+              if (line.trim().match(/^\d+\./)) {
+                lineNumber++
+                return line
+              }
+              // Remove bullets if present
+              const cleanLine = line.replace(/^(\s*)• /, '$1')
+              const numberedLine = cleanLine.replace(/^(\s*)/, `$1${lineNumber}. `)
+              lineNumber++
+              return numberedLine
+            }).join('\n')
+          }
+        }
+      }
+    })
+    
+    updateElement(element.id, { cells: newCells })
+  }
 
   // Update canvas size based on viewport
   useEffect(() => {
@@ -269,8 +1581,19 @@ export function SlideView({
     }
   }
 
-  const deleteElement = () => {
-    if (multiSelectedElements.size > 0) {
+  const deleteElement = (elementId?: string) => {
+    if (elementId) {
+      // Delete specific element (used by AI assistant)
+      setElements((prev) => prev.filter((el) => el.id !== elementId))
+      if (selectedElement === elementId) {
+        onElementSelect(null)
+      }
+      if (multiSelectedElements.has(elementId)) {
+        const newSet = new Set(multiSelectedElements)
+        newSet.delete(elementId)
+        setMultiSelectedElements(newSet)
+      }
+    } else if (multiSelectedElements.size > 0) {
       // Delete all multi-selected elements
       setElements((prev) => prev.filter((el) => !multiSelectedElements.has(el.id)))
       setMultiSelectedElements(new Set())
@@ -288,7 +1611,9 @@ export function SlideView({
       const isEditing = e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement
       
       if ((e.metaKey || e.ctrlKey) && e.key === 'c') {
-        e.preventDefault()
+        if (!isEditing) {
+          e.preventDefault()
+        }
         if (isEditing && isEditingText) {
           // Copy text selection
           document.execCommand('copy')
@@ -300,7 +1625,9 @@ export function SlideView({
           }
         }
       } else if ((e.metaKey || e.ctrlKey) && e.key === 'v') {
-        e.preventDefault()
+        if (!isEditing) {
+          e.preventDefault()
+        }
         if (isEditing && isEditingText) {
           // Paste text
           document.execCommand('paste')
@@ -592,6 +1919,186 @@ export function SlideView({
     )
   }
 
+  // Handle AI Assistant actions
+  const handleAIAction = (action: any) => {
+    addToUndoStack()
+    
+    switch (action.type) {
+      case 'addElement':
+        const { elementType, position, size, properties } = action.payload
+        let newElement: SlideElement
+        
+        switch (elementType) {
+          case 'text':
+            newElement = {
+              id: `text-${Date.now()}`,
+              type: 'text',
+              content: properties.content || 'New text',
+              position: position || { x: canvasSize.width * 0.1, y: canvasSize.height * 0.5 },
+              size: size || { width: 300, height: 100 },
+              style: {
+                fontSize: properties.fontSize || 16,
+                fontWeight: properties.fontWeight || '400',
+                fontStyle: 'normal',
+                textDecoration: 'none',
+                color: properties.color || '#000000',
+                backgroundColor: 'transparent',
+                borderColor: 'transparent',
+                borderWidth: 0,
+                borderRadius: 0,
+                textAlign: properties.textAlign || 'left',
+                lineHeight: 1.5,
+                letterSpacing: 0,
+                opacity: 100,
+                fontFamily: 'Inter',
+              }
+            }
+            break
+            
+          case 'shape':
+            newElement = {
+              id: `shape-${Date.now()}`,
+              type: 'shape',
+              content: '',
+              position: position || { x: canvasSize.width * 0.1, y: canvasSize.height * 0.5 },
+              size: size || { width: 200, height: 200 },
+              shapeType: properties.shapeType || 'rectangle',
+              style: {
+                fontSize: 16,
+                fontWeight: '400',
+                fontStyle: 'normal',
+                textDecoration: 'none',
+                color: '#000000',
+                backgroundColor: properties.backgroundColor || '#3b82f6',
+                borderColor: properties.borderColor || '#1e40af',
+                borderWidth: properties.borderWidth || 2,
+                borderRadius: properties.shapeType === 'circle' ? 50 : 0,
+                textAlign: 'center',
+                lineHeight: 1.5,
+                letterSpacing: 0,
+                opacity: 100,
+                fontFamily: 'Inter',
+              }
+            }
+            break
+            
+          case 'chart':
+            newElement = {
+              id: `chart-${Date.now()}`,
+              type: 'chart',
+              content: '',
+              position: position || { x: canvasSize.width * 0.1, y: canvasSize.height * 0.3 },
+              size: size || { width: 400, height: 300 },
+              chartType: properties.chartType || 'bar',
+              chartData: properties.chartData || {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
+                datasets: [{
+                  label: 'Data',
+                  data: [12, 19, 3, 5, 2],
+                  backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                  borderColor: 'rgba(59, 130, 246, 1)',
+                  borderWidth: 1
+                }]
+              },
+              chartOptions: properties.chartOptions,
+              smartLabels: properties.smartLabels,
+              chartSettings: properties.chartSettings,
+              style: {
+                fontSize: 16,
+                fontWeight: '400',
+                fontStyle: 'normal',
+                textDecoration: 'none',
+                color: '#000000',
+                backgroundColor: '#ffffff',
+                borderColor: '#e5e7eb',
+                borderWidth: 1,
+                borderRadius: 8,
+                textAlign: 'left',
+                lineHeight: 1.5,
+                letterSpacing: 0,
+                opacity: 100,
+                fontFamily: 'Inter',
+              }
+            }
+            break
+            
+          case 'table':
+            const rows = properties.rows || 3
+            const columns = properties.columns || 3
+            const cells: any = {}
+            for (let r = 0; r < rows; r++) {
+              for (let c = 0; c < columns; c++) {
+                cells[`${r}-${c}`] = {
+                  content: '',
+                  style: {
+                    backgroundColor: '#ffffff',
+                    color: '#000000',
+                    fontWeight: '400',
+                    textAlign: 'center',
+                    borderColor: '#e5e7eb',
+                  }
+                }
+              }
+            }
+            
+            newElement = {
+              id: `table-${Date.now()}`,
+              type: 'table',
+              content: '',
+              position: position || { x: canvasSize.width * 0.1, y: canvasSize.height * 0.3 },
+              size: size || { width: 400, height: 200 },
+              rows,
+              columns,
+              cells,
+              style: {
+                fontSize: 14,
+                fontWeight: '400',
+                fontStyle: 'normal',
+                textDecoration: 'none',
+                color: '#000000',
+                backgroundColor: '#ffffff',
+                borderColor: '#e5e7eb',
+                borderWidth: 1,
+                borderRadius: 0,
+                textAlign: 'center',
+                lineHeight: 1.5,
+                letterSpacing: 0,
+                opacity: 100,
+                fontFamily: 'Inter',
+              }
+            }
+            break
+            
+          default:
+            return
+        }
+        
+        setElements(prev => [...prev, newElement])
+        onElementSelect(newElement.id)
+        break
+        
+      case 'updateElement':
+        const { elementId, updates } = action.payload
+        updateElement(elementId, updates)
+        break
+        
+      case 'deleteElement':
+        const { elementId: deleteId } = action.payload
+        deleteElement(deleteId)
+        break
+        
+      case 'alignElements':
+        const { direction } = action.payload
+        alignElements(direction)
+        break
+        
+      case 'distributeElements':
+        const { axis } = action.payload
+        distributeElements(axis)
+        break
+    }
+  }
+
   const addTextBox = () => {
     const newElement: SlideElement = {
       id: `text-${Date.now()}`,
@@ -655,7 +2162,258 @@ export function SlideView({
     onElementSelect(newElement.id)
   }
 
+  // Helper function to generate default chart data
+  const getDefaultChartData = (chartType: SlideElement['chartType']): SlideElement['chartData'] => {
+    const pieColors = [
+      'rgba(59, 130, 246, 0.8)',
+      'rgba(34, 197, 94, 0.8)', 
+      'rgba(251, 146, 60, 0.8)',
+      'rgba(168, 85, 247, 0.8)'
+    ]
+    
+    switch (chartType) {
+      case 'pie':
+      case 'doughnut':
+        return {
+          labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+          datasets: [{
+            label: 'Quarterly Revenue',
+            data: [30, 25, 20, 25],
+            backgroundColor: pieColors,
+            borderWidth: 2,
+            borderColor: '#fff'
+          }]
+        }
+      case 'line':
+        return {
+          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+          datasets: [{
+            label: 'Monthly Growth',
+            data: [12, 19, 15, 25, 22, 30],
+            borderColor: 'rgba(59, 130, 246, 1)',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4 // Smooth line
+          }]
+        }
+      case 'waterfall':
+        return {
+          labels: ['Q1 Start', 'Product Sales', 'Services', 'Licensing', 'Operating Costs', 'Marketing', 'Q1 End'],
+          datasets: [{
+            label: 'Cash Flow',
+            data: [120, 45, 30, 15, -35, -20, 155],
+            waterfall: {
+              categories: ['total', 'increase', 'increase', 'increase', 'decrease', 'decrease', 'total'],
+              connectorColor: 'rgba(0, 0, 0, 0.3)',
+              totalColor: 'rgba(107, 114, 128, 0.8)',
+              increaseColor: 'rgba(34, 197, 94, 0.8)',
+              decreaseColor: 'rgba(239, 68, 68, 0.8)',
+            },
+            backgroundColor: 'dynamic', // Will be set based on categories
+            borderColor: 'rgba(0, 0, 0, 0.1)',
+            borderWidth: 1
+          }]
+        }
+      case 'funnel':
+        return {
+          labels: ['Visitors', 'Leads', 'Opportunities', 'Sales', 'Customers'],
+          datasets: [{
+            label: 'Conversion Funnel',
+            data: [1000, 600, 300, 150, 100],
+            backgroundColor: [
+              'rgba(59, 130, 246, 0.6)',
+              'rgba(59, 130, 246, 0.7)',
+              'rgba(59, 130, 246, 0.8)',
+              'rgba(59, 130, 246, 0.9)',
+              'rgba(59, 130, 246, 1)'
+            ],
+            borderWidth: 0
+          }]
+        }
+      default: // bar, column
+        return {
+          labels: ['Product A', 'Product B', 'Product C', 'Product D'],
+          datasets: [{
+            label: 'Sales by Product',
+            data: [65, 45, 80, 55],
+            backgroundColor: 'rgba(59, 130, 246, 0.8)',
+            borderColor: 'rgba(59, 130, 246, 1)',
+            borderWidth: 1
+          }]
+        }
+    }
+  }
+
+  const addChart = (chartType: SlideElement['chartType'] = 'bar') => {
+    const defaultData = getDefaultChartData(chartType)
+
+    const newElement: SlideElement = {
+      id: `chart-${Date.now()}`,
+      type: "chart",
+      content: "",
+      position: { x: 200, y: 150 },
+      size: { width: 400, height: 300 },
+      style: {
+        fontSize: 14,
+        fontWeight: "400",
+        fontStyle: "normal",
+        textDecoration: "none",
+        color: "#374151",
+        backgroundColor: "white",
+        borderColor: "#e5e7eb",
+        borderWidth: 1,
+        textAlign: "center",
+        fontFamily: "Inter",
+        opacity: 1,
+        borderRadius: 8,
+      },
+      zIndex: elements.length > 0 ? Math.max(...elements.map((el) => el.zIndex)) + 1 : 1,
+      chartType,
+      chartData: defaultData,
+      chartOptions: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: {
+          duration: 750,
+          easing: 'easeInOutQuart'
+        },
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top' as const,
+            labels: {
+              padding: 15,
+              usePointStyle: true,
+              font: {
+                size: 12,
+                family: 'Inter'
+              }
+            }
+          },
+          title: {
+            display: false,
+            text: 'Chart Title'
+          },
+          tooltip: {
+            enabled: true,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            padding: 12,
+            cornerRadius: 4,
+            titleFont: {
+              size: 13,
+              weight: 'bold'
+            },
+            bodyFont: {
+              size: 12
+            }
+          }
+        },
+        scales: chartType === 'pie' || chartType === 'doughnut' || chartType === 'funnel' ? {} : {
+          x: {
+            grid: {
+              display: false,
+              drawBorder: false
+            },
+            ticks: {
+              font: {
+                size: 11,
+                family: 'Inter'
+              }
+            }
+          },
+          y: {
+            beginAtZero: true,
+            grid: {
+              color: 'rgba(0, 0, 0, 0.1)',
+              drawBorder: false
+            },
+            ticks: {
+              font: {
+                size: 11,
+                family: 'Inter'
+              }
+            }
+          }
+        } as any
+      },
+      smartLabels: {
+        enabled: true,
+        format: chartType === 'waterfall' ? 'currency' : 'number',
+        decimals: chartType === 'percentage' ? 1 : 0,
+        template: chartType === 'pie' || chartType === 'doughnut' ? '{value} ({percentage}%)' : '{value}',
+        showValue: true,
+        showPercentage: chartType === 'pie' || chartType === 'doughnut',
+        showDelta: chartType === 'waterfall',
+        position: 'auto' as const,
+        connectorLines: true,
+        fontSize: 11,
+        fontWeight: 'normal'
+      }
+    }
+    
+    setElements(prev => [...prev, newElement])
+    addToUndoStack()
+    onElementSelect(newElement.id)
+  }
+
+  const addTable = (rows: number = 3, columns: number = 3) => {
+    // Validate input
+    const validRows = Math.max(1, Math.min(20, rows))
+    const validColumns = Math.max(1, Math.min(10, columns))
+    
+    // Initialize cells with empty strings
+    const cells: string[][] = Array(validRows).fill(null).map(() => Array(validColumns).fill(""))
+    
+    // Initialize column widths equally
+    const columnWidth = 100 / validColumns
+    const columnWidths = Array(validColumns).fill(columnWidth)
+    
+    // Initialize row heights equally  
+    const rowHeight = 100 / validRows
+    const rowHeights = Array(validRows).fill(rowHeight)
+    
+    const newElement: SlideElement = {
+      id: `table-${Date.now()}`,
+      type: "table",
+      content: "",
+      position: { x: 150, y: 150 },
+      size: { width: 400, height: 200 },
+      style: {
+        fontSize: 14,
+        fontWeight: "400",
+        fontStyle: "normal",
+        textDecoration: "none",
+        color: "#374151",
+        backgroundColor: "#ffffff",
+        borderColor: "#e5e7eb",
+        borderWidth: 1,
+        textAlign: "left",
+        fontFamily: "Inter",
+        opacity: 1,
+        borderRadius: 0,
+      },
+      rows: validRows,
+      columns: validColumns,
+      cells,
+      columnWidths,
+      rowHeights,
+      headerRow: true,
+      borderStyle: {
+        color: "#e5e7eb",
+        width: 1,
+        style: "solid" as const
+      },
+      cellStyles: Array(validRows).fill(null).map(() => Array(validColumns).fill({})),
+      zIndex: elements.length > 0 ? Math.max(...elements.map((el) => el.zIndex)) + 1 : 1,
+    }
+    setElements((prev) => [...prev, newElement])
+    onElementSelect(newElement.id)
+  }
+
   const duplicateElement = () => {
+    addToUndoStack()
+    
     if (multiSelectedElements.size > 0) {
       // Duplicate all multi-selected elements
       const newElements: SlideElement[] = []
@@ -669,14 +2427,39 @@ export function SlideView({
             ...element,
             id: `${element.type}-${Date.now()}-${Math.random()}`,
             position: {
-              x: element.position.x + 20,
-              y: element.position.y + 20,
+              x: Math.min(element.position.x + 20, canvasSize.width - element.size.width),
+              y: Math.min(element.position.y + 20, canvasSize.height - element.size.height),
             },
             style: { ...element.style },
             rotation: element.rotation,
             lineOrientation: element.lineOrientation,
             zIndex: ++maxZIndex,
           }
+          
+          // Deep copy chart data if it's a chart
+          if (element.type === 'chart' && element.chartData) {
+            newElement.chartData = JSON.parse(JSON.stringify(element.chartData))
+            newElement.chartOptions = JSON.parse(JSON.stringify(element.chartOptions || {}))
+            newElement.chartType = element.chartType
+          }
+          
+          // Deep copy table data if it's a table
+          if (element.type === 'table' && element.cells) {
+            newElement.cells = element.cells.map(row => [...row])
+            newElement.columnWidths = [...(element.columnWidths || [])]
+            newElement.rowHeights = [...(element.rowHeights || [])]
+            newElement.cellStyles = element.cellStyles?.map(row => row.map(cell => ({...cell}))) || []
+            newElement.borderStyle = { ...element.borderStyle }
+            newElement.rows = element.rows
+            newElement.columns = element.columns
+            newElement.headerRow = element.headerRow
+          }
+          
+          // Deep copy shape properties
+          if (element.type === 'shape') {
+            newElement.shapeType = element.shapeType
+          }
+          
           newElements.push(newElement)
         }
       })
@@ -692,13 +2475,37 @@ export function SlideView({
         ...selectedElementData,
         id: `${selectedElementData.type}-${Date.now()}`,
         position: {
-          x: selectedElementData.position.x + 20,
-          y: selectedElementData.position.y + 20,
+          x: Math.min(selectedElementData.position.x + 20, canvasSize.width - selectedElementData.size.width),
+          y: Math.min(selectedElementData.position.y + 20, canvasSize.height - selectedElementData.size.height),
         },
         style: { ...selectedElementData.style },
         rotation: selectedElementData.rotation,
         lineOrientation: selectedElementData.lineOrientation,
         zIndex: elements.length > 0 ? Math.max(...elements.map((el) => el.zIndex)) + 1 : 1,
+      }
+      
+      // Deep copy chart data if it's a chart
+      if (selectedElementData.type === 'chart' && selectedElementData.chartData) {
+        newElement.chartData = JSON.parse(JSON.stringify(selectedElementData.chartData))
+        newElement.chartOptions = JSON.parse(JSON.stringify(selectedElementData.chartOptions || {}))
+        newElement.chartType = selectedElementData.chartType
+      }
+      
+      // Deep copy table data if it's a table
+      if (selectedElementData.type === 'table' && selectedElementData.cells) {
+        newElement.cells = selectedElementData.cells.map(row => [...row])
+        newElement.columnWidths = [...(selectedElementData.columnWidths || [])]
+        newElement.rowHeights = [...(selectedElementData.rowHeights || [])]
+        newElement.cellStyles = selectedElementData.cellStyles?.map(row => row.map(cell => ({...cell}))) || []
+        newElement.borderStyle = { ...selectedElementData.borderStyle }
+        newElement.rows = selectedElementData.rows
+        newElement.columns = selectedElementData.columns
+        newElement.headerRow = selectedElementData.headerRow
+      }
+      
+      // Deep copy shape properties
+      if (selectedElementData.type === 'shape') {
+        newElement.shapeType = selectedElementData.shapeType
       }
       setElements((prev) => [...prev, newElement])
       onElementSelect(newElement.id)
@@ -979,6 +2786,46 @@ export function SlideView({
         handleElementDrag(e)
       } else if (resizingElement) {
         handleResize(e)
+      } else if (resizingColumn && resizeStartPos) {
+        // Handle column resize
+        const deltaX = e.clientX - resizeStartPos.x
+        const element = elements.find(el => el.id === resizingColumn.elementId)
+        if (element && element.type === 'table' && element.columnWidths) {
+          const totalWidth = element.size.width
+          const deltaPercent = (deltaX / totalWidth) * 100
+          
+          const newColumnWidths = [...element.columnWidths]
+          const currentWidth = newColumnWidths[resizingColumn.colIndex]
+          const nextWidth = newColumnWidths[resizingColumn.colIndex + 1]
+          
+          const newCurrentWidth = Math.max(5, Math.min(90, currentWidth + deltaPercent))
+          const widthDiff = newCurrentWidth - currentWidth
+          newColumnWidths[resizingColumn.colIndex] = newCurrentWidth
+          newColumnWidths[resizingColumn.colIndex + 1] = nextWidth - widthDiff
+          
+          updateElement(element.id, { columnWidths: newColumnWidths })
+          setResizeStartPos({ x: e.clientX, y: e.clientY })
+        }
+      } else if (resizingRow && resizeStartPos) {
+        // Handle row resize
+        const deltaY = e.clientY - resizeStartPos.y
+        const element = elements.find(el => el.id === resizingRow.elementId)
+        if (element && element.type === 'table' && element.rowHeights) {
+          const totalHeight = element.size.height
+          const deltaPercent = (deltaY / totalHeight) * 100
+          
+          const newRowHeights = [...element.rowHeights]
+          const currentHeight = newRowHeights[resizingRow.rowIndex]
+          const nextHeight = newRowHeights[resizingRow.rowIndex + 1]
+          
+          const newCurrentHeight = Math.max(5, Math.min(90, currentHeight + deltaPercent))
+          const heightDiff = newCurrentHeight - currentHeight
+          newRowHeights[resizingRow.rowIndex] = newCurrentHeight
+          newRowHeights[resizingRow.rowIndex + 1] = nextHeight - heightDiff
+          
+          updateElement(element.id, { rowHeights: newRowHeights })
+          setResizeStartPos({ x: e.clientX, y: e.clientY })
+        }
       }
     }
     
@@ -986,9 +2833,12 @@ export function SlideView({
       setDraggedElement(null)
       setResizingElement(null)
       setResizeDirection('')
+      setResizingColumn(null)
+      setResizingRow(null)
+      setResizeStartPos(null)
     }
     
-    if (draggedElement || resizingElement) {
+    if (draggedElement || resizingElement || resizingColumn || resizingRow) {
       document.addEventListener('mousemove', handleGlobalMouseMove)
       document.addEventListener('mouseup', handleGlobalMouseUp)
       
@@ -997,7 +2847,908 @@ export function SlideView({
         document.removeEventListener('mouseup', handleGlobalMouseUp)
       }
     }
-  }, [draggedElement, resizingElement, handleElementDrag, handleResize])
+  }, [draggedElement, resizingElement, resizingColumn, resizingRow, handleElementDrag, handleResize, resizeStartPos, elements, updateElement])
+
+  // Focus contentEditable when entering table cell edit mode
+  useEffect(() => {
+    if (editingCell && tableCellRef.current) {
+      // Use requestAnimationFrame to ensure DOM is updated
+      requestAnimationFrame(() => {
+        if (tableCellRef.current) {
+          tableCellRef.current.focus()
+          // Select all text in contentEditable
+          const range = document.createRange()
+          const sel = window.getSelection()
+          range.selectNodeContents(tableCellRef.current)
+          sel?.removeAllRanges()
+          sel?.addRange(range)
+        }
+      })
+    }
+  }, [editingCell])
+
+  // Update editingCellValue when navigating to a different cell
+  useEffect(() => {
+    if (editingCell) {
+      const element = elements.find(el => el.id === editingCell.elementId)
+      if (element && element.type === 'table' && element.cells) {
+        const cellValue = element.cells[editingCell.row][editingCell.col] || ""
+        setEditingCellValue(cellValue)
+      }
+    }
+  }, [editingCell?.elementId, editingCell?.row, editingCell?.col, elements])
+
+  // When selected element changes, handle table cell selection
+  useEffect(() => {
+    if (selectedElement) {
+      const element = elements.find(el => el.id === selectedElement)
+      if (element && element.type === 'table') {
+        // If a table is selected but no cells are selected, select the first cell
+        if (selectedCells.size === 0) {
+          const firstCellId = `${element.id}-0-0`
+          setSelectedCells(new Set([firstCellId]))
+          setTableSelectionStart({ elementId: element.id, row: 0, col: 0 })
+          setTableSelectionEnd({ elementId: element.id, row: 0, col: 0 })
+        }
+      } else {
+        // Clear table selection when non-table element is selected
+        setSelectedCells(new Set())
+        setTableSelectionStart(null)
+        setTableSelectionEnd(null)
+        setEditingCell(null)
+      }
+    } else {
+      // Clear all selections when nothing is selected
+      setSelectedCells(new Set())
+      setTableSelectionStart(null) 
+      setTableSelectionEnd(null)
+      setEditingCell(null)
+    }
+  }, [selectedElement, elements])
+
+  const renderChart = (element: SlideElement) => {
+    if (!element.chartType || !element.chartData) return null
+
+    // Validate chart data
+    if (!element.chartData.labels || !element.chartData.datasets || element.chartData.datasets.length === 0) {
+      return (
+        <div className="w-full h-full flex items-center justify-center text-gray-500 bg-gray-50 rounded">
+          <div className="text-center">
+            <BarChart3 className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+            <p className="text-sm">Invalid chart data</p>
+            <p className="text-xs text-gray-400 mt-1">Double-click to edit</p>
+          </div>
+        </div>
+      )
+    }
+
+    try {
+      // Special handling for waterfall charts
+      let chartProps: any
+      
+      if (element.chartType === 'waterfall' && element.chartData) {
+        const waterfallConfig = element.chartData.datasets[0].waterfall
+        const processedData = processWaterfallData(
+          element.chartData.datasets[0].data,
+          waterfallConfig?.categories
+        )
+        
+        // Transform to stacked bar chart format
+        const waterfallData = {
+          labels: element.chartData.labels,
+          datasets: [
+            {
+              label: 'Hidden',
+              data: processedData.invisible,
+              backgroundColor: 'transparent',
+              borderColor: 'transparent',
+              stack: 'stack1',
+              skipNull: true,
+            },
+            {
+              label: element.chartData.datasets[0].label,
+              data: processedData.visible,
+              backgroundColor: element.chartData.labels.map((_, index) => {
+                const category = waterfallConfig?.categories?.[index]
+                const value = element.chartData!.datasets[0].data[index]
+                
+                if (category === 'total' || category === 'subtotal') {
+                  return waterfallConfig?.totalColor || 'rgba(107, 114, 128, 0.8)'
+                } else if (value >= 0) {
+                  return waterfallConfig?.increaseColor || 'rgba(34, 197, 94, 0.8)'
+                } else {
+                  return waterfallConfig?.decreaseColor || 'rgba(239, 68, 68, 0.8)'
+                }
+              }),
+              borderColor: waterfallConfig?.connectorColor || 'rgba(0, 0, 0, 0.5)',
+              borderWidth: 1,
+              stack: 'stack1',
+            }
+          ]
+        }
+        
+        chartProps = {
+          data: waterfallData,
+          options: {
+            ...element.chartOptions,
+            responsive: true,
+            maintainAspectRatio: false,
+            devicePixelRatio: window.devicePixelRatio || 2,
+            interaction: {
+              mode: 'index' as const,
+              intersect: false,
+            },
+            plugins: {
+              ...element.chartOptions?.plugins,
+              tooltip: {
+                callbacks: {
+                  label: (context: any) => {
+                    if (context.datasetIndex === 0) return null // Hide invisible dataset
+                    const value = element.chartData!.datasets[0].data[context.dataIndex]
+                    const cumulative = processedData.cumulative[context.dataIndex]
+                    return [
+                      `${context.dataset.label}: ${value > 0 ? '+' : ''}${value.toLocaleString()}`,
+                      `Cumulative: ${cumulative.toLocaleString()}`
+                    ]
+                  }
+                }
+              },
+              legend: {
+                display: false // Hide legend for waterfall
+              },
+              // Smart labels for waterfall
+              datalabels: element.smartLabels?.enabled !== false ? {
+                display: true,
+                align: 'end' as const,
+                anchor: 'end' as const,
+                formatter: (value: number, context: any) => {
+                  if (context.datasetIndex === 0) return null
+                  const originalValue = element.chartData!.datasets[0].data[context.dataIndex]
+                  const smartLabels = element.smartLabels || {
+                    format: 'currency',
+                    decimals: 0,
+                    template: '{value}',
+                    showDelta: true
+                  }
+                  
+                  let label = formatChartLabel(Math.abs(originalValue), {
+                    format: smartLabels.format,
+                    decimals: smartLabels.decimals,
+                    prefix: smartLabels.prefix,
+                    suffix: smartLabels.suffix,
+                    template: smartLabels.template
+                  })
+                  
+                  // Add delta indicator
+                  if (smartLabels.showDelta && waterfallConfig?.categories?.[context.dataIndex] !== 'total' && 
+                      waterfallConfig?.categories?.[context.dataIndex] !== 'subtotal') {
+                    label = (originalValue > 0 ? '+' : '-') + label
+                  }
+                  
+                  return label
+                },
+                font: {
+                  size: element.smartLabels?.fontSize || 11,
+                  weight: element.smartLabels?.fontWeight || 'bold',
+                },
+                color: 'rgba(0, 0, 0, 0.8)',
+                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                borderColor: 'rgba(0, 0, 0, 0.2)',
+                borderRadius: 2,
+                borderWidth: 1,
+                padding: 3,
+              } : { display: false }
+            },
+            scales: {
+              x: {
+                stacked: true,
+                ...element.chartOptions?.scales?.x,
+              },
+              y: {
+                stacked: true,
+                ...element.chartOptions?.scales?.y,
+              }
+            }
+          }
+        }
+      } else {
+        // Regular chart handling with stacking support
+        let chartData = element.chartData
+        const isStacked = element.chartSettings?.stacked && (element.chartType === 'bar' || element.chartType === 'column')
+        const is100Stacked = element.chartSettings?.stackedType === '100%'
+        
+        // Transform data for 100% stacked charts
+        if (isStacked && is100Stacked && chartData) {
+          chartData = {
+            ...chartData,
+            datasets: transformTo100Stacked(chartData.datasets)
+          }
+        }
+        
+        // Add stack property to datasets if stacked
+        if (isStacked && chartData) {
+          chartData = {
+            ...chartData,
+            datasets: chartData.datasets.map(dataset => ({
+              ...dataset,
+              stack: 'stack1' // All datasets in same stack
+            }))
+          }
+        }
+        
+        // Calculate totals for stacked charts
+        const stackTotals = isStacked && element.chartData ? calculateStackTotals(element.chartData.datasets) : []
+        
+        // Add CAGR line if enabled
+        if (element.chartSettings?.showCAGR && chartData && chartData.labels && chartData.labels.length > 1) {
+          const startIdx = element.chartSettings.cagrStartIndex || 0
+          const endIdx = element.chartSettings.cagrEndIndex || (chartData.labels.length - 1)
+          const periods = endIdx - startIdx
+          
+          if (periods > 0 && chartData.datasets.length > 0) {
+            // Calculate CAGR based on first dataset or stack totals
+            const values = isStacked ? stackTotals : chartData.datasets[0].data
+            const startValue = values[startIdx]
+            const endValue = values[endIdx]
+            const cagr = calculateCAGR(startValue, endValue, periods)
+            
+            // Create CAGR line dataset
+            const cagrLine = chartData.labels.map((_, idx) => {
+              if (idx < startIdx) return null
+              const periodsFromStart = idx - startIdx
+              return startValue * Math.pow(1 + cagr / 100, periodsFromStart)
+            })
+            
+            // Add CAGR line to datasets
+            chartData = {
+              ...chartData,
+              datasets: [
+                ...chartData.datasets,
+                {
+                  label: `CAGR ${cagr.toFixed(1)}%`,
+                  data: cagrLine,
+                  type: 'line',
+                  borderColor: 'rgba(255, 99, 132, 1)',
+                  backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                  borderWidth: 2,
+                  borderDash: [5, 5],
+                  pointRadius: 0,
+                  fill: false,
+                  stack: undefined // Don't stack the CAGR line
+                }
+              ]
+            }
+          }
+        }
+        
+        // Create custom plugin for stack totals
+        const stackTotalsPlugin = isStacked && element.chartSettings?.showTotals ? {
+          id: 'stackTotals',
+          afterDatasetsDraw(chart: any) {
+            const ctx = chart.ctx
+            
+            ctx.save()
+            ctx.font = `${element.smartLabels?.fontWeight || 'bold'} ${element.smartLabels?.fontSize || 12}px Inter`
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'
+            ctx.textAlign = 'center'
+            ctx.textBaseline = 'bottom'
+            
+            // Get the x positions from the first dataset
+            const meta = chart.getDatasetMeta(0)
+            
+            stackTotals.forEach((total: number, index: number) => {
+              const barElement = meta.data[index]
+              if (barElement) {
+                // Find the top of the stack
+                let minY = barElement.y
+                for (let i = 0; i < chart.data.datasets.length; i++) {
+                  const datasetMeta = chart.getDatasetMeta(i)
+                  if (datasetMeta.data[index] && datasetMeta.data[index].y < minY) {
+                    minY = datasetMeta.data[index].y
+                  }
+                }
+                
+                // Format the total
+                const formattedTotal = formatChartLabel(total, {
+                  format: element.smartLabels?.format || 'number',
+                  decimals: element.smartLabels?.decimals || 0,
+                  prefix: element.smartLabels?.prefix,
+                  suffix: element.smartLabels?.suffix
+                })
+                
+                // Draw the total above the stack
+                ctx.fillText(formattedTotal, barElement.x, minY - 5)
+              }
+            })
+            
+            ctx.restore()
+          }
+        } : null
+        
+        chartProps = {
+          data: chartData,
+          options: {
+          ...element.chartOptions,
+          responsive: true,
+          maintainAspectRatio: false,
+          devicePixelRatio: window.devicePixelRatio || 2,
+          animation: {
+            duration: 500,
+            easing: 'easeInOutQuart' as const,
+          },
+          plugins: {
+            ...element.chartOptions?.plugins,
+            tooltip: {
+              enabled: true,
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              padding: 12,
+              cornerRadius: 4,
+              titleFont: {
+                size: 13,
+                weight: '600' as const,
+              },
+              bodyFont: {
+                size: 12,
+              },
+            },
+            legend: {
+              ...element.chartOptions?.plugins?.legend,
+              labels: {
+                font: {
+                  size: 12,
+                  family: 'Inter',
+                },
+                padding: 15,
+                usePointStyle: true,
+                pointStyle: element.chartType === 'line' ? 'line' : 'rect',
+              }
+            },
+            datalabels: element.smartLabels?.enabled ? {
+              display: true,
+              anchor: element.chartType === 'pie' || element.chartType === 'doughnut' ? 'center' : ('end' as const),
+              align: element.chartType === 'pie' || element.chartType === 'doughnut' ? 'center' : ('top' as const),
+              offset: element.chartType === 'pie' || element.chartType === 'doughnut' ? 0 : 5,
+              formatter: (value: number, context: any) => {
+                const smartLabels = element.smartLabels!
+                const total = element.chartData?.datasets[0].data.reduce((sum: number, val: number) => sum + val, 0) || 0
+                
+                return formatChartLabel(value, {
+                  format: smartLabels.format,
+                  decimals: smartLabels.decimals,
+                  prefix: smartLabels.prefix,
+                  suffix: smartLabels.suffix,
+                  template: smartLabels.template,
+                  showPercentage: smartLabels.showPercentage,
+                  total
+                })
+              },
+              font: {
+                size: element.smartLabels?.fontSize || 11,
+                weight: element.smartLabels?.fontWeight || 'normal',
+              },
+              color: 'rgba(0, 0, 0, 0.8)',
+              backgroundColor: 'rgba(255, 255, 255, 0.8)',
+              borderColor: 'rgba(0, 0, 0, 0.2)',
+              borderRadius: 2,
+              borderWidth: 1,
+              padding: 2,
+              // Smart positioning for pie/doughnut
+              ...(element.chartType === 'pie' || element.chartType === 'doughnut' ? {
+                display: (context: any) => {
+                  const value = context.dataset.data[context.dataIndex]
+                  const total = context.dataset.data.reduce((sum: number, val: number) => sum + val, 0)
+                  const percentage = (value / total) * 100
+                  return percentage > 5 // Only show labels for slices > 5%
+                }
+              } : {})
+            } : { display: false }
+          },
+          scales: element.chartType === 'pie' || element.chartType === 'doughnut' ? {} : {
+            ...element.chartOptions?.scales,
+            x: {
+              ...element.chartOptions?.scales?.x,
+              grid: {
+                display: true,
+                color: 'rgba(0, 0, 0, 0.05)',
+              },
+              ticks: {
+                font: {
+                  size: 11,
+                  family: 'Inter',
+                },
+                padding: 5,
+              },
+              // Enable stacking if needed
+              ...(isStacked ? { stacked: true } : {})
+            },
+            y: {
+              ...element.chartOptions?.scales?.y,
+              grid: {
+                display: true,
+                color: 'rgba(0, 0, 0, 0.05)',
+              },
+              ticks: {
+                font: {
+                  size: 11,
+                  family: 'Inter',
+                },
+                padding: 5,
+                // Format as percentage for 100% stacked charts
+                ...(is100Stacked ? {
+                  callback: function(value: any) {
+                    return value + '%'
+                  }
+                } : {})
+              },
+              // Set max to 100 for percentage stacked charts
+              ...(is100Stacked ? { max: 100 } : {}),
+              // Enable stacking if needed
+              ...(isStacked ? { stacked: true } : {})
+            }
+          }
+        },
+        // Add custom plugins
+        plugins: stackTotalsPlugin ? [stackTotalsPlugin] : []
+      }}
+
+    const chartStyle = {
+      width: '100%',
+      height: '100%',
+      padding: '16px',
+      backgroundColor: element.style.backgroundColor,
+      borderRadius: `${element.style.borderRadius}px`,
+      border: element.style.borderWidth > 0 ? `${element.style.borderWidth}px solid ${element.style.borderColor}` : 'none',
+    }
+
+    return (
+      <div 
+        className="w-full h-full relative group cursor-pointer" 
+        style={chartStyle}
+        data-chart-element="true"
+        onDoubleClick={(e) => {
+          e.stopPropagation()
+          setEditingChart(element.id)
+        }}
+      >
+        {element.chartType === 'line' && <Line {...chartProps} />}
+        {element.chartType === 'bar' && <Bar {...chartProps} />}
+        {element.chartType === 'column' && <Bar {...chartProps} />}
+        {element.chartType === 'pie' && <Pie {...chartProps} />}
+        {element.chartType === 'doughnut' && <Doughnut {...chartProps} />}
+        {element.chartType === 'waterfall' && <Bar {...chartProps} />}
+        {/* Funnel would need custom implementation */}
+        {element.chartType === 'funnel' && (
+          <div className="flex items-center justify-center h-full text-gray-500">
+            Funnel chart coming soon
+          </div>
+        )}
+        {/* Hover overlay hint */}
+        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-5 transition-all duration-200 flex items-center justify-center">
+          <span className="text-xs text-gray-700 bg-white px-2 py-1 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            Double-click to edit data
+          </span>
+        </div>
+      </div>
+    )
+    } catch (error) {
+      console.error('Chart rendering error:', error)
+      return (
+        <div className="w-full h-full flex items-center justify-center text-gray-500 bg-gray-50 rounded">
+          <div className="text-center">
+            <BarChart3 className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+            <p className="text-sm">Error rendering chart</p>
+            <p className="text-xs text-gray-400 mt-1">Double-click to edit</p>
+          </div>
+        </div>
+      )
+    }
+  }
+
+  const renderTable = (element: SlideElement) => {
+    if (!element.cells || !element.rows || !element.columns) {
+      return (
+        <div className="w-full h-full flex items-center justify-center text-gray-500 bg-gray-50 rounded border-2 border-dashed border-gray-300">
+          <div className="text-center">
+            <Table className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+            <p className="text-sm">Invalid table data</p>
+            <p className="text-xs text-gray-400 mt-1">Double-click to configure</p>
+          </div>
+        </div>
+      )
+    }
+
+    // Validate table data integrity
+    if (element.cells.length !== element.rows || 
+        element.cells.some(row => !Array.isArray(row) || row.length !== element.columns)) {
+      return (
+        <div className="w-full h-full flex items-center justify-center text-gray-500 bg-gray-50 rounded border-2 border-dashed border-gray-300">
+          <div className="text-center">
+            <Table className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+            <p className="text-sm">Table data corrupted</p>
+            <p className="text-xs text-gray-400 mt-1">Please recreate the table</p>
+          </div>
+        </div>
+      )
+    }
+
+    const cellHeight = element.rowHeights 
+      ? element.size.height * (element.rowHeights[0] / 100)
+      : element.size.height / element.rows
+    const isEditingThisTable = editingCell?.elementId === element.id
+
+    // Handle table cell mouse events
+    const handleCellMouseDown = (e: React.MouseEvent, rowIndex: number, colIndex: number) => {
+      e.stopPropagation()
+      const isShift = e.shiftKey
+
+      // Make sure the table element is selected first
+      if (selectedElement !== element.id) {
+        onElementSelect(element.id)
+      }
+
+      if (isShift && tableSelectionStart) {
+        // Shift-click to extend selection (no edit mode)
+        const newEnd = { elementId: element.id, row: rowIndex, col: colIndex }
+        setTableSelectionEnd(newEnd)
+        const cells = calculateSelectedCells(element.id, tableSelectionStart, newEnd)
+        setSelectedCells(cells)
+      } else {
+        // Single click selects cell
+        const cellId = `${element.id}-${rowIndex}-${colIndex}`
+        setSelectedCells(new Set([cellId]))
+        setTableSelectionStart({ elementId: element.id, row: rowIndex, col: colIndex })
+        setTableSelectionEnd({ elementId: element.id, row: rowIndex, col: colIndex })
+        setIsTableSelecting(true)
+      }
+    }
+
+    const handleCellMouseEnter = (e: React.MouseEvent, rowIndex: number, colIndex: number) => {
+      if (isTableSelecting && tableSelectionStart) {
+        // Exit edit mode if we're dragging to select multiple cells
+        if (editingCell) {
+          setEditingCell(null)
+        }
+        
+        const newEnd = { elementId: element.id, row: rowIndex, col: colIndex }
+        setTableSelectionEnd(newEnd)
+        const cells = calculateSelectedCells(element.id, tableSelectionStart, newEnd)
+        setSelectedCells(cells)
+      }
+    }
+
+    const handleCellMouseUp = () => {
+      setIsTableSelecting(false)
+    }
+
+    return (
+      <div className="w-full h-full relative group">
+        {/* Table selection border - easier to grab */}
+        <div 
+          className="absolute inset-0 pointer-events-none border-2 border-transparent group-hover:border-gray-300 transition-colors"
+          style={{ margin: '-4px' }}
+        />
+        
+        {/* Table grab handle */}
+        <div 
+          className="absolute -top-6 left-0 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+        >
+          <Move className="w-3 h-3 inline mr-1" />
+          Click border to move table
+        </div>
+        
+        {/* Invisible border areas for easier selection - split into 4 borders */}
+        {/* Top border */}
+        <div 
+          className="absolute -top-1 left-0 right-0 h-2 cursor-move"
+          style={{ zIndex: 5 }}
+          onMouseDown={(e) => {
+            e.stopPropagation()
+            onElementSelect(element.id)
+            setSelectedCells(new Set([`${element.id}-0-0`]))
+            setTableSelectionStart({ elementId: element.id, row: 0, col: 0 })
+            setTableSelectionEnd({ elementId: element.id, row: 0, col: 0 })
+          }}
+        />
+        {/* Bottom border */}
+        <div 
+          className="absolute -bottom-1 left-0 right-0 h-2 cursor-move"
+          style={{ zIndex: 5 }}
+          onMouseDown={(e) => {
+            e.stopPropagation()
+            onElementSelect(element.id)
+            setSelectedCells(new Set([`${element.id}-0-0`]))
+            setTableSelectionStart({ elementId: element.id, row: 0, col: 0 })
+            setTableSelectionEnd({ elementId: element.id, row: 0, col: 0 })
+          }}
+        />
+        {/* Left border */}
+        <div 
+          className="absolute top-0 -left-1 bottom-0 w-2 cursor-move"
+          style={{ zIndex: 5 }}
+          onMouseDown={(e) => {
+            e.stopPropagation()
+            onElementSelect(element.id)
+            setSelectedCells(new Set([`${element.id}-0-0`]))
+            setTableSelectionStart({ elementId: element.id, row: 0, col: 0 })
+            setTableSelectionEnd({ elementId: element.id, row: 0, col: 0 })
+          }}
+        />
+        {/* Right border */}
+        <div 
+          className="absolute top-0 -right-1 bottom-0 w-2 cursor-move"
+          style={{ zIndex: 5 }}
+          onMouseDown={(e) => {
+            e.stopPropagation()
+            onElementSelect(element.id)
+            setSelectedCells(new Set([`${element.id}-0-0`]))
+            setTableSelectionStart({ elementId: element.id, row: 0, col: 0 })
+            setTableSelectionEnd({ elementId: element.id, row: 0, col: 0 })
+          }}
+        />
+        
+        <table 
+          className="w-full h-full border-collapse relative"
+          style={{
+            backgroundColor: element.style.backgroundColor,
+            color: element.style.color,
+            fontSize: element.style.fontSize,
+            fontFamily: element.style.fontFamily,
+          }}
+          onMouseUp={handleCellMouseUp}
+          onMouseLeave={handleCellMouseUp}
+        >
+          <tbody>
+            {element.cells.map((row, rowIndex) => (
+              <tr key={rowIndex} style={{ height: element.rowHeights ? `${element.rowHeights[rowIndex]}%` : 'auto' }}>
+                {row.map((cellContent, colIndex) => {
+                  const cellId = `${element.id}-${rowIndex}-${colIndex}`
+                  const isEditing = isEditingThisTable && 
+                    editingCell?.row === rowIndex && 
+                    editingCell?.col === colIndex
+                  const isSelected = selectedCells.has(cellId)
+                  const isHeaderRow = element.headerRow && rowIndex === 0
+                  
+                  // Get cell-specific styles if available
+                  const cellStyle = element.cellStyles?.[rowIndex]?.[colIndex] || {}
+                  const cellBorder = element.cellBorders?.[rowIndex]?.[colIndex] || {}
+                  
+                  // Calculate border styles
+                  const borderTop = cellBorder.top 
+                    ? `${cellBorder.top.width}px ${cellBorder.top.style} ${cellBorder.top.color}` 
+                    : `${element.borderStyle?.width || 1}px ${element.borderStyle?.style || 'solid'} ${element.borderStyle?.color || '#e5e7eb'}`
+                  const borderRight = cellBorder.right 
+                    ? `${cellBorder.right.width}px ${cellBorder.right.style} ${cellBorder.right.color}` 
+                    : `${element.borderStyle?.width || 1}px ${element.borderStyle?.style || 'solid'} ${element.borderStyle?.color || '#e5e7eb'}`
+                  const borderBottom = cellBorder.bottom 
+                    ? `${cellBorder.bottom.width}px ${cellBorder.bottom.style} ${cellBorder.bottom.color}` 
+                    : `${element.borderStyle?.width || 1}px ${element.borderStyle?.style || 'solid'} ${element.borderStyle?.color || '#e5e7eb'}`
+                  const borderLeft = cellBorder.left 
+                    ? `${cellBorder.left.width}px ${cellBorder.left.style} ${cellBorder.left.color}` 
+                    : `${element.borderStyle?.width || 1}px ${element.borderStyle?.style || 'solid'} ${element.borderStyle?.color || '#e5e7eb'}`
+                  
+                  return (
+                    <td
+                      key={colIndex}
+                      className={`relative ${isSelected ? 'bg-blue-50' : ''}`}
+                      style={{
+                        borderTop,
+                        borderRight,
+                        borderBottom,
+                        borderLeft,
+                        padding: '8px',
+                        width: element.columnWidths ? `${element.columnWidths[colIndex]}%` : 'auto',
+                        backgroundColor: isSelected ? 'rgba(59, 130, 246, 0.1)' : (cellStyle.backgroundColor || (isHeaderRow && !cellStyle.backgroundColor ? '#f3f4f6' : 'transparent')),
+                        color: cellStyle.color || element.style.color,
+                        fontWeight: cellStyle.fontWeight || (isHeaderRow ? '600' : element.style.fontWeight),
+                        textAlign: cellStyle.textAlign || element.style.textAlign,
+                        verticalAlign: cellStyle.verticalAlign || 'middle',
+                        cursor: 'text',
+                        userSelect: isEditing ? 'text' : 'none',
+                        position: 'relative',
+                        zIndex: isEditing ? 50 : 'auto',
+                      }}
+                      onMouseDown={(e) => {
+                        // Only handle single click for selection
+                        if (e.detail === 1) {
+                          handleCellMouseDown(e, rowIndex, colIndex)
+                        }
+                      }}
+                      onDoubleClick={(e) => {
+                        e.stopPropagation()
+                        // Enter edit mode on double click
+                        setEditingCell({ elementId: element.id, row: rowIndex, col: colIndex })
+                        setEditingCellValue(sanitizeCellContent(element.cells![rowIndex][colIndex]))
+                        setIsEditingText(null)
+                      }}
+                      onMouseEnter={(e) => handleCellMouseEnter(e, rowIndex, colIndex)}
+                    >
+                      {isEditing ? (
+                        <div
+                          ref={tableCellRef as any}
+                          contentEditable
+                          suppressContentEditableWarning
+                          className="w-full h-full outline-none overflow-hidden p-2 bg-white border-2 border-blue-500"
+                          onInput={(e) => {
+                            const newValue = e.currentTarget.textContent || ""
+                            console.log('ContentEditable input:', newValue)
+                            setEditingCellValue(newValue)
+                          }}
+                          onBlur={(e) => {
+                            // Save the value when losing focus
+                            const finalValue = e.currentTarget.textContent || ""
+                            const newCells = [...element.cells!]
+                            newCells[editingCell!.row][editingCell!.col] = finalValue
+                            updateElement(element.id, { cells: newCells })
+                            setEditingCell(null)
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault()
+                              // Save current value
+                              const finalValue = e.currentTarget.textContent || ""
+                              const newCells = [...element.cells!]
+                              newCells[editingCell!.row][editingCell!.col] = finalValue
+                              updateElement(element.id, { cells: newCells })
+                              
+                              // Move to next cell
+                              if (colIndex < element.columns! - 1) {
+                                setEditingCell({ elementId: element.id, row: rowIndex, col: colIndex + 1 })
+                                setEditingCellValue(sanitizeCellContent(element.cells![rowIndex][colIndex + 1]))
+                              } else if (rowIndex < element.rows! - 1) {
+                                setEditingCell({ elementId: element.id, row: rowIndex + 1, col: 0 })
+                                setEditingCellValue(sanitizeCellContent(element.cells![rowIndex + 1][0]))
+                              } else {
+                                setEditingCell(null)
+                              }
+                            } else if (e.key === 'Enter' && e.shiftKey) {
+                              // Allow Shift+Enter for new lines - don't prevent default
+                            } else if (e.key === 'Tab') {
+                              e.preventDefault()
+                              if (e.shiftKey) {
+                                // Move to previous cell
+                                if (colIndex > 0) {
+                                  setEditingCell({ elementId: element.id, row: rowIndex, col: colIndex - 1 })
+                                } else if (rowIndex > 0) {
+                                  setEditingCell({ elementId: element.id, row: rowIndex - 1, col: element.columns! - 1 })
+                                }
+                              } else {
+                                // Move to next cell
+                                if (colIndex < element.columns! - 1) {
+                                  setEditingCell({ elementId: element.id, row: rowIndex, col: colIndex + 1 })
+                                } else if (rowIndex < element.rows! - 1) {
+                                  setEditingCell({ elementId: element.id, row: rowIndex + 1, col: 0 })
+                                }
+                              }
+                            } else if (e.key === 'Escape') {
+                              setEditingCell(null)
+                            } else if (e.key === 'ArrowUp') {
+                              e.preventDefault()
+                              if (rowIndex > 0) {
+                                setEditingCell({ elementId: element.id, row: rowIndex - 1, col: colIndex })
+                              }
+                            } else if (e.key === 'ArrowDown') {
+                              e.preventDefault()
+                              if (rowIndex < element.rows! - 1) {
+                                setEditingCell({ elementId: element.id, row: rowIndex + 1, col: colIndex })
+                              }
+                            } else if (e.key === 'ArrowLeft' && (e.target as HTMLTextAreaElement).selectionStart === 0) {
+                              e.preventDefault()
+                              if (colIndex > 0) {
+                                setEditingCell({ elementId: element.id, row: rowIndex, col: colIndex - 1 })
+                              }
+                            } else if (e.key === 'ArrowRight' && (e.target as HTMLTextAreaElement).selectionStart === cellContent.length) {
+                              e.preventDefault()
+                              if (colIndex < element.columns! - 1) {
+                                setEditingCell({ elementId: element.id, row: rowIndex, col: colIndex + 1 })
+                              }
+                            }
+                          }}
+                          style={{
+                            fontSize: cellStyle.fontSize || element.style.fontSize,
+                            fontFamily: cellStyle.fontFamily || element.style.fontFamily,
+                            color: cellStyle.color || element.style.color,
+                            fontWeight: cellStyle.fontWeight || element.style.fontWeight,
+                            fontStyle: cellStyle.fontStyle || element.style.fontStyle,
+                            textDecoration: cellStyle.textDecoration || element.style.textDecoration,
+                            textAlign: cellStyle.textAlign || element.style.textAlign,
+                            padding: 0,
+                            lineHeight: 1.5,
+                            position: 'relative',
+                            zIndex: 100,
+                          }}
+                          onClick={(e) => e.stopPropagation()} // Prevent click from bubbling up
+                          onMouseDown={(e) => e.stopPropagation()} // Prevent mousedown from bubbling up
+                          onFocus={(e) => {
+                            // Focus contentEditable
+                            const range = document.createRange()
+                            const sel = window.getSelection()
+                            range.selectNodeContents(e.currentTarget)
+                            sel?.removeAllRanges()
+                            sel?.addRange(range)
+                          }}
+                        >
+                          {editingCellValue}
+                        </div>
+                      ) : (
+                        <div 
+                          className="w-full h-full flex items-center whitespace-pre-wrap"
+                          style={{
+                            fontSize: cellStyle.fontSize || element.style.fontSize,
+                            fontFamily: cellStyle.fontFamily || element.style.fontFamily,
+                            fontWeight: cellStyle.fontWeight || element.style.fontWeight,
+                            fontStyle: cellStyle.fontStyle || element.style.fontStyle,
+                            textDecoration: cellStyle.textDecoration || element.style.textDecoration,
+                            justifyContent: cellStyle.textAlign === 'center' ? 'center' : cellStyle.textAlign === 'right' ? 'flex-end' : 'flex-start',
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          {sanitizeCellContent(cellContent)}
+                        </div>
+                      )}
+                    </td>
+                  )
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        
+        {/* Column resize handles - positioned absolutely over the table */}
+        {Array.from({ length: (element.columns || 0) - 1 }, (_, colIndex) => {
+          const leftOffset = element.columnWidths 
+            ? element.columnWidths.slice(0, colIndex + 1).reduce((sum, w) => sum + w, 0)
+            : ((colIndex + 1) / (element.columns || 1)) * 100
+          
+          return (
+            <div
+              key={`col-resize-${colIndex}`}
+              className={`absolute top-0 w-1 h-full cursor-col-resize z-20 transition-all ${
+                resizingColumn?.elementId === element.id && resizingColumn?.colIndex === colIndex
+                  ? 'bg-blue-500 opacity-100 w-2'
+                  : 'hover:bg-blue-500 hover:opacity-50'
+              }`}
+              style={{
+                left: `${leftOffset}%`,
+                transform: 'translateX(-50%)',
+              }}
+              onMouseDown={(e) => {
+                e.stopPropagation()
+                setResizingColumn({ elementId: element.id, colIndex })
+                setResizeStartPos({ x: e.clientX, y: e.clientY })
+              }}
+            />
+          )
+        })}
+        
+        {/* Row resize handles - positioned absolutely over the table */}
+        {Array.from({ length: (element.rows || 0) - 1 }, (_, rowIndex) => {
+          const topOffset = element.rowHeights 
+            ? element.rowHeights.slice(0, rowIndex + 1).reduce((sum, h) => sum + h, 0)
+            : ((rowIndex + 1) / (element.rows || 1)) * 100
+          
+          return (
+            <div
+              key={`row-resize-${rowIndex}`}
+              className={`absolute left-0 w-full h-1 cursor-row-resize z-20 transition-all ${
+                resizingRow?.elementId === element.id && resizingRow?.rowIndex === rowIndex
+                  ? 'bg-blue-500 opacity-100 h-2'
+                  : 'hover:bg-blue-500 hover:opacity-50'
+              }`}
+              style={{
+                top: `${topOffset}%`,
+                transform: 'translateY(-50%)',
+              }}
+              onMouseDown={(e) => {
+                e.stopPropagation()
+                setResizingRow({ elementId: element.id, rowIndex })
+                setResizeStartPos({ x: e.clientX, y: e.clientY })
+              }}
+            />
+          )
+        })}
+      </div>
+    )
+  }
 
   const renderShape = (element: SlideElement) => {
     const { shapeType, style, lineOrientation, rotation = 0 } = element
@@ -1254,8 +4005,8 @@ export function SlideView({
             setDraggedElement(element.id)
             setDragStart({ x: e.clientX, y: e.clientY })
           }
-          // For shapes that aren't selected, select and start dragging immediately
-          else if (element.type === 'shape' && !isSelected && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+          // For shapes and tables that aren't selected, select and start dragging immediately
+          else if ((element.type === 'shape' || element.type === 'table') && !isSelected && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
             handleElementClick(element.id, e)
             setDraggedElement(element.id)
             setDragStart({ x: e.clientX, y: e.clientY })
@@ -1265,6 +4016,10 @@ export function SlideView({
         <div className="w-full h-full relative">
           {element.type === "shape" ? (
             renderShape(element)
+          ) : element.type === "table" ? (
+            renderTable(element)
+          ) : element.type === "chart" ? (
+            renderChart(element)
           ) : isEditing ? (
             <textarea
               ref={textAreaRef}
@@ -1357,7 +4112,10 @@ export function SlideView({
               onDoubleClick={(e) => {
                 e.stopPropagation()
                 // Double click enters edit mode for text elements
-                if (element.type !== "shape" && !isEditing) {
+                if (element.type === "chart") {
+                  // For charts, show the editor popup
+                  setEditingChart(element.id)
+                } else if (element.type !== "shape" && element.type !== "table" && !isEditing) {
                   setIsEditingText(element.id)
                 }
               }}
@@ -1460,6 +4218,94 @@ export function SlideView({
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button 
+                        size="icon" 
+                        variant="ghost"
+                        title="Add Table"
+                        className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
+                      >
+                        <Table className="w-3 h-3 sm:w-4 sm:h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-48">
+                      <DropdownMenuItem onClick={() => addTable(2, 2)}>
+                        <TableProperties className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                        <span className="text-xs sm:text-sm">2x2 Table</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => addTable(3, 3)}>
+                        <TableProperties className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                        <span className="text-xs sm:text-sm">3x3 Table</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => addTable(4, 4)}>
+                        <TableProperties className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                        <span className="text-xs sm:text-sm">4x4 Table</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => addTable(5, 5)}>
+                        <TableProperties className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                        <span className="text-xs sm:text-sm">5x5 Table</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => addTable(3, 4)}>
+                        <TableProperties className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                        <span className="text-xs sm:text-sm">3x4 Table</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => addTable(4, 3)}>
+                        <TableProperties className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                        <span className="text-xs sm:text-sm">4x3 Table</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  
+                  {/* Chart dropdown */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="icon" variant="ghost" className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9">
+                        <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-48">
+                      <DropdownMenuItem onClick={() => addChart('bar')}>
+                        <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                        <span className="text-xs sm:text-sm">Bar Chart</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => addChart('column')}>
+                        <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 rotate-90" />
+                        <span className="text-xs sm:text-sm">Column Chart</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => addChart('line')}>
+                        <LineChart className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                        <span className="text-xs sm:text-sm">Line Chart</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => addChart('pie')}>
+                        <PieChart className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                        <span className="text-xs sm:text-sm">Pie Chart</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => addChart('doughnut')}>
+                        <PieChart className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                        <span className="text-xs sm:text-sm">Doughnut Chart</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => addChart('waterfall')}>
+                        <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                        <span className="text-xs sm:text-sm">Waterfall Chart</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => addChart('funnel')}>
+                        <Triangle className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 rotate-180" />
+                        <span className="text-xs sm:text-sm">Funnel Chart</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  
+                  {/* AI Assistant */}
+                  <Button 
+                    size="icon" 
+                    variant={isAIAssistantOpen ? "secondary" : "ghost"}
+                    className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9 ml-1"
+                    onClick={() => setIsAIAssistantOpen(!isAIAssistantOpen)}
+                    title="AI Assistant"
+                  >
+                    <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />
+                  </Button>
                 </div>
                 {isAnyElementSelected ? (
                   <>
@@ -1487,13 +4333,19 @@ export function SlideView({
                       </Button>
                     </div>
                     
-                    {/* Text Formatting - only show for text elements */}
-                    {selectedElementData && selectedElementData.type !== "shape" && (
+                    {/* Text Formatting - show for text elements and when table cells are selected */}
+                    {selectedElementData && (selectedElementData.type !== "shape" && selectedElementData.type !== "table" || (selectedElementData.type === "table" && selectedCells.size > 0)) && (
                       <>
                         <div className="flex items-center space-x-0.5 px-1 border-r border-gray-200">
                           <Select
                             value={selectedElementData?.style.fontSize.toString() || "16"}
-                            onValueChange={(v) => updateElementStyle(selectedElement!, { fontSize: Number(v) })}
+                            onValueChange={(v) => {
+                              if (selectedElementData.type === "table" && selectedCells.size > 0) {
+                                updateSelectedCellStyles({ fontSize: Number(v) })
+                              } else {
+                                updateElementStyle(selectedElement!, { fontSize: Number(v) })
+                              }
+                            }}
                           >
                             <SelectTrigger className="w-12 sm:w-14 md:w-16 h-7 sm:h-8 md:h-9 text-[10px] sm:text-xs rounded-md">
                               <SelectValue />
@@ -1511,11 +4363,14 @@ export function SlideView({
                           <Button
                             size="icon"
                             variant={selectedElementData?.style.fontWeight === "600" ? "secondary" : "ghost"}
-                            onClick={() =>
-                              updateElementStyle(selectedElement!, {
-                                fontWeight: selectedElementData?.style.fontWeight === "600" ? "400" : "600",
-                              })
-                            }
+                            onClick={() => {
+                              const newWeight = selectedElementData?.style.fontWeight === "600" ? "400" : "600"
+                              if (selectedElementData.type === "table" && selectedCells.size > 0) {
+                                updateSelectedCellStyles({ fontWeight: newWeight })
+                              } else {
+                                updateElementStyle(selectedElement!, { fontWeight: newWeight })
+                              }
+                            }}
                             className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
                           >
                             <Bold className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -1523,11 +4378,14 @@ export function SlideView({
                           <Button
                             size="icon"
                             variant={selectedElementData?.style.fontStyle === "italic" ? "secondary" : "ghost"}
-                            onClick={() =>
-                              updateElementStyle(selectedElement!, {
-                                fontStyle: selectedElementData?.style.fontStyle === "italic" ? "normal" : "italic",
-                              })
-                            }
+                            onClick={() => {
+                              const newStyle = selectedElementData?.style.fontStyle === "italic" ? "normal" : "italic"
+                              if (selectedElementData.type === "table" && selectedCells.size > 0) {
+                                updateSelectedCellStyles({ fontStyle: newStyle })
+                              } else {
+                                updateElementStyle(selectedElement!, { fontStyle: newStyle })
+                              }
+                            }}
                             title="Italic"
                             className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
                           >
@@ -1536,11 +4394,14 @@ export function SlideView({
                           <Button
                             size="icon"
                             variant={selectedElementData?.style.textDecoration === "underline" ? "secondary" : "ghost"}
-                            onClick={() =>
-                              updateElementStyle(selectedElement!, {
-                                textDecoration: selectedElementData?.style.textDecoration === "underline" ? "none" : "underline",
-                              })
-                            }
+                            onClick={() => {
+                              const newDecoration = selectedElementData?.style.textDecoration === "underline" ? "none" : "underline"
+                              if (selectedElementData.type === "table" && selectedCells.size > 0) {
+                                updateSelectedCellStyles({ textDecoration: newDecoration })
+                              } else {
+                                updateElementStyle(selectedElement!, { textDecoration: newDecoration })
+                              }
+                            }}
                             title="Underline"
                             className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
                           >
@@ -1551,14 +4412,16 @@ export function SlideView({
                     )}
                     
                     {/* Lists and Indentation - only show for text elements */}
-                    {selectedElementData && selectedElementData.type !== "shape" && (
+                    {selectedElementData && selectedElementData.type !== "shape" && selectedElementData.type !== "table" && (
                       <>
                         <div className="flex items-center space-x-0.5 px-1 border-r border-gray-200">
                           <Button
                             size="icon"
                             variant="ghost"
                             onClick={() => {
-                              if (!isEditingText && selectedElement) {
+                              if (selectedElementData?.type === "table" && selectedCells.size > 0) {
+                                formatTableCells("bullet")
+                              } else if (!isEditingText && selectedElement) {
                                 setIsEditingText(selectedElement)
                                 setTimeout(() => formatText("bullet"), 100)
                               } else if (isEditingText) {
@@ -1575,7 +4438,9 @@ export function SlideView({
                             size="icon"
                             variant="ghost"
                             onClick={() => {
-                              if (!isEditingText && selectedElement) {
+                              if (selectedElementData?.type === "table" && selectedCells.size > 0) {
+                                formatTableCells("numberedList")
+                              } else if (!isEditingText && selectedElement) {
                                 setIsEditingText(selectedElement)
                                 setTimeout(() => formatText("numberedList"), 100)
                               } else if (isEditingText) {
@@ -1594,7 +4459,13 @@ export function SlideView({
                           <Button
                             size="icon"
                             variant={selectedElementData?.style.textAlign === "left" ? "secondary" : "ghost"}
-                            onClick={() => updateElementStyle(selectedElement!, { textAlign: "left" })}
+                            onClick={() => {
+                              if (selectedElementData.type === "table" && selectedCells.size > 0) {
+                                updateSelectedCellStyles({ textAlign: "left" })
+                              } else {
+                                updateElementStyle(selectedElement!, { textAlign: "left" })
+                              }
+                            }}
                             title="Align Left"
                             className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
                           >
@@ -1603,7 +4474,13 @@ export function SlideView({
                           <Button
                             size="icon"
                             variant={selectedElementData.style.textAlign === "center" ? "secondary" : "ghost"}
-                            onClick={() => updateElementStyle(selectedElement!, { textAlign: "center" })}
+                            onClick={() => {
+                              if (selectedElementData.type === "table" && selectedCells.size > 0) {
+                                updateSelectedCellStyles({ textAlign: "center" })
+                              } else {
+                                updateElementStyle(selectedElement!, { textAlign: "center" })
+                              }
+                            }}
                             title="Align Center"
                             className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
                           >
@@ -1612,7 +4489,13 @@ export function SlideView({
                           <Button
                             size="icon"
                             variant={selectedElementData.style.textAlign === "right" ? "secondary" : "ghost"}
-                            onClick={() => updateElementStyle(selectedElement!, { textAlign: "right" })}
+                            onClick={() => {
+                              if (selectedElementData.type === "table" && selectedCells.size > 0) {
+                                updateSelectedCellStyles({ textAlign: "right" })
+                              } else {
+                                updateElementStyle(selectedElement!, { textAlign: "right" })
+                              }
+                            }}
                             title="Align Right"
                             className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
                           >
@@ -1621,7 +4504,13 @@ export function SlideView({
                           <Button
                             size="icon"
                             variant={selectedElementData.style.textAlign === "justify" ? "secondary" : "ghost"}
-                            onClick={() => updateElementStyle(selectedElement!, { textAlign: "justify" })}
+                            onClick={() => {
+                              if (selectedElementData.type === "table" && selectedCells.size > 0) {
+                                updateSelectedCellStyles({ textAlign: "justify" })
+                              } else {
+                                updateElementStyle(selectedElement!, { textAlign: "justify" })
+                              }
+                            }}
                             title="Justify"
                             className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
                           >
@@ -1631,7 +4520,13 @@ export function SlideView({
                         <div className="flex items-center space-x-0.5 px-1 border-r border-gray-200">
                           <Select
                             value={selectedElementData.style.fontFamily}
-                            onValueChange={(v) => updateElementStyle(selectedElement!, { fontFamily: v })}
+                            onValueChange={(v) => {
+                              if (selectedElementData.type === "table" && selectedCells.size > 0) {
+                                updateSelectedCellStyles({ fontFamily: v })
+                              } else {
+                                updateElementStyle(selectedElement!, { fontFamily: v })
+                              }
+                            }}
                           >
                             <SelectTrigger className="w-24 sm:w-28 md:w-32 h-7 sm:h-8 md:h-9 text-[10px] sm:text-xs rounded-md">
                               <SelectValue />
@@ -1772,6 +4667,402 @@ export function SlideView({
                       </div>
                     )}
                     
+                    {/* Chart-specific controls */}
+                    {selectedElementData && selectedElementData.type === "chart" && (
+                      <div className="flex items-center space-x-0.5 px-1 border-r border-gray-200">
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button 
+                              size="icon" 
+                              variant="ghost"
+                              title="Edit Chart Data"
+                              className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
+                            >
+                              <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-96" align="start">
+                            <div className="space-y-4">
+                              <h3 className="font-medium text-sm">Edit Chart Data</h3>
+                              
+                              {/* Chart Type */}
+                              <div>
+                                <p className="text-xs font-medium mb-2">Chart Type</p>
+                                <Select
+                                  value={selectedElementData.chartType}
+                                  onValueChange={(value) => {
+                                    // Get default data for the new chart type
+                                    const chartType = value as SlideElement['chartType']
+                                    let defaultData: SlideElement['chartData']
+                                    
+                                    switch (chartType) {
+                                      case 'pie':
+                                      case 'doughnut':
+                                        defaultData = {
+                                          labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+                                          datasets: [{
+                                            label: 'Quarterly Revenue',
+                                            data: [30, 25, 20, 25],
+                                            backgroundColor: [
+                                              'rgba(59, 130, 246, 0.8)',
+                                              'rgba(34, 197, 94, 0.8)', 
+                                              'rgba(251, 146, 60, 0.8)',
+                                              'rgba(168, 85, 247, 0.8)'
+                                            ],
+                                            borderWidth: 2,
+                                            borderColor: '#fff'
+                                          }]
+                                        }
+                                        break
+                                      case 'line':
+                                        defaultData = {
+                                          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                                          datasets: [{
+                                            label: 'Monthly Growth',
+                                            data: [12, 19, 15, 25, 22, 30],
+                                            borderColor: 'rgba(59, 130, 246, 1)',
+                                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                            borderWidth: 2,
+                                            fill: true
+                                          }]
+                                        }
+                                        break
+                                      case 'waterfall':
+                                        defaultData = getDefaultChartData('waterfall')
+                                        break
+                                      default: // bar, column
+                                        defaultData = {
+                                          labels: ['Product A', 'Product B', 'Product C', 'Product D'],
+                                          datasets: [{
+                                            label: 'Sales by Product',
+                                            data: [65, 45, 80, 55],
+                                            backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                                            borderColor: 'rgba(59, 130, 246, 1)',
+                                            borderWidth: 1
+                                          }]
+                                        }
+                                    }
+                                    
+                                    updateElement(selectedElement!, { 
+                                      chartType: chartType,
+                                      chartData: defaultData
+                                    })
+                                  }}
+                                >
+                                  <SelectTrigger className="w-full h-8 text-xs">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="bar">Bar Chart</SelectItem>
+                                    <SelectItem value="column">Column Chart</SelectItem>
+                                    <SelectItem value="line">Line Chart</SelectItem>
+                                    <SelectItem value="pie">Pie Chart</SelectItem>
+                                    <SelectItem value="doughnut">Doughnut Chart</SelectItem>
+                                    <SelectItem value="waterfall">Waterfall Chart</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              
+                              {/* Chart Data Editor */}
+                              <div>
+                                <p className="text-xs font-medium mb-2">Data Points</p>
+                                <div className="space-y-2 max-h-48 overflow-y-auto">
+                                  {selectedElementData.chartData?.labels.map((label, index) => (
+                                    <div key={index} className="flex items-center space-x-2">
+                                      <input
+                                        type="text"
+                                        value={label}
+                                        onChange={(e) => {
+                                          const newData = JSON.parse(JSON.stringify(selectedElementData.chartData))
+                                          newData.labels[index] = e.target.value
+                                          updateElement(selectedElement!, { chartData: newData })
+                                        }}
+                                        className="flex-1 h-7 px-2 text-xs border rounded"
+                                        placeholder="Label"
+                                      />
+                                      <input
+                                        type="number"
+                                        value={selectedElementData.chartData?.datasets[0].data[index] || 0}
+                                        onChange={(e) => {
+                                          const newData = JSON.parse(JSON.stringify(selectedElementData.chartData))
+                                          newData.datasets[0].data[index] = parseFloat(e.target.value) || 0
+                                          updateElement(selectedElement!, { chartData: newData })
+                                        }}
+                                        className="w-20 h-7 px-2 text-xs border rounded"
+                                        placeholder="Value"
+                                      />
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        onClick={() => {
+                                          const newData = JSON.parse(JSON.stringify(selectedElementData.chartData))
+                                          newData.labels.splice(index, 1)
+                                          newData.datasets[0].data.splice(index, 1)
+                                          if (selectedElementData.chartType === 'pie' || selectedElementData.chartType === 'doughnut') {
+                                            // Also update backgroundColor array for pie/doughnut charts
+                                            if (Array.isArray(newData.datasets[0].backgroundColor)) {
+                                              newData.datasets[0].backgroundColor.splice(index, 1)
+                                            }
+                                          }
+                                          updateElement(selectedElement!, { chartData: newData })
+                                        }}
+                                        className="h-6 w-6"
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </Button>
+                                    </div>
+                                  ))}
+                                </div>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    const newData = JSON.parse(JSON.stringify(selectedElementData.chartData))
+                                    newData.labels.push(`Item ${newData.labels.length + 1}`)
+                                    newData.datasets[0].data.push(50)
+                                    if (selectedElementData.chartType === 'pie' || selectedElementData.chartType === 'doughnut') {
+                                      // Add a new color for pie/doughnut charts
+                                      if (Array.isArray(newData.datasets[0].backgroundColor)) {
+                                        const colors = [
+                                          'rgba(239, 68, 68, 0.8)',
+                                          'rgba(245, 158, 11, 0.8)',
+                                          'rgba(16, 185, 129, 0.8)',
+                                          'rgba(139, 92, 246, 0.8)',
+                                          'rgba(236, 72, 153, 0.8)',
+                                        ]
+                                        newData.datasets[0].backgroundColor.push(colors[newData.labels.length % colors.length])
+                                      }
+                                    }
+                                    updateElement(selectedElement!, { chartData: newData })
+                                  }}
+                                  className="w-full mt-2 h-7 text-xs"
+                                >
+                                  <Plus className="w-3 h-3 mr-1" />
+                                  Add Data Point
+                                </Button>
+                              </div>
+                              
+                              {/* Legend Toggle */}
+                              <div className="flex items-center justify-between">
+                                <p className="text-xs font-medium">Show Legend</p>
+                                <Button
+                                  size="sm"
+                                  variant={selectedElementData.chartOptions?.plugins?.legend?.display ? "secondary" : "ghost"}
+                                  onClick={() => {
+                                    const newOptions = { ...selectedElementData.chartOptions }
+                                    if (!newOptions.plugins) newOptions.plugins = {}
+                                    if (!newOptions.plugins.legend) newOptions.plugins.legend = {}
+                                    newOptions.plugins.legend.display = !newOptions.plugins.legend.display
+                                    updateElement(selectedElement!, { chartOptions: newOptions })
+                                  }}
+                                  className="h-6 px-2 text-xs"
+                                >
+                                  {selectedElementData.chartOptions?.plugins?.legend?.display ? "On" : "Off"}
+                                </Button>
+                              </div>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                    )}
+                    
+                    {/* Table-specific controls */}
+                    {selectedElementData && selectedElementData.type === "table" && (
+                      <>
+                        <div className="flex items-center space-x-0.5 px-1 border-r border-gray-200">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => {
+                              if (!selectedElementData.rows || !selectedElementData.columns || !selectedElementData.cells) return
+                              const newRows = selectedElementData.rows + 1
+                              const newCells = [...selectedElementData.cells]
+                              newCells.push(Array(selectedElementData.columns).fill(""))
+                              updateElement(selectedElement!, { 
+                                rows: newRows, 
+                                cells: newCells 
+                              })
+                            }}
+                            title="Add Row"
+                            className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
+                          >
+                            <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <Rows3 className="w-2 h-2 sm:w-3 sm:h-3" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => {
+                              if (!selectedElementData.rows || selectedElementData.rows <= 1 || !selectedElementData.cells) return
+                              const newRows = selectedElementData.rows - 1
+                              const newCells = selectedElementData.cells.slice(0, -1)
+                              updateElement(selectedElement!, { 
+                                rows: newRows, 
+                                cells: newCells 
+                              })
+                            }}
+                            title="Remove Row"
+                            className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
+                            disabled={!selectedElementData.rows || selectedElementData.rows <= 1}
+                          >
+                            <Minus className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <Rows3 className="w-2 h-2 sm:w-3 sm:h-3" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => {
+                              if (!selectedElementData.columns || !selectedElementData.cells) return
+                              const newColumns = selectedElementData.columns + 1
+                              const newCells = selectedElementData.cells.map(row => [...row, ""])
+                              const newColumnWidths = selectedElementData.columnWidths 
+                                ? [...selectedElementData.columnWidths].map(w => w * (selectedElementData.columns! / newColumns))
+                                : undefined
+                              if (newColumnWidths) {
+                                newColumnWidths.push(100 / newColumns)
+                              }
+                              updateElement(selectedElement!, { 
+                                columns: newColumns, 
+                                cells: newCells,
+                                columnWidths: newColumnWidths
+                              })
+                            }}
+                            title="Add Column"
+                            className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
+                          >
+                            <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <Columns3 className="w-2 h-2 sm:w-3 sm:h-3" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => {
+                              if (!selectedElementData.columns || selectedElementData.columns <= 1 || !selectedElementData.cells) return
+                              const newColumns = selectedElementData.columns - 1
+                              const newCells = selectedElementData.cells.map(row => row.slice(0, -1))
+                              const newColumnWidths = selectedElementData.columnWidths 
+                                ? selectedElementData.columnWidths.slice(0, -1).map(w => w * (selectedElementData.columns! / newColumns))
+                                : undefined
+                              updateElement(selectedElement!, { 
+                                columns: newColumns, 
+                                cells: newCells,
+                                columnWidths: newColumnWidths
+                              })
+                            }}
+                            title="Remove Column"
+                            className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
+                            disabled={!selectedElementData.columns || selectedElementData.columns <= 1}
+                          >
+                            <Minus className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <Columns3 className="w-2 h-2 sm:w-3 sm:h-3" />
+                          </Button>
+                        </div>
+                        
+                        <div className="flex items-center space-x-0.5 px-1 border-r border-gray-200">
+                          <Button
+                            size="icon"
+                            variant={selectedElementData.headerRow ? "secondary" : "ghost"}
+                            onClick={() => updateElement(selectedElement!, { 
+                              headerRow: !selectedElementData.headerRow 
+                            })}
+                            title="Toggle Header Row"
+                            className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
+                          >
+                            <TableProperties className="w-3 h-3 sm:w-4 sm:h-4" />
+                          </Button>
+                        </div>
+                        
+                        {/* Table Border Controls */}
+                        <div className="flex items-center space-x-0.5 px-1 border-r border-gray-200">
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button 
+                                size="icon" 
+                                variant="ghost"
+                                title="Table Borders"
+                                className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
+                              >
+                                <Square className="w-3 h-3 sm:w-4 sm:h-4" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-64" align="start">
+                              <div className="space-y-3">
+                                <div>
+                                  <p className="text-xs font-medium mb-2">Border Style</p>
+                                  <Select
+                                    value={selectedElementData.borderStyle?.style || "solid"}
+                                    onValueChange={(value) => {
+                                      const borderStyle = {
+                                        color: selectedElementData.borderStyle?.color || "#e5e7eb",
+                                        width: selectedElementData.borderStyle?.width || 1,
+                                        style: value as "solid" | "dashed" | "dotted" | "none"
+                                      }
+                                      updateElement(selectedElement!, { borderStyle })
+                                    }}
+                                  >
+                                    <SelectTrigger className="w-full h-8 text-xs">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="solid">Solid</SelectItem>
+                                      <SelectItem value="dashed">Dashed</SelectItem>
+                                      <SelectItem value="dotted">Dotted</SelectItem>
+                                      <SelectItem value="none">None</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                
+                                <div>
+                                  <p className="text-xs font-medium mb-2">Border Width</p>
+                                  <div className="flex items-center space-x-2">
+                                    <input
+                                      type="range"
+                                      min="1"
+                                      max="10"
+                                      value={selectedElementData.borderStyle?.width || 1}
+                                      onChange={(e) => {
+                                        const borderStyle = {
+                                          color: selectedElementData.borderStyle?.color || "#e5e7eb",
+                                          width: parseInt(e.target.value),
+                                          style: selectedElementData.borderStyle?.style || "solid"
+                                        }
+                                        updateElement(selectedElement!, { borderStyle })
+                                      }}
+                                      className="flex-1"
+                                    />
+                                    <span className="text-xs w-8 text-right">
+                                      {selectedElementData.borderStyle?.width || 1}px
+                                    </span>
+                                  </div>
+                                </div>
+                                
+                                <div>
+                                  <p className="text-xs font-medium mb-2">Border Color</p>
+                                  <div className="grid grid-cols-8 gap-1">
+                                    {colors.map((c) => (
+                                      <button
+                                        key={c}
+                                        className="w-6 h-6 rounded border hover:scale-110 transition-transform"
+                                        style={{ backgroundColor: c }}
+                                        onClick={() => {
+                                          const borderStyle = {
+                                            color: c,
+                                            width: selectedElementData.borderStyle?.width || 1,
+                                            style: selectedElementData.borderStyle?.style || "solid"
+                                          }
+                                          updateElement(selectedElement!, { borderStyle })
+                                        }}
+                                      />
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                      </>
+                    )}
+                    
                     <div className="flex items-center space-x-0.5 px-1 border-r border-gray-200">
                       <Popover>
                     <PopoverTrigger asChild>
@@ -1872,6 +5163,45 @@ export function SlideView({
                                 </div>
                               </div>
                             )}
+                          </>
+                        ) : selectedElementData?.type === "table" && selectedCells.size > 0 ? (
+                          // For table cells, show cell-specific colors
+                          <>
+                            <div>
+                              <p className="text-xs font-medium mb-2">Cell Text Color</p>
+                              <div className="grid grid-cols-8 gap-1">
+                                {colors.map((c) => (
+                                  <button
+                                    key={c}
+                                    className="w-6 h-6 rounded border hover:scale-110 transition-transform"
+                                    style={{ backgroundColor: c }}
+                                    onClick={() => updateSelectedCellStyles({ color: c })}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-xs font-medium mb-2">Cell Background</p>
+                              <div className="grid grid-cols-8 gap-1">
+                                {colors.concat(["transparent"]).map((c) => (
+                                  <button
+                                    key={c}
+                                    className="w-6 h-6 rounded border hover:scale-110 transition-transform"
+                                    style={{ 
+                                      backgroundColor: c === "transparent" ? "white" : c,
+                                      backgroundImage: c === "transparent" 
+                                        ? "linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc), linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%, #ccc)"
+                                        : "none",
+                                      backgroundSize: "8px 8px",
+                                      backgroundPosition: "0 0, 4px 4px"
+                                    }}
+                                    onClick={() => updateSelectedCellStyles({ 
+                                      backgroundColor: c === "transparent" ? "transparent" : c 
+                                    })}
+                                  />
+                                ))}
+                              </div>
+                            </div>
                           </>
                         ) : (
                           // For text elements, show both text and background colors
@@ -2164,6 +5494,105 @@ export function SlideView({
           </CardContent>
         </Card>
       </div>
+      
+      {/* Chart Editor Popup */}
+      {editingChart && (() => {
+        const chartElement = elements.find(el => el.id === editingChart)
+        if (!chartElement) return null
+        
+        // Calculate position next to the chart
+        const slideRect = slideRef.current?.getBoundingClientRect()
+        if (!slideRect) {
+          // Fallback to center screen if slide ref not available
+          return (
+            <div 
+              ref={chartEditorRef}
+              className="fixed bg-white rounded-lg shadow-2xl border border-gray-200 p-4 w-96 max-h-[80vh] overflow-y-auto z-50"
+              style={{
+                left: '50%',
+                top: '50%',
+                transform: 'translate(-50%, -50%)',
+              }}
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-medium text-sm">Edit Chart Data</h3>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => setEditingChart(null)}
+                  className="h-6 w-6"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+              <div className="space-y-4">
+                {renderChartEditorContent(chartElement)}
+              </div>
+            </div>
+          )
+        }
+        
+        const chartScreenX = chartElement.position.x * (zoom / 100) + slideRect.left
+        const chartScreenY = chartElement.position.y * (zoom / 100) + slideRect.top
+        const chartWidth = chartElement.size.width * (zoom / 100)
+        const chartHeight = chartElement.size.height * (zoom / 100)
+        
+        // Position the editor to the right of the chart if there's space, otherwise to the left
+        const editorWidth = 384 // w-96 = 24rem = 384px
+        const windowWidth = window.innerWidth
+        const spaceOnRight = windowWidth - (chartScreenX + chartWidth)
+        const shouldPositionRight = spaceOnRight > editorWidth + 20
+        
+        let editorX = shouldPositionRight 
+          ? chartScreenX + chartWidth + 10
+          : chartScreenX - editorWidth - 10
+          
+        // Ensure editor stays within viewport
+        editorX = Math.max(10, Math.min(windowWidth - editorWidth - 10, editorX))
+        
+        // Center vertically with the chart
+        let editorY = chartScreenY + (chartHeight / 2)
+        
+        // Ensure editor doesn't go off screen vertically
+        const maxHeight = window.innerHeight * 0.8
+        editorY = Math.max(maxHeight / 2 + 10, Math.min(window.innerHeight - maxHeight / 2 - 10, editorY))
+        
+        return (
+          <div 
+            ref={chartEditorRef}
+            className="fixed bg-white rounded-lg shadow-2xl border border-gray-200 p-4 w-96 max-h-[80vh] overflow-y-auto z-50"
+            style={{
+              left: `${editorX}px`,
+              top: `${editorY}px`,
+              transform: 'translateY(-50%)',
+            }}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-medium text-sm">Edit Chart Data</h3>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => setEditingChart(null)}
+                className="h-6 w-6"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            <div className="space-y-4">
+              {renderChartEditorContent(chartElement)}
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* AI Assistant */}
+      <AIAssistant
+        currentSlide={slide}
+        elements={elements}
+        onAction={handleAIAction}
+        isOpen={isAIAssistantOpen}
+        onClose={() => setIsAIAssistantOpen(false)}
+      />
     </div>
   )
 }
