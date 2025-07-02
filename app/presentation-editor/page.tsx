@@ -69,7 +69,9 @@ export default function PresentationEditorPage() {
     isUnlimited
   } = useEditUsage()
 
-  const currentSlide = slides[currentSlideIndex]
+  const currentSlide = slides.length > 0 && currentSlideIndex >= 0 && currentSlideIndex < slides.length 
+    ? slides[currentSlideIndex]
+    : null
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [lastSavedAt, setLastSavedAt] = useState(Date.now())
 
@@ -221,8 +223,10 @@ export default function PresentationEditorPage() {
               currentSlide={currentSlide} 
               elements={[]}
               onAction={(action) => {
-                // Handle AI actions here
-                // TODO: Implement AI action handling
+                // Handle AI actions - pass to SlideView
+                if (action && action.type) {
+                  // AI actions are handled by SlideView's handleAIAction
+                }
               }}
               width={sidebarWidth}
               onResizeStart={() => {

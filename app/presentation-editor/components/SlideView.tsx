@@ -63,8 +63,7 @@ import {
   TrendingUp,
   X,
 } from "lucide-react"
-import { WaterfallChartD3 } from '@/components/charts/think-cell-d3/WaterfallChartD3'
-import { ProfessionalBarChartD3 } from '@/components/charts/think-cell-d3/ProfessionalBarChartD3'
+import { ChartRenderer } from './ChartRenderer'
 
 interface SlideElement {
   id: string
@@ -1795,9 +1794,10 @@ export function SlideView({
                 textAlign: properties.textAlign || 'left',
                 lineHeight: 1.5,
                 letterSpacing: 0,
-                opacity: 100,
+                opacity: 1,
                 fontFamily: 'Inter',
-              }
+              },
+              zIndex: elements.length > 0 ? Math.max(...elements.map((el) => el.zIndex)) + 1 : 1
             }
             break
             
@@ -1822,9 +1822,10 @@ export function SlideView({
                 textAlign: 'center',
                 lineHeight: 1.5,
                 letterSpacing: 0,
-                opacity: 100,
+                opacity: 1,
                 fontFamily: 'Inter',
-              }
+              },
+              zIndex: elements.length > 0 ? Math.max(...elements.map((el) => el.zIndex)) + 1 : 1
             }
             break
             
@@ -1837,14 +1838,13 @@ export function SlideView({
               size: size || { width: 400, height: 300 },
               chartType: properties.chartType || 'bar',
               chartData: properties.chartData || {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
-                datasets: [{
-                  label: 'Data',
-                  data: [12, 19, 3, 5, 2],
-                  backgroundColor: 'rgba(59, 130, 246, 0.8)',
-                  borderColor: 'rgba(59, 130, 246, 1)',
-                  borderWidth: 1
-                }]
+                data: [
+                  { category: 'Jan', value: 12 },
+                  { category: 'Feb', value: 19 },
+                  { category: 'Mar', value: 3 },
+                  { category: 'Apr', value: 5 },
+                  { category: 'May', value: 2 }
+                ]
               },
               chartOptions: properties.chartOptions,
               smartLabels: properties.smartLabels,
@@ -1862,30 +1862,19 @@ export function SlideView({
                 textAlign: 'left',
                 lineHeight: 1.5,
                 letterSpacing: 0,
-                opacity: 100,
+                opacity: 1,
                 fontFamily: 'Inter',
-              }
+              },
+              zIndex: elements.length > 0 ? Math.max(...elements.map((el) => el.zIndex)) + 1 : 1
             }
             break
             
           case 'table':
             const rows = properties.rows || 3
             const columns = properties.columns || 3
-            const cells: any = {}
-            for (let r = 0; r < rows; r++) {
-              for (let c = 0; c < columns; c++) {
-                cells[`${r}-${c}`] = {
-                  content: '',
-                  style: {
-                    backgroundColor: '#ffffff',
-                    color: '#000000',
-                    fontWeight: '400',
-                    textAlign: 'center',
-                    borderColor: '#e5e7eb',
-                  }
-                }
-              }
-            }
+            const cells: string[][] = Array(rows).fill(null).map(() => Array(columns).fill(""))
+            const columnWidths = Array(columns).fill(100 / columns)
+            const rowHeights = Array(rows).fill(100 / rows)
             
             newElement = {
               id: `table-${Date.now()}`,
@@ -1896,6 +1885,15 @@ export function SlideView({
               rows,
               columns,
               cells,
+              columnWidths,
+              rowHeights,
+              headerRow: true,
+              borderStyle: {
+                color: '#e5e7eb',
+                width: 1,
+                style: 'solid' as const
+              },
+              cellStyles: Array(rows).fill(null).map(() => Array(columns).fill({})),
               style: {
                 fontSize: 14,
                 fontWeight: '400',
@@ -1909,9 +1907,10 @@ export function SlideView({
                 textAlign: 'center',
                 lineHeight: 1.5,
                 letterSpacing: 0,
-                opacity: 100,
+                opacity: 1,
                 fontFamily: 'Inter',
-              }
+              },
+              zIndex: elements.length > 0 ? Math.max(...elements.map((el) => el.zIndex)) + 1 : 1
             }
             break
             
@@ -2673,102 +2672,12 @@ export function SlideView({
   }, [selectedElement, elements])
 
   const renderChart = (element: SlideElement) => {
-    if (!element.chartType || !element.chartData) return null
-
-    // Validate chart data - D3 charts use data array instead of labels/datasets
-    if (!element.chartData.data || element.chartData.data.length === 0) {
-      return (
-        <div className="w-full h-full flex items-center justify-center text-gray-500 bg-gray-50 rounded">
-          <div className="text-center">
-            <BarChart3 className="w-12 h-12 mx-auto mb-2 text-gray-400" />
-            <p className="text-sm">Invalid chart data</p>
-            <p className="text-xs text-gray-400 mt-1">Double-click to edit</p>
-          </div>
-        </div>
-      )
-    }
-
-    const chartStyle = {
-      width: '100%',
-      height: '100%',
-      padding: '16px',
-      backgroundColor: element.style.backgroundColor,
-      borderRadius: `${element.style.borderRadius}px`,
-      border: element.style.borderWidth > 0 ? `${element.style.borderWidth}px solid ${element.style.borderColor}` : 'none',
-    }
-
-    try {
-      return (
-        <div 
-          className="w-full h-full relative group cursor-pointer" 
-          style={chartStyle}
-          data-chart-element="true"
-          onDoubleClick={(e) => {
-            e.stopPropagation()
-            setEditingChart(element.id)
-          }}
-        >
-          {element.chartType === 'bar' && element.chartData?.data && (
-            <ProfessionalBarChartD3
-              data={element.chartData.data}
-              width={element.size.width - 32}
-              height={element.size.height - 32}
-              type="single"
-            />
-          )}
-          {element.chartType === 'bar-grouped' && element.chartData?.data && (
-            <ProfessionalBarChartD3
-              data={element.chartData.data}
-              width={element.size.width - 32}
-              height={element.size.height - 32}
-              type="grouped"
-            />
-          )}
-          {element.chartType === 'bar-stacked' && element.chartData?.data && (
-            <ProfessionalBarChartD3
-              data={element.chartData.data}
-              width={element.size.width - 32}
-              height={element.size.height - 32}
-              type="stacked"
-            />
-          )}
-          {element.chartType === 'waterfall' && element.chartData?.data && (
-            <WaterfallChartD3
-              data={element.chartData.data}
-              width={element.size.width - 32}
-              height={element.size.height - 32}
-            />
-          )}
-          {element.chartType === 'line' && (
-            <div className="flex items-center justify-center h-full text-gray-500">
-              Line chart coming soon
-            </div>
-          )}
-          {element.chartType === 'pie' && (
-            <div className="flex items-center justify-center h-full text-gray-500">
-              Pie chart coming soon
-            </div>
-          )}
-          {/* Hover overlay hint */}
-          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-5 transition-all duration-200 flex items-center justify-center">
-            <span className="text-xs text-gray-700 bg-white px-2 py-1 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-              Double-click to edit data
-            </span>
-          </div>
-        </div>
-      )
-    } catch (error) {
-      // Log chart rendering error - in production, send to error tracking
-      return (
-        <div className="w-full h-full flex items-center justify-center text-gray-500 bg-gray-50 rounded">
-          <div className="text-center">
-            <BarChart3 className="w-12 h-12 mx-auto mb-2 text-gray-400" />
-            <p className="text-sm">Error rendering chart</p>
-            <p className="text-xs text-gray-400 mt-1">Double-click to edit</p>
-          </div>
-        </div>
-      )
-    }
+    return (
+      <ChartRenderer 
+        element={element} 
+        onDoubleClick={(elementId) => setEditingChart(elementId)}
+      />
+    )
   }
 
   const renderTable = (element: SlideElement) => {

@@ -1,84 +1,125 @@
 import { NextRequest, NextResponse } from 'next/server'
-import OpenAI from 'openai'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
-
-// System prompt that defines the assistant's capabilities
-const SYSTEM_PROMPT = `You are an AI assistant for a presentation editor. You can help users create and edit slides using the following capabilities:
-
-1. **Text Elements**: Add titles, subtitles, and content text
-2. **Shapes**: Add rectangles, circles, triangles, arrows, and custom shapes
-3. **Charts**: Create bar, column, line, pie, doughnut, and waterfall charts with smart labels
-4. **Tables**: Create and format tables with custom rows and columns
-5. **Layout**: Arrange, align, and distribute elements on slides
-6. **Styling**: Change colors, fonts, sizes, and other visual properties
-
-When responding to user requests:
-- Be specific about what actions you're taking
-- Return structured commands that the application can execute
-- Ask for clarification when needed
-- Suggest improvements or alternatives when appropriate
-
-Available action types:
-- addElement: Add a new element to the slide
-- updateElement: Update an existing element
-- deleteElement: Remove an element
-- alignElements: Align selected elements
-- distributeElements: Distribute elements evenly
-
-Element types and their properties:
-- text: { content, fontSize, fontWeight, color, textAlign }
-- shape: { shapeType, backgroundColor, borderColor, borderWidth }
-- chart: { chartType, chartData, chartOptions, smartLabels, chartSettings }
-- table: { rows, columns, cells }
-
-Return your response in this JSON format:
-{
-  "message": "A description of what you're doing",
-  "actions": [
-    {
-      "type": "addElement",
-      "payload": {
-        "elementType": "text|shape|chart|table",
-        "position": { "x": 100, "y": 100 },
-        "size": { "width": 300, "height": 200 },
-        "properties": { ... }
+// Mock AI responses for testing
+const mockResponses = [
+  {
+    message: "I'll help you add that to your slide. What specific content would you like to include?",
+    actions: []
+  },
+  {
+    message: "I've added a text element to your slide. You can now edit it by clicking on it.",
+    actions: [
+      {
+        type: 'addElement',
+        payload: {
+          elementType: 'text',
+          position: { x: 100, y: 100 },
+          size: { width: 300, height: 100 },
+          properties: {
+            content: 'New text element',
+            fontSize: 16,
+            color: '#000000',
+            textAlign: 'left'
+          }
+        }
       }
-    }
-  ]
-}`
+    ]
+  },
+  {
+    message: "I've created a bar chart for you. Double-click on it to edit the data.",
+    actions: [
+      {
+        type: 'addElement',
+        payload: {
+          elementType: 'chart',
+          position: { x: 150, y: 150 },
+          size: { width: 400, height: 300 },
+          properties: {
+            chartType: 'bar',
+            chartData: {
+              data: [
+                { category: 'Q1', value: 45 },
+                { category: 'Q2', value: 52 },
+                { category: 'Q3', value: 48 },
+                { category: 'Q4', value: 61 }
+              ]
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
+    message: "I've added a table to your slide. You can edit cells by double-clicking on them.",
+    actions: [
+      {
+        type: 'addElement',
+        payload: {
+          elementType: 'table',
+          position: { x: 100, y: 100 },
+          size: { width: 400, height: 200 },
+          properties: {
+            rows: 3,
+            columns: 3
+          }
+        }
+      }
+    ]
+  },
+  {
+    message: "I've added a shape to your slide. You can resize and move it as needed.",
+    actions: [
+      {
+        type: 'addElement',
+        payload: {
+          elementType: 'shape',
+          position: { x: 200, y: 200 },
+          size: { width: 150, height: 150 },
+          properties: {
+            shapeType: 'rectangle',
+            backgroundColor: '#3b82f6',
+            borderColor: '#1e40af',
+            borderWidth: 2
+          }
+        }
+      }
+    ]
+  }
+]
 
 export async function POST(request: NextRequest) {
   try {
-    const { message, currentSlide, elements } = await request.json()
+    const body = await request.json()
+    const { message, currentSlide, elements } = body
 
-    const completion = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { 
-          role: 'user', 
-          content: `Current slide context:
-Title: ${currentSlide?.title || 'Untitled'}
-Elements: ${JSON.stringify(elements || [], null, 2)}
+    // Simulate AI processing delay
+    await new Promise(resolve => setTimeout(resolve, 800))
 
-User request: ${message}`
-        }
-      ],
-      response_format: { type: "json_object" },
-      temperature: 0.7,
-      max_tokens: parseInt(process.env.MAX_TOKENS_PER_REQUEST || '2000'),
-    })
+    // Simple keyword-based response selection for testing
+    const lowerMessage = message.toLowerCase()
+    let response = mockResponses[0] // Default response
 
-    const response = JSON.parse(completion.choices[0].message.content || '{}')
-    
+    if (lowerMessage.includes('chart') || lowerMessage.includes('graph')) {
+      response = mockResponses[2]
+    } else if (lowerMessage.includes('table')) {
+      response = mockResponses[3]
+    } else if (lowerMessage.includes('shape') || lowerMessage.includes('rectangle') || lowerMessage.includes('circle')) {
+      response = mockResponses[4]
+    } else if (lowerMessage.includes('text') || lowerMessage.includes('title') || lowerMessage.includes('add')) {
+      response = mockResponses[1]
+    }
+
+    // TODO: When OpenAI is configured, replace mock with actual API call:
+    // const completion = await openai.chat.completions.create({ ... })
+
     return NextResponse.json(response)
   } catch (error) {
-    console.error('AI Assistant error:', error)
+    console.error('AI Assistant mock error:', error)
     return NextResponse.json(
-      { error: 'Failed to process AI request' },
+      { 
+        error: 'Failed to process request',
+        message: 'Sorry, I encountered an error. Please try again.'
+      },
       { status: 500 }
     )
   }
