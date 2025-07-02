@@ -62,37 +62,9 @@ import {
   PieChart,
   TrendingUp,
   X,
-  Sparkles,
 } from "lucide-react"
-import { AIAssistant } from "./AIAssistant"
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  LineElement,
-  PointElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
-} from 'chart.js'
-import { Bar, Line, Pie, Doughnut } from 'react-chartjs-2'
-
-// Register Chart.js components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  LineElement,
-  PointElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-)
+import { WaterfallChartD3 } from '@/components/charts/think-cell-d3/WaterfallChartD3'
+import { ProfessionalBarChartD3 } from '@/components/charts/think-cell-d3/ProfessionalBarChartD3'
 
 interface SlideElement {
   id: string
@@ -113,6 +85,8 @@ interface SlideElement {
     fontFamily: string
     opacity: number
     borderRadius: number
+    lineHeight?: number
+    letterSpacing?: number
     lineStyle?: "solid" | "dashed" | "dotted"
     lineThickness?: number
   }
@@ -139,9 +113,9 @@ interface SlideElement {
   rowHeights?: number[]
   headerRow?: boolean
   borderStyle?: {
-    color: string
-    width: number
-    style: "solid" | "dashed" | "dotted" | "none"
+    color?: string
+    width?: number
+    style?: "solid" | "dashed" | "dotted" | "none"
   }
   cellBorders?: {
     top?: { color: string; width: number; style: "solid" | "dashed" | "dotted" | "none" }
@@ -150,18 +124,26 @@ interface SlideElement {
     left?: { color: string; width: number; style: "solid" | "dashed" | "dotted" | "none" }
   }[][]
   // Chart-specific properties
-  chartType?: "bar" | "line" | "pie" | "doughnut" | "column" | "waterfall" | "funnel"
+  chartType?: "bar" | "bar-grouped" | "bar-stacked" | "waterfall" | "line" | "pie"
   chartData?: {
-    labels: string[]
-    datasets: {
+    // D3 format - array of data points
+    data?: Array<{
+      category?: string
+      name?: string
+      value: number
+      series?: string
+      type?: 'start' | 'positive' | 'negative' | 'end'
+    }>
+    // Legacy Chart.js format (for compatibility during migration)
+    labels?: string[]
+    datasets?: {
       label: string
       data: number[]
       backgroundColor?: string | string[]
       borderColor?: string | string[]
       borderWidth?: number
       fill?: boolean
-      stack?: string // For stacking
-      // Waterfall-specific properties
+      stack?: string
       waterfall?: {
         categories?: ('increase' | 'decrease' | 'total' | 'subtotal')[]
         cumulative?: number[]
@@ -212,17 +194,17 @@ interface SlideElement {
   }
   // Smart label configuration
   smartLabels?: {
-    enabled: boolean
-    format: 'number' | 'currency' | 'percentage'
-    decimals: number
+    enabled?: boolean
+    format?: 'number' | 'currency' | 'percentage'
+    decimals?: number
     prefix?: string
     suffix?: string
-    template: string // e.g., "{value} ({percentage}%)"
-    showValue: boolean
-    showPercentage: boolean
-    showDelta: boolean
-    position: 'auto' | 'inside' | 'outside' | 'center' | 'end'
-    connectorLines: boolean
+    template?: string // e.g., "{value} ({percentage}%)"
+    showValue?: boolean
+    showPercentage?: boolean
+    showDelta?: boolean
+    position?: 'auto' | 'inside' | 'outside' | 'center' | 'end'
+    connectorLines?: boolean
     fontSize?: number
     fontWeight?: string
   }
@@ -300,7 +282,6 @@ export function SlideView({
   const [resizeStartPos, setResizeStartPos] = useState<{ x: number; y: number } | null>(null)
   const [editingCellValue, setEditingCellValue] = useState<string>("")
   const [editingChart, setEditingChart] = useState<string | null>(null)
-  const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false)
   const slideRef = useRef<HTMLDivElement>(null)
   const textAreaRef = useRef<HTMLTextAreaElement>(null)
   const tableCellRef = useRef<HTMLTextAreaElement>(null)
@@ -393,11 +374,9 @@ export function SlideView({
           <p className="text-xs font-medium mb-2">Chart Title</p>
           <input
             type="text"
-            value={chartElement.chartData?.datasets[0].label || ''}
+            value={chartElement.content || ''}
             onChange={(e) => {
-              const newData = JSON.parse(JSON.stringify(chartElement.chartData))
-              newData.datasets[0].label = e.target.value
-              updateElement(chartElement.id, { chartData: newData })
+              updateElement(chartElement.id, { content: e.target.value })
             }}
             className="w-full h-8 px-2 text-xs border rounded"
             placeholder="Enter chart title"
@@ -411,56 +390,7 @@ export function SlideView({
             value={chartElement.chartType}
             onValueChange={(value) => {
               const chartType = value as SlideElement['chartType']
-              let defaultData: SlideElement['chartData']
-              
-              switch (chartType) {
-                case 'pie':
-                case 'doughnut':
-                  defaultData = {
-                    labels: ['Q1', 'Q2', 'Q3', 'Q4'],
-                    datasets: [{
-                      label: 'Quarterly Revenue',
-                      data: [30, 25, 20, 25],
-                      backgroundColor: [
-                        'rgba(59, 130, 246, 0.8)',
-                        'rgba(34, 197, 94, 0.8)', 
-                        'rgba(251, 146, 60, 0.8)',
-                        'rgba(168, 85, 247, 0.8)'
-                      ],
-                      borderWidth: 2,
-                      borderColor: '#fff'
-                    }]
-                  }
-                  break
-                case 'line':
-                  defaultData = {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                    datasets: [{
-                      label: 'Monthly Growth',
-                      data: [12, 19, 15, 25, 22, 30],
-                      borderColor: 'rgba(59, 130, 246, 1)',
-                      backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                      borderWidth: 2,
-                      fill: true
-                    }]
-                  }
-                  break
-                case 'waterfall':
-                  defaultData = getDefaultChartData('waterfall')
-                  break
-                default: // bar, column
-                  defaultData = {
-                    labels: ['Product A', 'Product B', 'Product C', 'Product D'],
-                    datasets: [{
-                      label: 'Sales by Product',
-                      data: [65, 45, 80, 55],
-                      backgroundColor: 'rgba(59, 130, 246, 0.8)',
-                      borderColor: 'rgba(59, 130, 246, 1)',
-                      borderWidth: 1
-                    }]
-                  }
-              }
-              
+              const defaultData = getDefaultChartData(chartType)
               updateElement(chartElement.id, { 
                 chartType: chartType,
                 chartData: defaultData
@@ -472,11 +402,11 @@ export function SlideView({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="bar">Bar Chart</SelectItem>
-              <SelectItem value="column">Column Chart</SelectItem>
+              <SelectItem value="bar-grouped">Grouped Bar Chart</SelectItem>
+              <SelectItem value="bar-stacked">Stacked Bar Chart</SelectItem>
+              <SelectItem value="waterfall">Waterfall Chart</SelectItem>
               <SelectItem value="line">Line Chart</SelectItem>
               <SelectItem value="pie">Pie Chart</SelectItem>
-              <SelectItem value="doughnut">Doughnut Chart</SelectItem>
-              <SelectItem value="waterfall">Waterfall Chart</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -489,12 +419,11 @@ export function SlideView({
               // For waterfall charts, show increase/decrease/total colors
               <div className="space-y-2">
                 {[
-                  { label: 'Increase', key: 'increaseColor', default: 'rgba(34, 197, 94, 0.8)' },
-                  { label: 'Decrease', key: 'decreaseColor', default: 'rgba(239, 68, 68, 0.8)' },
-                  { label: 'Total', key: 'totalColor', default: 'rgba(107, 114, 128, 0.8)' },
+                  { label: 'Positive', key: 'positive', default: '#166534' },
+                  { label: 'Negative', key: 'negative', default: '#C93C37' },
+                  { label: 'Start/End', key: 'start', default: '#4A6FA5' },
                 ].map(({ label, key, default: defaultColor }) => {
-                  const waterfall = chartElement.chartData?.datasets[0].waterfall
-                  const currentColor = waterfall?.[key as keyof typeof waterfall] || defaultColor
+                  const currentColor = defaultColor
                   
                   return (
                     <div key={key} className="flex items-center justify-between">
@@ -533,18 +462,9 @@ export function SlideView({
                                 className="w-6 h-6 rounded border border-gray-300 hover:scale-110 transition-transform"
                                 style={{ backgroundColor: color }}
                                 onClick={() => {
-                                  const newData = JSON.parse(JSON.stringify(chartElement.chartData))
-                                  if (!newData.datasets[0].waterfall) {
-                                    newData.datasets[0].waterfall = {
-                                      categories: [],
-                                      connectorColor: 'rgba(0, 0, 0, 0.3)',
-                                      totalColor: 'rgba(107, 114, 128, 0.8)',
-                                      increaseColor: 'rgba(34, 197, 94, 0.8)',
-                                      decreaseColor: 'rgba(239, 68, 68, 0.8)',
-                                    }
-                                  }
-                                  newData.datasets[0].waterfall[key] = color
-                                  updateElement(chartElement.id, { chartData: newData })
+                                  // Color customization for D3 charts is handled by the chart component
+                                  // For now, we'll just update the element to trigger a re-render
+                                  updateElement(chartElement.id, { chartData: { ...chartElement.chartData } })
                                   addToUndoStack()
                                 }}
                               />
@@ -556,16 +476,15 @@ export function SlideView({
                   )
                 })}
               </div>
-            ) : (chartElement.chartType === 'pie' || chartElement.chartType === 'doughnut') ? (
-              // For pie/doughnut charts, show color for each data point
-              chartElement.chartData?.labels.map((label, index) => {
-                const currentColor = Array.isArray(chartElement.chartData?.datasets[0].backgroundColor) 
-                  ? chartElement.chartData.datasets[0].backgroundColor[index] 
-                  : 'rgba(59, 130, 246, 0.8)'
+            ) : (chartElement.chartType === 'pie') ? (
+              // For pie charts, show color for each data point
+              chartElement.chartData?.data?.map((item, index) => {
+                const colors = ['#4A6FA5', '#166534', '#E07B39', '#C93C37', '#7E57C2', '#5D7092']
+                const currentColor = colors[index % colors.length]
                 
                 return (
                   <div key={index} className="flex items-center justify-between">
-                    <span className="text-xs text-gray-600 truncate max-w-[120px]">{label}</span>
+                    <span className="text-xs text-gray-600 truncate max-w-[120px]">{item.category || item.name || 'Item'}</span>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
@@ -600,12 +519,9 @@ export function SlideView({
                               className="w-6 h-6 rounded border border-gray-300 hover:scale-110 transition-transform"
                               style={{ backgroundColor: color }}
                               onClick={() => {
-                                const newData = JSON.parse(JSON.stringify(chartElement.chartData))
-                                if (!Array.isArray(newData.datasets[0].backgroundColor)) {
-                                  newData.datasets[0].backgroundColor = Array(newData.labels.length).fill('rgba(59, 130, 246, 0.8)')
-                                }
-                                newData.datasets[0].backgroundColor[index] = color
-                                updateElement(chartElement.id, { chartData: newData })
+                                // Color customization for D3 charts is handled by the chart component
+                                // For now, we'll just update the element to trigger a re-render
+                                updateElement(chartElement.id, { chartData: { ...chartElement.chartData } })
                                 addToUndoStack()
                               }}
                             />
@@ -617,7 +533,7 @@ export function SlideView({
                 )
               })
             ) : (
-              // For bar/line/column charts, show single color selector
+              // For bar/line charts, show single color selector
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-600">Primary Color</span>
                 <Popover>
@@ -630,9 +546,7 @@ export function SlideView({
                       <div
                         className="w-full h-full rounded"
                         style={{ 
-                          backgroundColor: chartElement.chartType === 'line' 
-                            ? chartElement.chartData?.datasets[0].borderColor || 'rgba(59, 130, 246, 1)'
-                            : chartElement.chartData?.datasets[0].backgroundColor || 'rgba(59, 130, 246, 0.8)'
+                          backgroundColor: '#4A6FA5'
                         }}
                       />
                     </Button>
@@ -658,15 +572,9 @@ export function SlideView({
                           className="w-6 h-6 rounded border border-gray-300 hover:scale-110 transition-transform"
                           style={{ backgroundColor: colorSet.bg }}
                           onClick={() => {
-                            const newData = JSON.parse(JSON.stringify(chartElement.chartData))
-                            if (chartElement.chartType === 'line') {
-                              newData.datasets[0].borderColor = colorSet.border
-                              newData.datasets[0].backgroundColor = colorSet.bg.replace('0.8', '0.1')
-                            } else {
-                              newData.datasets[0].backgroundColor = colorSet.bg
-                              newData.datasets[0].borderColor = colorSet.border
-                            }
-                            updateElement(chartElement.id, { chartData: newData })
+                            // Color customization for D3 charts is handled by the chart component
+                            // For now, we'll just update the element to trigger a re-render
+                            updateElement(chartElement.id, { chartData: { ...chartElement.chartData } })
                             addToUndoStack()
                           }}
                         />
@@ -684,30 +592,19 @@ export function SlideView({
           <div>
             <p className="text-xs font-medium mb-2">Category Types</p>
             <div className="space-y-2 max-h-36 overflow-y-auto">
-              {chartElement.chartData?.labels.map((label, index) => {
-                const waterfall = chartElement.chartData?.datasets[0].waterfall
-                const category = waterfall?.categories?.[index] || 'increase'
+              {chartElement.chartData?.data?.map((item, index) => {
+                const category = item.type || 'positive'
                 
                 return (
                   <div key={index} className="flex items-center justify-between">
-                    <span className="text-xs text-gray-600 truncate max-w-[100px]">{label}</span>
+                    <span className="text-xs text-gray-600 truncate max-w-[100px]">{item.name || item.category || 'Item'}</span>
                     <Select
                       value={category}
                       onValueChange={(value) => {
                         const newData = JSON.parse(JSON.stringify(chartElement.chartData))
-                        if (!newData.datasets[0].waterfall) {
-                          newData.datasets[0].waterfall = {
-                            categories: [],
-                            connectorColor: 'rgba(0, 0, 0, 0.3)',
-                            totalColor: 'rgba(107, 114, 128, 0.8)',
-                            increaseColor: 'rgba(34, 197, 94, 0.8)',
-                            decreaseColor: 'rgba(239, 68, 68, 0.8)',
-                          }
+                        if (newData.data && newData.data[index]) {
+                          newData.data[index].type = value
                         }
-                        if (!newData.datasets[0].waterfall.categories) {
-                          newData.datasets[0].waterfall.categories = Array(newData.labels.length).fill('increase')
-                        }
-                        newData.datasets[0].waterfall.categories[index] = value
                         updateElement(chartElement.id, { chartData: newData })
                       }}
                     >
@@ -715,10 +612,10 @@ export function SlideView({
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="increase">Increase</SelectItem>
-                        <SelectItem value="decrease">Decrease</SelectItem>
-                        <SelectItem value="total">Total</SelectItem>
-                        <SelectItem value="subtotal">Subtotal</SelectItem>
+                        <SelectItem value="positive">Positive</SelectItem>
+                        <SelectItem value="negative">Negative</SelectItem>
+                        <SelectItem value="start">Start</SelectItem>
+                        <SelectItem value="end">End</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -732,14 +629,20 @@ export function SlideView({
         <div>
           <p className="text-xs font-medium mb-2">Data Points</p>
           <div className="space-y-2 max-h-48 overflow-y-auto">
-            {chartElement.chartData?.labels.map((label, index) => (
+            {chartElement.chartData?.data?.map((item, index) => (
               <div key={index} className="flex items-center space-x-2">
                 <input
                   type="text"
-                  value={label}
+                  value={item.category || item.name || ''}
                   onChange={(e) => {
                     const newData = JSON.parse(JSON.stringify(chartElement.chartData))
-                    newData.labels[index] = e.target.value
+                    if (newData.data && newData.data[index]) {
+                      if (chartElement.chartType === 'waterfall') {
+                        newData.data[index].name = e.target.value
+                      } else {
+                        newData.data[index].category = e.target.value
+                      }
+                    }
                     updateElement(chartElement.id, { chartData: newData })
                   }}
                   className="flex-1 h-7 px-2 text-xs border rounded"
@@ -747,10 +650,12 @@ export function SlideView({
                 />
                 <input
                   type="number"
-                  value={chartElement.chartData?.datasets[0].data[index] || 0}
+                  value={item.value || 0}
                   onChange={(e) => {
                     const newData = JSON.parse(JSON.stringify(chartElement.chartData))
-                    newData.datasets[0].data[index] = parseFloat(e.target.value) || 0
+                    if (newData.data && newData.data[index]) {
+                      newData.data[index].value = parseFloat(e.target.value) || 0
+                    }
                     updateElement(chartElement.id, { chartData: newData })
                   }}
                   className="w-20 h-7 px-2 text-xs border rounded"
@@ -761,15 +666,8 @@ export function SlideView({
                   variant="ghost"
                   onClick={() => {
                     const newData = JSON.parse(JSON.stringify(chartElement.chartData))
-                    newData.labels.splice(index, 1)
-                    newData.datasets[0].data.splice(index, 1)
-                    if (chartElement.chartType === 'pie' || chartElement.chartType === 'doughnut') {
-                      if (Array.isArray(newData.datasets[0].backgroundColor)) {
-                        newData.datasets[0].backgroundColor.splice(index, 1)
-                      }
-                    }
-                    if (chartElement.chartType === 'waterfall' && newData.datasets[0].waterfall?.categories) {
-                      newData.datasets[0].waterfall.categories.splice(index, 1)
+                    if (newData.data) {
+                      newData.data.splice(index, 1)
                     }
                     updateElement(chartElement.id, { chartData: newData })
                   }}
@@ -778,33 +676,28 @@ export function SlideView({
                   <Trash2 className="w-3 h-3" />
                 </Button>
               </div>
-            ))}
+            )) || []}
           </div>
           <Button
             size="sm"
             variant="outline"
             onClick={() => {
-              const newData = JSON.parse(JSON.stringify(chartElement.chartData))
-              newData.labels.push(`Item ${newData.labels.length + 1}`)
-              newData.datasets[0].data.push(50)
-              if (chartElement.chartType === 'pie' || chartElement.chartType === 'doughnut') {
-                if (Array.isArray(newData.datasets[0].backgroundColor)) {
-                  const colors = [
-                    'rgba(239, 68, 68, 0.8)',
-                    'rgba(245, 158, 11, 0.8)',
-                    'rgba(16, 185, 129, 0.8)',
-                    'rgba(139, 92, 246, 0.8)',
-                    'rgba(236, 72, 153, 0.8)',
-                  ]
-                  newData.datasets[0].backgroundColor.push(colors[newData.labels.length % colors.length])
-                }
+                const newData = JSON.parse(JSON.stringify(chartElement.chartData))
+              if (!newData.data) {
+                newData.data = []
               }
+              const newItem = {
+                value: 50
+              } as any
+              
               if (chartElement.chartType === 'waterfall') {
-                if (newData.datasets[0].waterfall?.categories) {
-                  // Default new items to 'increase' category
-                  newData.datasets[0].waterfall.categories.push('increase')
-                }
+                newItem.name = `Item ${newData.data.length + 1}`
+                newItem.type = 'positive'
+              } else {
+                newItem.category = `Item ${newData.data.length + 1}`
               }
+              
+              newData.data.push(newItem)
               updateElement(chartElement.id, { chartData: newData })
             }}
             className="w-full mt-2 h-7 text-xs"
@@ -1091,8 +984,8 @@ export function SlideView({
           </Button>
         </div>
 
-        {/* Stacked Chart Settings - Only for Bar and Column charts */}
-        {(chartElement.chartType === 'bar' || chartElement.chartType === 'column') && (
+        {/* Stacked Chart Settings - Only for Bar charts */}
+        {(chartElement.chartType === 'bar' || chartElement.chartType === 'bar-grouped' || chartElement.chartType === 'bar-stacked') && (
           <div className="space-y-3 pt-3 border-t">
             <p className="text-xs font-semibold text-gray-700">Stacking Options</p>
             
@@ -1348,53 +1241,6 @@ export function SlideView({
   }
 
   // Calculate CAGR (Compound Annual Growth Rate)
-  const calculateCAGR = (startValue: number, endValue: number, periods: number) => {
-    if (startValue <= 0 || endValue <= 0 || periods <= 0) return 0
-    return (Math.pow(endValue / startValue, 1 / periods) - 1) * 100
-  }
-
-  // Transform data for 100% stacked charts
-  const transformTo100Stacked = (datasets: any[]) => {
-    if (!datasets || datasets.length === 0) return datasets
-    
-    const numPoints = datasets[0].data.length
-    const totals = new Array(numPoints).fill(0)
-    
-    // Calculate totals for each stack
-    datasets.forEach(dataset => {
-      dataset.data.forEach((value: number, index: number) => {
-        totals[index] += value
-      })
-    })
-    
-    // Convert to percentages
-    const transformedDatasets = datasets.map(dataset => ({
-      ...dataset,
-      data: dataset.data.map((value: number, index: number) => 
-        totals[index] > 0 ? (value / totals[index]) * 100 : 0
-      ),
-      originalData: dataset.data // Store original values for tooltips
-    }))
-    
-    return transformedDatasets
-  }
-
-  // Calculate totals for stacked charts
-  const calculateStackTotals = (datasets: any[]) => {
-    if (!datasets || datasets.length === 0) return []
-    
-    const numPoints = datasets[0].data.length
-    const totals = new Array(numPoints).fill(0)
-    
-    datasets.forEach(dataset => {
-      dataset.data.forEach((value: number, index: number) => {
-        totals[index] += value
-      })
-    })
-    
-    return totals
-  }
-
   // Helper function to calculate cells in selection range
   const calculateSelectedCells = (elementId: string, start: { row: number; col: number }, end: { row: number; col: number }) => {
     const minRow = Math.min(start.row, end.row)
@@ -2164,83 +2010,82 @@ export function SlideView({
 
   // Helper function to generate default chart data
   const getDefaultChartData = (chartType: SlideElement['chartType']): SlideElement['chartData'] => {
-    const pieColors = [
-      'rgba(59, 130, 246, 0.8)',
-      'rgba(34, 197, 94, 0.8)', 
-      'rgba(251, 146, 60, 0.8)',
-      'rgba(168, 85, 247, 0.8)'
-    ]
-    
     switch (chartType) {
-      case 'pie':
-      case 'doughnut':
+      case 'bar':
         return {
-          labels: ['Q1', 'Q2', 'Q3', 'Q4'],
-          datasets: [{
-            label: 'Quarterly Revenue',
-            data: [30, 25, 20, 25],
-            backgroundColor: pieColors,
-            borderWidth: 2,
-            borderColor: '#fff'
-          }]
+          data: [
+            { category: 'Product A', value: 120 },
+            { category: 'Product B', value: 95 },
+            { category: 'Product C', value: 140 },
+            { category: 'Product D', value: 110 },
+            { category: 'Product E', value: 85 }
+          ]
         }
-      case 'line':
+      case 'bar-grouped':
         return {
-          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-          datasets: [{
-            label: 'Monthly Growth',
-            data: [12, 19, 15, 25, 22, 30],
-            borderColor: 'rgba(59, 130, 246, 1)',
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-            borderWidth: 2,
-            fill: true,
-            tension: 0.4 // Smooth line
-          }]
+          data: [
+            { category: '2022', value: 120, series: 'Revenue' },
+            { category: '2022', value: 85, series: 'Profit' },
+            { category: '2023', value: 150, series: 'Revenue' },
+            { category: '2023', value: 95, series: 'Profit' },
+            { category: '2024', value: 180, series: 'Revenue' },
+            { category: '2024', value: 115, series: 'Profit' }
+          ]
+        }
+      case 'bar-stacked':
+        return {
+          data: [
+            { category: 'Q1', value: 40, series: 'Online' },
+            { category: 'Q1', value: 60, series: 'Retail' },
+            { category: 'Q1', value: 20, series: 'Partner' },
+            { category: 'Q2', value: 50, series: 'Online' },
+            { category: 'Q2', value: 55, series: 'Retail' },
+            { category: 'Q2', value: 30, series: 'Partner' },
+            { category: 'Q3', value: 65, series: 'Online' },
+            { category: 'Q3', value: 50, series: 'Retail' },
+            { category: 'Q3', value: 35, series: 'Partner' }
+          ]
         }
       case 'waterfall':
         return {
-          labels: ['Q1 Start', 'Product Sales', 'Services', 'Licensing', 'Operating Costs', 'Marketing', 'Q1 End'],
-          datasets: [{
-            label: 'Cash Flow',
-            data: [120, 45, 30, 15, -35, -20, 155],
-            waterfall: {
-              categories: ['total', 'increase', 'increase', 'increase', 'decrease', 'decrease', 'total'],
-              connectorColor: 'rgba(0, 0, 0, 0.3)',
-              totalColor: 'rgba(107, 114, 128, 0.8)',
-              increaseColor: 'rgba(34, 197, 94, 0.8)',
-              decreaseColor: 'rgba(239, 68, 68, 0.8)',
-            },
-            backgroundColor: 'dynamic', // Will be set based on categories
-            borderColor: 'rgba(0, 0, 0, 0.1)',
-            borderWidth: 1
-          }]
+          data: [
+            { name: 'Q1 Revenue', value: 150, type: 'start' },
+            { name: 'Product Sales', value: 45, type: 'positive' },
+            { name: 'Services', value: 30, type: 'positive' },
+            { name: 'Returns', value: -20, type: 'negative' },
+            { name: 'Costs', value: -35, type: 'negative' },
+            { name: 'Q2 Revenue', value: 170, type: 'end' }
+          ]
         }
-      case 'funnel':
+      case 'line':
         return {
-          labels: ['Visitors', 'Leads', 'Opportunities', 'Sales', 'Customers'],
-          datasets: [{
-            label: 'Conversion Funnel',
-            data: [1000, 600, 300, 150, 100],
-            backgroundColor: [
-              'rgba(59, 130, 246, 0.6)',
-              'rgba(59, 130, 246, 0.7)',
-              'rgba(59, 130, 246, 0.8)',
-              'rgba(59, 130, 246, 0.9)',
-              'rgba(59, 130, 246, 1)'
-            ],
-            borderWidth: 0
-          }]
+          data: [
+            { category: 'Jan', value: 12 },
+            { category: 'Feb', value: 19 },
+            { category: 'Mar', value: 15 },
+            { category: 'Apr', value: 25 },
+            { category: 'May', value: 22 },
+            { category: 'Jun', value: 30 }
+          ]
         }
-      default: // bar, column
+      case 'pie':
         return {
-          labels: ['Product A', 'Product B', 'Product C', 'Product D'],
-          datasets: [{
-            label: 'Sales by Product',
-            data: [65, 45, 80, 55],
-            backgroundColor: 'rgba(59, 130, 246, 0.8)',
-            borderColor: 'rgba(59, 130, 246, 1)',
-            borderWidth: 1
-          }]
+          data: [
+            { category: 'Product A', value: 35 },
+            { category: 'Product B', value: 25 },
+            { category: 'Product C', value: 20 },
+            { category: 'Product D', value: 15 },
+            { category: 'Product E', value: 5 }
+          ]
+        }
+      default:
+        return {
+          data: [
+            { category: 'Item 1', value: 100 },
+            { category: 'Item 2', value: 80 },
+            { category: 'Item 3', value: 60 },
+            { category: 'Item 4', value: 40 }
+          ]
         }
     }
   }
@@ -2270,86 +2115,7 @@ export function SlideView({
       },
       zIndex: elements.length > 0 ? Math.max(...elements.map((el) => el.zIndex)) + 1 : 1,
       chartType,
-      chartData: defaultData,
-      chartOptions: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: {
-          duration: 750,
-          easing: 'easeInOutQuart'
-        },
-        plugins: {
-          legend: {
-            display: true,
-            position: 'top' as const,
-            labels: {
-              padding: 15,
-              usePointStyle: true,
-              font: {
-                size: 12,
-                family: 'Inter'
-              }
-            }
-          },
-          title: {
-            display: false,
-            text: 'Chart Title'
-          },
-          tooltip: {
-            enabled: true,
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-            padding: 12,
-            cornerRadius: 4,
-            titleFont: {
-              size: 13,
-              weight: 'bold'
-            },
-            bodyFont: {
-              size: 12
-            }
-          }
-        },
-        scales: chartType === 'pie' || chartType === 'doughnut' || chartType === 'funnel' ? {} : {
-          x: {
-            grid: {
-              display: false,
-              drawBorder: false
-            },
-            ticks: {
-              font: {
-                size: 11,
-                family: 'Inter'
-              }
-            }
-          },
-          y: {
-            beginAtZero: true,
-            grid: {
-              color: 'rgba(0, 0, 0, 0.1)',
-              drawBorder: false
-            },
-            ticks: {
-              font: {
-                size: 11,
-                family: 'Inter'
-              }
-            }
-          }
-        } as any
-      },
-      smartLabels: {
-        enabled: true,
-        format: chartType === 'waterfall' ? 'currency' : 'number',
-        decimals: chartType === 'percentage' ? 1 : 0,
-        template: chartType === 'pie' || chartType === 'doughnut' ? '{value} ({percentage}%)' : '{value}',
-        showValue: true,
-        showPercentage: chartType === 'pie' || chartType === 'doughnut',
-        showDelta: chartType === 'waterfall',
-        position: 'auto' as const,
-        connectorLines: true,
-        fontSize: 11,
-        fontWeight: 'normal'
-      }
+      chartData: defaultData
     }
     
     setElements(prev => [...prev, newElement])
@@ -2909,8 +2675,8 @@ export function SlideView({
   const renderChart = (element: SlideElement) => {
     if (!element.chartType || !element.chartData) return null
 
-    // Validate chart data
-    if (!element.chartData.labels || !element.chartData.datasets || element.chartData.datasets.length === 0) {
+    // Validate chart data - D3 charts use data array instead of labels/datasets
+    if (!element.chartData.data || element.chartData.data.length === 0) {
       return (
         <div className="w-full h-full flex items-center justify-center text-gray-500 bg-gray-50 rounded">
           <div className="text-center">
@@ -2922,375 +2688,6 @@ export function SlideView({
       )
     }
 
-    try {
-      // Special handling for waterfall charts
-      let chartProps: any
-      
-      if (element.chartType === 'waterfall' && element.chartData) {
-        const waterfallConfig = element.chartData.datasets[0].waterfall
-        const processedData = processWaterfallData(
-          element.chartData.datasets[0].data,
-          waterfallConfig?.categories
-        )
-        
-        // Transform to stacked bar chart format
-        const waterfallData = {
-          labels: element.chartData.labels,
-          datasets: [
-            {
-              label: 'Hidden',
-              data: processedData.invisible,
-              backgroundColor: 'transparent',
-              borderColor: 'transparent',
-              stack: 'stack1',
-              skipNull: true,
-            },
-            {
-              label: element.chartData.datasets[0].label,
-              data: processedData.visible,
-              backgroundColor: element.chartData.labels.map((_, index) => {
-                const category = waterfallConfig?.categories?.[index]
-                const value = element.chartData!.datasets[0].data[index]
-                
-                if (category === 'total' || category === 'subtotal') {
-                  return waterfallConfig?.totalColor || 'rgba(107, 114, 128, 0.8)'
-                } else if (value >= 0) {
-                  return waterfallConfig?.increaseColor || 'rgba(34, 197, 94, 0.8)'
-                } else {
-                  return waterfallConfig?.decreaseColor || 'rgba(239, 68, 68, 0.8)'
-                }
-              }),
-              borderColor: waterfallConfig?.connectorColor || 'rgba(0, 0, 0, 0.5)',
-              borderWidth: 1,
-              stack: 'stack1',
-            }
-          ]
-        }
-        
-        chartProps = {
-          data: waterfallData,
-          options: {
-            ...element.chartOptions,
-            responsive: true,
-            maintainAspectRatio: false,
-            devicePixelRatio: window.devicePixelRatio || 2,
-            interaction: {
-              mode: 'index' as const,
-              intersect: false,
-            },
-            plugins: {
-              ...element.chartOptions?.plugins,
-              tooltip: {
-                callbacks: {
-                  label: (context: any) => {
-                    if (context.datasetIndex === 0) return null // Hide invisible dataset
-                    const value = element.chartData!.datasets[0].data[context.dataIndex]
-                    const cumulative = processedData.cumulative[context.dataIndex]
-                    return [
-                      `${context.dataset.label}: ${value > 0 ? '+' : ''}${value.toLocaleString()}`,
-                      `Cumulative: ${cumulative.toLocaleString()}`
-                    ]
-                  }
-                }
-              },
-              legend: {
-                display: false // Hide legend for waterfall
-              },
-              // Smart labels for waterfall
-              datalabels: element.smartLabels?.enabled !== false ? {
-                display: true,
-                align: 'end' as const,
-                anchor: 'end' as const,
-                formatter: (value: number, context: any) => {
-                  if (context.datasetIndex === 0) return null
-                  const originalValue = element.chartData!.datasets[0].data[context.dataIndex]
-                  const smartLabels = element.smartLabels || {
-                    format: 'currency',
-                    decimals: 0,
-                    template: '{value}',
-                    showDelta: true
-                  }
-                  
-                  let label = formatChartLabel(Math.abs(originalValue), {
-                    format: smartLabels.format,
-                    decimals: smartLabels.decimals,
-                    prefix: smartLabels.prefix,
-                    suffix: smartLabels.suffix,
-                    template: smartLabels.template
-                  })
-                  
-                  // Add delta indicator
-                  if (smartLabels.showDelta && waterfallConfig?.categories?.[context.dataIndex] !== 'total' && 
-                      waterfallConfig?.categories?.[context.dataIndex] !== 'subtotal') {
-                    label = (originalValue > 0 ? '+' : '-') + label
-                  }
-                  
-                  return label
-                },
-                font: {
-                  size: element.smartLabels?.fontSize || 11,
-                  weight: element.smartLabels?.fontWeight || 'bold',
-                },
-                color: 'rgba(0, 0, 0, 0.8)',
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                borderColor: 'rgba(0, 0, 0, 0.2)',
-                borderRadius: 2,
-                borderWidth: 1,
-                padding: 3,
-              } : { display: false }
-            },
-            scales: {
-              x: {
-                stacked: true,
-                ...element.chartOptions?.scales?.x,
-              },
-              y: {
-                stacked: true,
-                ...element.chartOptions?.scales?.y,
-              }
-            }
-          }
-        }
-      } else {
-        // Regular chart handling with stacking support
-        let chartData = element.chartData
-        const isStacked = element.chartSettings?.stacked && (element.chartType === 'bar' || element.chartType === 'column')
-        const is100Stacked = element.chartSettings?.stackedType === '100%'
-        
-        // Transform data for 100% stacked charts
-        if (isStacked && is100Stacked && chartData) {
-          chartData = {
-            ...chartData,
-            datasets: transformTo100Stacked(chartData.datasets)
-          }
-        }
-        
-        // Add stack property to datasets if stacked
-        if (isStacked && chartData) {
-          chartData = {
-            ...chartData,
-            datasets: chartData.datasets.map(dataset => ({
-              ...dataset,
-              stack: 'stack1' // All datasets in same stack
-            }))
-          }
-        }
-        
-        // Calculate totals for stacked charts
-        const stackTotals = isStacked && element.chartData ? calculateStackTotals(element.chartData.datasets) : []
-        
-        // Add CAGR line if enabled
-        if (element.chartSettings?.showCAGR && chartData && chartData.labels && chartData.labels.length > 1) {
-          const startIdx = element.chartSettings.cagrStartIndex || 0
-          const endIdx = element.chartSettings.cagrEndIndex || (chartData.labels.length - 1)
-          const periods = endIdx - startIdx
-          
-          if (periods > 0 && chartData.datasets.length > 0) {
-            // Calculate CAGR based on first dataset or stack totals
-            const values = isStacked ? stackTotals : chartData.datasets[0].data
-            const startValue = values[startIdx]
-            const endValue = values[endIdx]
-            const cagr = calculateCAGR(startValue, endValue, periods)
-            
-            // Create CAGR line dataset
-            const cagrLine = chartData.labels.map((_, idx) => {
-              if (idx < startIdx) return null
-              const periodsFromStart = idx - startIdx
-              return startValue * Math.pow(1 + cagr / 100, periodsFromStart)
-            })
-            
-            // Add CAGR line to datasets
-            chartData = {
-              ...chartData,
-              datasets: [
-                ...chartData.datasets,
-                {
-                  label: `CAGR ${cagr.toFixed(1)}%`,
-                  data: cagrLine,
-                  type: 'line',
-                  borderColor: 'rgba(255, 99, 132, 1)',
-                  backgroundColor: 'rgba(255, 99, 132, 0.1)',
-                  borderWidth: 2,
-                  borderDash: [5, 5],
-                  pointRadius: 0,
-                  fill: false,
-                  stack: undefined // Don't stack the CAGR line
-                }
-              ]
-            }
-          }
-        }
-        
-        // Create custom plugin for stack totals
-        const stackTotalsPlugin = isStacked && element.chartSettings?.showTotals ? {
-          id: 'stackTotals',
-          afterDatasetsDraw(chart: any) {
-            const ctx = chart.ctx
-            
-            ctx.save()
-            ctx.font = `${element.smartLabels?.fontWeight || 'bold'} ${element.smartLabels?.fontSize || 12}px Inter`
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'
-            ctx.textAlign = 'center'
-            ctx.textBaseline = 'bottom'
-            
-            // Get the x positions from the first dataset
-            const meta = chart.getDatasetMeta(0)
-            
-            stackTotals.forEach((total: number, index: number) => {
-              const barElement = meta.data[index]
-              if (barElement) {
-                // Find the top of the stack
-                let minY = barElement.y
-                for (let i = 0; i < chart.data.datasets.length; i++) {
-                  const datasetMeta = chart.getDatasetMeta(i)
-                  if (datasetMeta.data[index] && datasetMeta.data[index].y < minY) {
-                    minY = datasetMeta.data[index].y
-                  }
-                }
-                
-                // Format the total
-                const formattedTotal = formatChartLabel(total, {
-                  format: element.smartLabels?.format || 'number',
-                  decimals: element.smartLabels?.decimals || 0,
-                  prefix: element.smartLabels?.prefix,
-                  suffix: element.smartLabels?.suffix
-                })
-                
-                // Draw the total above the stack
-                ctx.fillText(formattedTotal, barElement.x, minY - 5)
-              }
-            })
-            
-            ctx.restore()
-          }
-        } : null
-        
-        chartProps = {
-          data: chartData,
-          options: {
-          ...element.chartOptions,
-          responsive: true,
-          maintainAspectRatio: false,
-          devicePixelRatio: window.devicePixelRatio || 2,
-          animation: {
-            duration: 500,
-            easing: 'easeInOutQuart' as const,
-          },
-          plugins: {
-            ...element.chartOptions?.plugins,
-            tooltip: {
-              enabled: true,
-              backgroundColor: 'rgba(0, 0, 0, 0.8)',
-              padding: 12,
-              cornerRadius: 4,
-              titleFont: {
-                size: 13,
-                weight: '600' as const,
-              },
-              bodyFont: {
-                size: 12,
-              },
-            },
-            legend: {
-              ...element.chartOptions?.plugins?.legend,
-              labels: {
-                font: {
-                  size: 12,
-                  family: 'Inter',
-                },
-                padding: 15,
-                usePointStyle: true,
-                pointStyle: element.chartType === 'line' ? 'line' : 'rect',
-              }
-            },
-            datalabels: element.smartLabels?.enabled ? {
-              display: true,
-              anchor: element.chartType === 'pie' || element.chartType === 'doughnut' ? 'center' : ('end' as const),
-              align: element.chartType === 'pie' || element.chartType === 'doughnut' ? 'center' : ('top' as const),
-              offset: element.chartType === 'pie' || element.chartType === 'doughnut' ? 0 : 5,
-              formatter: (value: number, context: any) => {
-                const smartLabels = element.smartLabels!
-                const total = element.chartData?.datasets[0].data.reduce((sum: number, val: number) => sum + val, 0) || 0
-                
-                return formatChartLabel(value, {
-                  format: smartLabels.format,
-                  decimals: smartLabels.decimals,
-                  prefix: smartLabels.prefix,
-                  suffix: smartLabels.suffix,
-                  template: smartLabels.template,
-                  showPercentage: smartLabels.showPercentage,
-                  total
-                })
-              },
-              font: {
-                size: element.smartLabels?.fontSize || 11,
-                weight: element.smartLabels?.fontWeight || 'normal',
-              },
-              color: 'rgba(0, 0, 0, 0.8)',
-              backgroundColor: 'rgba(255, 255, 255, 0.8)',
-              borderColor: 'rgba(0, 0, 0, 0.2)',
-              borderRadius: 2,
-              borderWidth: 1,
-              padding: 2,
-              // Smart positioning for pie/doughnut
-              ...(element.chartType === 'pie' || element.chartType === 'doughnut' ? {
-                display: (context: any) => {
-                  const value = context.dataset.data[context.dataIndex]
-                  const total = context.dataset.data.reduce((sum: number, val: number) => sum + val, 0)
-                  const percentage = (value / total) * 100
-                  return percentage > 5 // Only show labels for slices > 5%
-                }
-              } : {})
-            } : { display: false }
-          },
-          scales: element.chartType === 'pie' || element.chartType === 'doughnut' ? {} : {
-            ...element.chartOptions?.scales,
-            x: {
-              ...element.chartOptions?.scales?.x,
-              grid: {
-                display: true,
-                color: 'rgba(0, 0, 0, 0.05)',
-              },
-              ticks: {
-                font: {
-                  size: 11,
-                  family: 'Inter',
-                },
-                padding: 5,
-              },
-              // Enable stacking if needed
-              ...(isStacked ? { stacked: true } : {})
-            },
-            y: {
-              ...element.chartOptions?.scales?.y,
-              grid: {
-                display: true,
-                color: 'rgba(0, 0, 0, 0.05)',
-              },
-              ticks: {
-                font: {
-                  size: 11,
-                  family: 'Inter',
-                },
-                padding: 5,
-                // Format as percentage for 100% stacked charts
-                ...(is100Stacked ? {
-                  callback: function(value: any) {
-                    return value + '%'
-                  }
-                } : {})
-              },
-              // Set max to 100 for percentage stacked charts
-              ...(is100Stacked ? { max: 100 } : {}),
-              // Enable stacking if needed
-              ...(isStacked ? { stacked: true } : {})
-            }
-          }
-        },
-        // Add custom plugins
-        plugins: stackTotalsPlugin ? [stackTotalsPlugin] : []
-      }}
-
     const chartStyle = {
       width: '100%',
       height: '100%',
@@ -3300,38 +2697,68 @@ export function SlideView({
       border: element.style.borderWidth > 0 ? `${element.style.borderWidth}px solid ${element.style.borderColor}` : 'none',
     }
 
-    return (
-      <div 
-        className="w-full h-full relative group cursor-pointer" 
-        style={chartStyle}
-        data-chart-element="true"
-        onDoubleClick={(e) => {
-          e.stopPropagation()
-          setEditingChart(element.id)
-        }}
-      >
-        {element.chartType === 'line' && <Line {...chartProps} />}
-        {element.chartType === 'bar' && <Bar {...chartProps} />}
-        {element.chartType === 'column' && <Bar {...chartProps} />}
-        {element.chartType === 'pie' && <Pie {...chartProps} />}
-        {element.chartType === 'doughnut' && <Doughnut {...chartProps} />}
-        {element.chartType === 'waterfall' && <Bar {...chartProps} />}
-        {/* Funnel would need custom implementation */}
-        {element.chartType === 'funnel' && (
-          <div className="flex items-center justify-center h-full text-gray-500">
-            Funnel chart coming soon
+    try {
+      return (
+        <div 
+          className="w-full h-full relative group cursor-pointer" 
+          style={chartStyle}
+          data-chart-element="true"
+          onDoubleClick={(e) => {
+            e.stopPropagation()
+            setEditingChart(element.id)
+          }}
+        >
+          {element.chartType === 'bar' && element.chartData?.data && (
+            <ProfessionalBarChartD3
+              data={element.chartData.data}
+              width={element.size.width - 32}
+              height={element.size.height - 32}
+              type="single"
+            />
+          )}
+          {element.chartType === 'bar-grouped' && element.chartData?.data && (
+            <ProfessionalBarChartD3
+              data={element.chartData.data}
+              width={element.size.width - 32}
+              height={element.size.height - 32}
+              type="grouped"
+            />
+          )}
+          {element.chartType === 'bar-stacked' && element.chartData?.data && (
+            <ProfessionalBarChartD3
+              data={element.chartData.data}
+              width={element.size.width - 32}
+              height={element.size.height - 32}
+              type="stacked"
+            />
+          )}
+          {element.chartType === 'waterfall' && element.chartData?.data && (
+            <WaterfallChartD3
+              data={element.chartData.data}
+              width={element.size.width - 32}
+              height={element.size.height - 32}
+            />
+          )}
+          {element.chartType === 'line' && (
+            <div className="flex items-center justify-center h-full text-gray-500">
+              Line chart coming soon
+            </div>
+          )}
+          {element.chartType === 'pie' && (
+            <div className="flex items-center justify-center h-full text-gray-500">
+              Pie chart coming soon
+            </div>
+          )}
+          {/* Hover overlay hint */}
+          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-5 transition-all duration-200 flex items-center justify-center">
+            <span className="text-xs text-gray-700 bg-white px-2 py-1 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              Double-click to edit data
+            </span>
           </div>
-        )}
-        {/* Hover overlay hint */}
-        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-5 transition-all duration-200 flex items-center justify-center">
-          <span className="text-xs text-gray-700 bg-white px-2 py-1 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            Double-click to edit data
-          </span>
         </div>
-      </div>
-    )
+      )
     } catch (error) {
-      console.error('Chart rendering error:', error)
+      // Log chart rendering error - in production, send to error tracking
       return (
         <div className="w-full h-full flex items-center justify-center text-gray-500 bg-gray-50 rounded">
           <div className="text-center">
@@ -3570,7 +2997,6 @@ export function SlideView({
                           className="w-full h-full outline-none overflow-hidden p-2 bg-white border-2 border-blue-500"
                           onInput={(e) => {
                             const newValue = e.currentTarget.textContent || ""
-                            console.log('ContentEditable input:', newValue)
                             setEditingCellValue(newValue)
                           }}
                           onBlur={(e) => {
@@ -4269,9 +3695,13 @@ export function SlideView({
                         <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
                         <span className="text-xs sm:text-sm">Bar Chart</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => addChart('column')}>
-                        <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 rotate-90" />
-                        <span className="text-xs sm:text-sm">Column Chart</span>
+                      <DropdownMenuItem onClick={() => addChart('bar-grouped')}>
+                        <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                        <span className="text-xs sm:text-sm">Grouped Bar Chart</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => addChart('bar-stacked')}>
+                        <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
+                        <span className="text-xs sm:text-sm">Stacked Bar Chart</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => addChart('line')}>
                         <LineChart className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
@@ -4281,31 +3711,13 @@ export function SlideView({
                         <PieChart className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
                         <span className="text-xs sm:text-sm">Pie Chart</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => addChart('doughnut')}>
-                        <PieChart className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
-                        <span className="text-xs sm:text-sm">Doughnut Chart</span>
-                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => addChart('waterfall')}>
                         <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
                         <span className="text-xs sm:text-sm">Waterfall Chart</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => addChart('funnel')}>
-                        <Triangle className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 rotate-180" />
-                        <span className="text-xs sm:text-sm">Funnel Chart</span>
-                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                   
-                  {/* AI Assistant */}
-                  <Button 
-                    size="icon" 
-                    variant={isAIAssistantOpen ? "secondary" : "ghost"}
-                    className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9 ml-1"
-                    onClick={() => setIsAIAssistantOpen(!isAIAssistantOpen)}
-                    title="AI Assistant"
-                  >
-                    <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />
-                  </Button>
                 </div>
                 {isAnyElementSelected ? (
                   <>
@@ -4754,11 +4166,11 @@ export function SlideView({
                                   </SelectTrigger>
                                   <SelectContent>
                                     <SelectItem value="bar">Bar Chart</SelectItem>
-                                    <SelectItem value="column">Column Chart</SelectItem>
+                                    <SelectItem value="bar-grouped">Grouped Bar Chart</SelectItem>
+                                    <SelectItem value="bar-stacked">Stacked Bar Chart</SelectItem>
+                                    <SelectItem value="waterfall">Waterfall Chart</SelectItem>
                                     <SelectItem value="line">Line Chart</SelectItem>
                                     <SelectItem value="pie">Pie Chart</SelectItem>
-                                    <SelectItem value="doughnut">Doughnut Chart</SelectItem>
-                                    <SelectItem value="waterfall">Waterfall Chart</SelectItem>
                                   </SelectContent>
                                 </Select>
                               </div>
@@ -4767,14 +4179,20 @@ export function SlideView({
                               <div>
                                 <p className="text-xs font-medium mb-2">Data Points</p>
                                 <div className="space-y-2 max-h-48 overflow-y-auto">
-                                  {selectedElementData.chartData?.labels.map((label, index) => (
+                                  {selectedElementData.chartData?.data?.map((item, index) => (
                                     <div key={index} className="flex items-center space-x-2">
                                       <input
                                         type="text"
-                                        value={label}
+                                        value={item.category || item.name || ''}
                                         onChange={(e) => {
                                           const newData = JSON.parse(JSON.stringify(selectedElementData.chartData))
-                                          newData.labels[index] = e.target.value
+                                          if (newData.data && newData.data[index]) {
+                                            if (selectedElementData.chartType === 'waterfall') {
+                                              newData.data[index].name = e.target.value
+                                            } else {
+                                              newData.data[index].category = e.target.value
+                                            }
+                                          }
                                           updateElement(selectedElement!, { chartData: newData })
                                         }}
                                         className="flex-1 h-7 px-2 text-xs border rounded"
@@ -4782,10 +4200,12 @@ export function SlideView({
                                       />
                                       <input
                                         type="number"
-                                        value={selectedElementData.chartData?.datasets[0].data[index] || 0}
+                                        value={item.value || 0}
                                         onChange={(e) => {
                                           const newData = JSON.parse(JSON.stringify(selectedElementData.chartData))
-                                          newData.datasets[0].data[index] = parseFloat(e.target.value) || 0
+                                          if (newData.data && newData.data[index]) {
+                                            newData.data[index].value = parseFloat(e.target.value) || 0
+                                          }
                                           updateElement(selectedElement!, { chartData: newData })
                                         }}
                                         className="w-20 h-7 px-2 text-xs border rounded"
@@ -4796,13 +4216,8 @@ export function SlideView({
                                         variant="ghost"
                                         onClick={() => {
                                           const newData = JSON.parse(JSON.stringify(selectedElementData.chartData))
-                                          newData.labels.splice(index, 1)
-                                          newData.datasets[0].data.splice(index, 1)
-                                          if (selectedElementData.chartType === 'pie' || selectedElementData.chartType === 'doughnut') {
-                                            // Also update backgroundColor array for pie/doughnut charts
-                                            if (Array.isArray(newData.datasets[0].backgroundColor)) {
-                                              newData.datasets[0].backgroundColor.splice(index, 1)
-                                            }
+                                          if (newData.data) {
+                                            newData.data.splice(index, 1)
                                           }
                                           updateElement(selectedElement!, { chartData: newData })
                                         }}
@@ -4811,28 +4226,28 @@ export function SlideView({
                                         <Trash2 className="w-3 h-3" />
                                       </Button>
                                     </div>
-                                  ))}
+                                  )) || []}
                                 </div>
                                 <Button
                                   size="sm"
                                   variant="outline"
                                   onClick={() => {
                                     const newData = JSON.parse(JSON.stringify(selectedElementData.chartData))
-                                    newData.labels.push(`Item ${newData.labels.length + 1}`)
-                                    newData.datasets[0].data.push(50)
-                                    if (selectedElementData.chartType === 'pie' || selectedElementData.chartType === 'doughnut') {
-                                      // Add a new color for pie/doughnut charts
-                                      if (Array.isArray(newData.datasets[0].backgroundColor)) {
-                                        const colors = [
-                                          'rgba(239, 68, 68, 0.8)',
-                                          'rgba(245, 158, 11, 0.8)',
-                                          'rgba(16, 185, 129, 0.8)',
-                                          'rgba(139, 92, 246, 0.8)',
-                                          'rgba(236, 72, 153, 0.8)',
-                                        ]
-                                        newData.datasets[0].backgroundColor.push(colors[newData.labels.length % colors.length])
-                                      }
+                                    if (!newData.data) {
+                                      newData.data = []
                                     }
+                                    const newItem = {
+                                      value: 50
+                                    } as any
+                                    
+                                    if (selectedElementData.chartType === 'waterfall') {
+                                      newItem.name = `Item ${newData.data.length + 1}`
+                                      newItem.type = 'positive'
+                                    } else {
+                                      newItem.category = `Item ${newData.data.length + 1}`
+                                    }
+                                    
+                                    newData.data.push(newItem)
                                     updateElement(selectedElement!, { chartData: newData })
                                   }}
                                   className="w-full mt-2 h-7 text-xs"
@@ -5585,14 +5000,6 @@ export function SlideView({
         )
       })()}
 
-      {/* AI Assistant */}
-      <AIAssistant
-        currentSlide={slide}
-        elements={elements}
-        onAction={handleAIAction}
-        isOpen={isAIAssistantOpen}
-        onClose={() => setIsAIAssistantOpen(false)}
-      />
     </div>
   )
 }

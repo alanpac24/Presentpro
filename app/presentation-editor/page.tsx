@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { PresentationEditorHeader } from "./components/PresentationEditorHeader"
-import { SlideSidebar } from "./components/SlideSidebar"
+import { AIAssistant } from "./components/AIAssistant"
 import { SlideView } from "./components/SlideView"
 import { SlideCarousel } from "./components/SlideCarousel"
 import { useEditUsage } from "@/hooks/useEditUsage"
@@ -70,15 +70,25 @@ export default function PresentationEditorPage() {
   } = useEditUsage()
 
   const currentSlide = slides[currentSlideIndex]
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [lastSavedAt, setLastSavedAt] = useState(Date.now())
 
+  // Auto-save when there are changes
   useEffect(() => {
-    const autoSave = () => {
+    if (!hasUnsavedChanges) return
+
+    const timeoutId = setTimeout(() => {
+      // Perform auto-save
       setIsAutoSaving(true)
+      setHasUnsavedChanges(false)
+      setLastSavedAt(Date.now())
+      
+      // Simulate save completion
       setTimeout(() => setIsAutoSaving(false), 1500)
-    }
-    const intervalId = setInterval(autoSave, 30000)
-    return () => clearInterval(intervalId)
-  }, [])
+    }, 2000) // Save 2 seconds after last change
+
+    return () => clearTimeout(timeoutId)
+  }, [hasUnsavedChanges, slides, presentationTitle])
 
   // Check for mobile viewport
   useEffect(() => {
@@ -140,14 +150,12 @@ export default function PresentationEditorPage() {
 
   const handleSlideUpdate = (slideId: number, updates: Partial<(typeof mockSlides)[0]>) => {
     setSlides((prev) => prev.map((slide) => (slide.id === slideId ? { ...slide, ...updates } : slide)))
-    setIsAutoSaving(true)
-    setTimeout(() => setIsAutoSaving(false), 1500)
+    setHasUnsavedChanges(true)
   }
 
   const handleSlidesReorder = (newSlides: typeof mockSlides) => {
     setSlides(newSlides)
-    setIsAutoSaving(true)
-    setTimeout(() => setIsAutoSaving(false), 1500)
+    setHasUnsavedChanges(true)
   }
 
   const handleSlideDelete = (slideId: number) => {
@@ -196,6 +204,8 @@ export default function PresentationEditorPage() {
     }
   }
 
+  // currentSlide is already defined above
+
   return (
     <div className="fixed inset-0 bg-white flex flex-col overflow-hidden">
       <PresentationEditorHeader
@@ -207,14 +217,18 @@ export default function PresentationEditorPage() {
       <div className="flex-1 flex overflow-hidden relative min-h-0">
         {!isMobile && (
           <div style={{ width: `${sidebarWidth}px`, flexShrink: 0 }} className="overflow-hidden">
-            <SlideSidebar 
+            <AIAssistant 
               currentSlide={currentSlide} 
-              selectedElement={selectedElement} 
-              onSlideUpdate={handleSlideUpdate}
+              elements={[]}
+              onAction={(action) => {
+                // Handle AI actions here
+                // TODO: Implement AI action handling
+              }}
               width={sidebarWidth}
               onResizeStart={() => {
                 setIsResizing(true)
               }}
+              onSlideUpdate={handleSlideUpdate}
             />
           </div>
         )}
@@ -236,7 +250,7 @@ export default function PresentationEditorPage() {
             onSlideDelete={handleSlideDelete}
             onSlideRename={handleSlideRename}
             onSlideAdd={handleSlideAdd}
-            sidebarWidth={sidebarWidth}
+            sidebarWidth={0}
           />
         </div>
       </div>
