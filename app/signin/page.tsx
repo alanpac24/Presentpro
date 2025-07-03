@@ -12,6 +12,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Presentation, Eye, EyeOff, CheckCircle, XCircle } from "lucide-react"
 import { MinimalHeader } from "@/components/minimal-header"
+import { GoogleIcon } from "@/components/icons/GoogleIcon"
+import { MicrosoftIcon } from "@/components/icons/MicrosoftIcon"
 
 interface FormData {
   email: string
@@ -37,6 +39,7 @@ function SignInContent() {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [successMessage, setSuccessMessage] = useState("")
+  const [oauthLoading, setOauthLoading] = useState<'google' | 'microsoft' | null>(null)
 
   useEffect(() => {
     const message = searchParams.get("message")
@@ -75,6 +78,13 @@ function SignInContent() {
     router.push("/dashboard")
   }
 
+  const handleOAuthSignin = async (provider: 'google' | 'microsoft') => {
+    setOauthLoading(provider)
+    // Simulate OAuth flow
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+    router.push("/dashboard")
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <MinimalHeader />
@@ -93,6 +103,57 @@ function SignInContent() {
 
         <Card className="bg-white border border-gray-200 shadow-sm rounded-lg">
           <CardContent className="p-8">
+            {/* OAuth Buttons */}
+            <div className="space-y-3 mb-6">
+              <Button
+                type="button"
+                onClick={() => handleOAuthSignin('google')}
+                disabled={oauthLoading !== null || isLoading}
+                className="w-full h-11 bg-white hover:bg-gray-50 text-gray-700 font-medium border border-gray-300 hover:border-gray-400 transition-all duration-200 rounded-md"
+              >
+                {oauthLoading === 'google' ? (
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-700 mr-2"></div>
+                    Signing in...
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center">
+                    <GoogleIcon className="w-5 h-5 mr-3" />
+                    Sign in with Google
+                  </div>
+                )}
+              </Button>
+
+              <Button
+                type="button"
+                onClick={() => handleOAuthSignin('microsoft')}
+                disabled={oauthLoading !== null || isLoading}
+                className="w-full h-11 bg-white hover:bg-gray-50 text-gray-700 font-medium border border-gray-300 hover:border-gray-400 transition-all duration-200 rounded-md"
+              >
+                {oauthLoading === 'microsoft' ? (
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-700 mr-2"></div>
+                    Signing in...
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center">
+                    <MicrosoftIcon className="w-5 h-5 mr-3" />
+                    Sign in with Microsoft
+                  </div>
+                )}
+              </Button>
+            </div>
+
+            {/* Divider */}
+            <div className="relative mb-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-4 bg-white text-gray-500 font-light">Or continue with email</span>
+              </div>
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-6">
               {successMessage && (
                 <Alert variant="default" className="bg-green-50 border-green-200 text-green-700">

@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Presentation, Eye, EyeOff, CheckCircle, XCircle } from "lucide-react"
 import { MinimalHeader } from "@/components/minimal-header"
+import { GoogleIcon } from "@/components/icons/GoogleIcon"
+import { MicrosoftIcon } from "@/components/icons/MicrosoftIcon"
 
 interface FormData {
   firstName: string
@@ -43,6 +45,7 @@ export default function SignUpPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [oauthLoading, setOauthLoading] = useState<'google' | 'microsoft' | null>(null)
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {}
@@ -73,6 +76,14 @@ export default function SignUpPage() {
     // Skip validation for testing - just show success and go to dashboard
     setIsLoading(true)
     await new Promise((resolve) => setTimeout(resolve, 500))
+    setSuccess(true)
+    setTimeout(() => router.push("/dashboard"), 1000)
+  }
+
+  const handleOAuthSignup = async (provider: 'google' | 'microsoft') => {
+    setOauthLoading(provider)
+    // Simulate OAuth flow
+    await new Promise((resolve) => setTimeout(resolve, 1000))
     setSuccess(true)
     setTimeout(() => router.push("/dashboard"), 1000)
   }
@@ -113,6 +124,57 @@ export default function SignUpPage() {
 
         <Card className="bg-white border border-gray-200 shadow-sm rounded-lg">
           <CardContent className="p-8">
+            {/* OAuth Buttons */}
+            <div className="space-y-3 mb-6">
+              <Button
+                type="button"
+                onClick={() => handleOAuthSignup('google')}
+                disabled={oauthLoading !== null}
+                className="w-full h-11 bg-white hover:bg-gray-50 text-gray-700 font-medium border border-gray-300 hover:border-gray-400 transition-all duration-200 rounded-md"
+              >
+                {oauthLoading === 'google' ? (
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-700 mr-2"></div>
+                    Connecting...
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center">
+                    <GoogleIcon className="w-5 h-5 mr-3" />
+                    Continue with Google
+                  </div>
+                )}
+              </Button>
+
+              <Button
+                type="button"
+                onClick={() => handleOAuthSignup('microsoft')}
+                disabled={oauthLoading !== null}
+                className="w-full h-11 bg-white hover:bg-gray-50 text-gray-700 font-medium border border-gray-300 hover:border-gray-400 transition-all duration-200 rounded-md"
+              >
+                {oauthLoading === 'microsoft' ? (
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-700 mr-2"></div>
+                    Connecting...
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center">
+                    <MicrosoftIcon className="w-5 h-5 mr-3" />
+                    Continue with Microsoft
+                  </div>
+                )}
+              </Button>
+            </div>
+
+            {/* Divider */}
+            <div className="relative mb-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-4 bg-white text-gray-500 font-light">Or sign up with email</span>
+              </div>
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-6">
               {errors.general && (
                 <Alert variant="destructive" className="bg-red-50 border-red-200 text-red-700">
