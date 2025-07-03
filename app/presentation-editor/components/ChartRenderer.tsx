@@ -12,10 +12,19 @@ interface ChartRendererProps {
     id: string
     chartType?: string
     chartData?: {
-      data: Array<{
-        category: string
+      data?: Array<{
+        category?: string
+        name?: string
         value: number
         series?: string
+        type?: 'positive' | 'negative' | 'start' | 'end'
+      }>
+      labels?: string[]
+      datasets?: Array<{
+        label: string
+        data: number[]
+        backgroundColor?: string | string[]
+        borderColor?: string | string[]
       }>
     }
     size: {
@@ -36,7 +45,10 @@ export function ChartRenderer({ element, onDoubleClick }: ChartRendererProps) {
   if (!element.chartType || !element.chartData) return null
 
   // Validate chart data - D3 charts use data array instead of labels/datasets
-  if (!element.chartData.data || element.chartData.data.length === 0) {
+  const hasValidData = element.chartData.data && element.chartData.data.length > 0
+  const hasValidDatasets = element.chartData.datasets && element.chartData.datasets.length > 0
+  
+  if (!hasValidData && !hasValidDatasets) {
     return (
       <div className="w-full h-full flex items-center justify-center text-gray-500 bg-gray-50 rounded">
         <div className="text-center">
@@ -70,7 +82,11 @@ export function ChartRenderer({ element, onDoubleClick }: ChartRendererProps) {
       >
         {element.chartType === 'bar' && element.chartData?.data && (
           <ProfessionalBarChartD3
-            data={element.chartData.data}
+            data={element.chartData.data.map(item => ({
+              category: item.category || item.name || '',
+              value: item.value,
+              series: item.series
+            }))}
             width={element.size.width - 32}
             height={element.size.height - 32}
             type="single"
@@ -78,7 +94,11 @@ export function ChartRenderer({ element, onDoubleClick }: ChartRendererProps) {
         )}
         {element.chartType === 'bar-grouped' && element.chartData?.data && (
           <ProfessionalBarChartD3
-            data={element.chartData.data}
+            data={element.chartData.data.map(item => ({
+              category: item.category || item.name || '',
+              value: item.value,
+              series: item.series
+            }))}
             width={element.size.width - 32}
             height={element.size.height - 32}
             type="grouped"
@@ -86,7 +106,11 @@ export function ChartRenderer({ element, onDoubleClick }: ChartRendererProps) {
         )}
         {element.chartType === 'bar-stacked' && element.chartData?.data && (
           <ProfessionalBarChartD3
-            data={element.chartData.data}
+            data={element.chartData.data.map(item => ({
+              category: item.category || item.name || '',
+              value: item.value,
+              series: item.series
+            }))}
             width={element.size.width - 32}
             height={element.size.height - 32}
             type="stacked"
@@ -94,14 +118,24 @@ export function ChartRenderer({ element, onDoubleClick }: ChartRendererProps) {
         )}
         {element.chartType === 'waterfall' && element.chartData?.data && (
           <WaterfallChartD3
-            data={element.chartData.data}
+            data={element.chartData.data.map((item, index, arr) => ({
+              name: item.category || item.name || `Item ${index + 1}`,
+              value: item.value,
+              type: item.type || (index === 0 ? 'start' : 
+                    index === arr.length - 1 ? 'end' : 
+                    item.value >= 0 ? 'positive' : 'negative') as 'start' | 'positive' | 'negative' | 'end'
+            }))}
             width={element.size.width - 32}
             height={element.size.height - 32}
           />
         )}
         {element.chartType === 'line' && element.chartData?.data && (
           <LineChartD3
-            data={element.chartData.data}
+            data={element.chartData.data.map(item => ({
+              category: item.category || item.name || '',
+              value: item.value,
+              series: item.series
+            }))}
             width={element.size.width - 32}
             height={element.size.height - 32}
             showPoints={true}
@@ -110,7 +144,10 @@ export function ChartRenderer({ element, onDoubleClick }: ChartRendererProps) {
         )}
         {element.chartType === 'pie' && element.chartData?.data && (
           <PieChartD3
-            data={element.chartData.data}
+            data={element.chartData.data.map(item => ({
+              category: item.category || item.name || '',
+              value: item.value
+            }))}
             width={element.size.width - 32}
             height={element.size.height - 32}
             showLabels={true}

@@ -217,6 +217,7 @@ interface SlideViewProps {
   panOffset: { x: number; y: number }
   onZoomChange: (zoom: number) => void
   onPanChange: (deltaX: number, deltaY: number) => void
+  incrementUsage?: () => boolean
 }
 
 const fontFamilies = ["Inter", "Arial", "Helvetica", "Times New Roman", "Georgia", "Verdana"]
@@ -256,7 +257,11 @@ export function SlideView({
   panOffset,
   onZoomChange,
   onPanChange,
-}: SlideViewProps) {
+  incrementUsage,
+  onElementsChange,
+  pendingAIAction,
+  onAIActionComplete,
+}: any) {
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [isEditingText, setIsEditingText] = useState<string | null>(null)
@@ -339,6 +344,23 @@ export function SlideView({
     
     setElements([titleElement, contentElement])
   }, [slide.title, slide.content, canvasSize])
+  
+  // Handle pending AI actions
+  useEffect(() => {
+    if (pendingAIAction) {
+      handleAIAction(pendingAIAction)
+      if (onAIActionComplete) {
+        onAIActionComplete()
+      }
+    }
+  }, [pendingAIAction])
+  
+  // Notify parent of element changes
+  useEffect(() => {
+    if (onElementsChange) {
+      onElementsChange(elements)
+    }
+  }, [elements, onElementsChange])
   
   // Handle click outside for chart editor
   useEffect(() => {
@@ -1769,10 +1791,13 @@ export function SlideView({
 
   // Handle AI Assistant actions
   const handleAIAction = (action: any) => {
-    addToUndoStack()
-    
     switch (action.type) {
       case 'addElement':
+        // Check edit limit for add actions
+        if (incrementUsage && !incrementUsage()) {
+          return // Edit blocked
+        }
+        addToUndoStack()
         const { elementType, position, size, properties } = action.payload
         let newElement: SlideElement
         
@@ -1926,21 +1951,25 @@ export function SlideView({
         break
         
       case 'updateElement':
+        addToUndoStack()
         const { elementId, updates } = action.payload
         updateElement(elementId, updates)
         break
         
       case 'deleteElement':
+        addToUndoStack()
         const { elementId: deleteId } = action.payload
         deleteElement(deleteId)
         break
         
       case 'alignElements':
+        addToUndoStack()
         const { direction } = action.payload
         alignElements(direction)
         break
         
       case 'distributeElements':
+        addToUndoStack()
         const { axis } = action.payload
         distributeElements(axis)
         break
@@ -1948,6 +1977,11 @@ export function SlideView({
   }
 
   const addTextBox = () => {
+    // Check edit limit
+    if (incrementUsage && !incrementUsage()) {
+      return // Edit blocked
+    }
+    
     const newElement: SlideElement = {
       id: `text-${Date.now()}`,
       type: "text",
@@ -1975,6 +2009,11 @@ export function SlideView({
   }
 
   const addShape = (shapeType: "rectangle" | "circle" | "triangle" | "line" | "arrow") => {
+    // Check edit limit
+    if (incrementUsage && !incrementUsage()) {
+      return // Edit blocked
+    }
+    
     const isLine = shapeType === "line" || shapeType === "arrow"
     const newElement: SlideElement = {
       id: `shape-${Date.now()}`,
@@ -2093,6 +2132,11 @@ export function SlideView({
   }
 
   const addChart = (chartType: SlideElement['chartType'] = 'bar') => {
+    // Check edit limit
+    if (incrementUsage && !incrementUsage()) {
+      return // Edit blocked
+    }
+    
     const defaultData = getDefaultChartData(chartType)
 
     const newElement: SlideElement = {
@@ -2126,6 +2170,11 @@ export function SlideView({
   }
 
   const addTable = (rows: number = 3, columns: number = 3) => {
+    // Check edit limit
+    if (incrementUsage && !incrementUsage()) {
+      return // Edit blocked
+    }
+    
     // Validate input
     const validRows = Math.max(1, Math.min(20, rows))
     const validColumns = Math.max(1, Math.min(10, columns))
@@ -2180,6 +2229,11 @@ export function SlideView({
   }
 
   const duplicateElement = () => {
+    // Check edit limit
+    if (incrementUsage && !incrementUsage()) {
+      return // Edit blocked
+    }
+    
     addToUndoStack()
     
     if (multiSelectedElements.size > 0) {
@@ -4021,7 +4075,6 @@ export function SlideView({
                                     
                                     switch (chartType) {
                                       case 'pie':
-                                      case 'doughnut':
                                         defaultData = {
                                           labels: ['Q1', 'Q2', 'Q3', 'Q4'],
                                           datasets: [{

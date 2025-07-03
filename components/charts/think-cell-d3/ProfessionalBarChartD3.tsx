@@ -9,6 +9,20 @@ interface BarData {
   series?: string
 }
 
+interface StackItem {
+  category: string
+  series: string
+  value: number
+  y0: number
+  y1: number
+}
+
+interface ProcessedStackData {
+  category: string
+  stack: StackItem[]
+  total: number
+}
+
 interface ProfessionalBarChartD3Props {
   data: BarData[]
   width?: number
@@ -56,7 +70,7 @@ export function ProfessionalBarChartD3({
       .attr('transform', `translate(${margin.left},${margin.top})`)
 
     // Process data for different chart types
-    let processedData: any[] = data
+    let processedData: ProcessedStackData[] = []
     let series: string[] = []
     
     if (type === 'grouped' || type === 'stacked') {
@@ -80,11 +94,13 @@ export function ProfessionalBarChartD3({
 
     // Scales
     const xScale = d3.scaleBand()
-      .domain(type === 'stacked' ? processedData.map(d => d.category) : data.map(d => d.category))
+      .domain(type === 'stacked' && processedData.length > 0 
+        ? processedData.map(d => d.category) 
+        : data.map(d => d.category))
       .range([0, innerWidth])
       .padding(0.2)
 
-    const yMax = type === 'stacked' 
+    const yMax = type === 'stacked' && processedData.length > 0
       ? d3.max(processedData, d => d.total) as number
       : d3.max(data, d => d.value) as number
 
@@ -184,12 +200,12 @@ export function ProfessionalBarChartD3({
         .attr('transform', d => `translate(${xScale(d.category)},0)`)
 
       stackGroups.selectAll('rect')
-        .data(d => d.stack)
+        .data((d: ProcessedStackData) => d.stack)
         .enter().append('rect')
-        .attr('y', d => yScale(d.y1))
+        .attr('y', (d: StackItem) => yScale(d.y1))
         .attr('width', xScale.bandwidth())
-        .attr('height', d => yScale(d.y0) - yScale(d.y1))
-        .attr('fill', d => colorScale(d.series) as string)
+        .attr('height', (d: StackItem) => yScale(d.y0) - yScale(d.y1))
+        .attr('fill', (d: StackItem) => colorScale(d.series) as string)
         .attr('opacity', 0.9)
     }
 

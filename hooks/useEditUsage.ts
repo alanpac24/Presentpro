@@ -107,6 +107,14 @@ export function useEditUsage() {
   const incrementUsage = useCallback(() => {
     if (isUnlimited) return true // Always allow for Enterprise
 
+    // Check if action is allowed BEFORE incrementing
+    if (usage && usage.count >= limit && !isModalDismissed()) {
+      // Show modal when limit is reached
+      setShowModal(true)
+      return false // Block the action
+    }
+
+    // Increment usage
     setUsage(prev => {
       if (!prev) return prev
       
@@ -114,16 +122,10 @@ export function useEditUsage() {
       const newUsage = { ...prev, count: newCount }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(newUsage))
       
-      // Check if we've hit the limit and modal isn't dismissed
-      if (newCount >= limit && !isModalDismissed()) {
-        return newUsage
-      }
-      
       return newUsage
     })
 
-    // Return whether the action is allowed
-    return !usage || usage.count < limit || isModalDismissed()
+    return true // Allow the action
   }, [isUnlimited, limit, usage, isModalDismissed])
 
   const dismissModal = useCallback((hours: number = 2) => {

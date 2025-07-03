@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { PresentationEditorHeader } from "./components/PresentationEditorHeader"
 import { AIAssistant } from "./components/AIAssistant"
 import { SlideView } from "./components/SlideView"
@@ -55,6 +55,8 @@ export default function PresentationEditorPage() {
   const [isResizing, setIsResizing] = useState(false)
   const [showVersionHistory, setShowVersionHistory] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const [currentElements, setCurrentElements] = useState<any[]>([])
+  const [pendingAIAction, setPendingAIAction] = useState<any>(null)
   
   // Edit usage tracking
   const {
@@ -221,11 +223,11 @@ export default function PresentationEditorPage() {
           <div style={{ width: `${sidebarWidth}px`, flexShrink: 0 }} className="overflow-hidden">
             <AIAssistant 
               currentSlide={currentSlide} 
-              elements={[]}
+              elements={currentElements}
               onAction={(action) => {
                 // Handle AI actions - pass to SlideView
                 if (action && action.type) {
-                  // AI actions are handled by SlideView's handleAIAction
+                  setPendingAIAction(action)
                 }
               }}
               width={sidebarWidth}
@@ -245,6 +247,10 @@ export default function PresentationEditorPage() {
             panOffset={panOffset}
             onZoomChange={handleZoomChange}
             onPanChange={handlePanChange}
+            incrementUsage={incrementUsage}
+            onElementsChange={setCurrentElements}
+            pendingAIAction={pendingAIAction}
+            onAIActionComplete={() => setPendingAIAction(null)}
           />
           <SlideCarousel 
             slides={slides} 

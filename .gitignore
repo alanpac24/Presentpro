@@ -25,6 +25,8 @@ yarn-error.log*
 
 # local env files
 .env*.local
+.env
+.env.production
 
 # vercel
 .vercel
@@ -50,3 +52,27 @@ Thumbs.db
 
 # Claude
 .claude/
+
+# Test files
+test-*.js
+test-*.ts
+simple-*.js
+server.js
+
+# Standalone projects
+think-cell-clone/
+slide-generator-backend/
+pptx-parser/
+
+# Data and uploads
+data/uploads/
+logs/
+
+# Report and backup files
+*-report.md
+*-summary.md
+*.backup
+*.bak
+
+# Development files
+dev-output.txt

@@ -6,15 +6,37 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
 import { PrivateHeader } from "@/components/header"
-import { mockUser } from "@/lib/constants"
+import { mockUser, updateUserTier } from "@/lib/constants"
 
 export default function UpgradePage() {
   const router = useRouter()
   const [isYearly, setIsYearly] = useState(false)
 
   const handleUpgrade = (planName: string) => {
-    // In a real app, this would initiate the payment flow
-    // For now, just redirect to dashboard
+    // Update the user's tier
+    updateUserTier(planName)
+    
+    // Reset edit usage when upgrading
+    const editUsageKey = 'presentpro_edit_usage'
+    try {
+      const currentUsage = localStorage.getItem(editUsageKey)
+      if (currentUsage) {
+        const usage = JSON.parse(currentUsage)
+        const updatedUsage = {
+          ...usage,
+          count: 0,
+          lastReset: new Date().toISOString()
+        }
+        localStorage.setItem(editUsageKey, JSON.stringify(updatedUsage))
+      }
+    } catch (error) {
+      console.error('Error resetting edit usage:', error)
+    }
+    
+    // Show success message (using alert for now, can be replaced with toast)
+    alert(`Successfully upgraded to ${planName}! Your new limits are now active.`)
+    
+    // Redirect to dashboard to see the new tier in action
     router.push("/dashboard")
   }
 
