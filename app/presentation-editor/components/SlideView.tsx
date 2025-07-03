@@ -1427,6 +1427,9 @@ export function SlideView({
   }
 
   const deleteElement = (elementId?: string) => {
+    // Add to undo stack before deleting
+    addToUndoStack()
+    
     if (elementId) {
       // Delete specific element (used by AI assistant)
       setElements((prev) => prev.filter((el) => el.id !== elementId))
@@ -4678,7 +4681,7 @@ export function SlideView({
                     <Button
                       size="icon"
                       variant="ghost"
-                      onClick={deleteElement}
+                      onClick={() => deleteElement()}
                       className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9 text-red-600 hover:text-red-700 hover:bg-red-50"
                       title="Delete"
                     >
