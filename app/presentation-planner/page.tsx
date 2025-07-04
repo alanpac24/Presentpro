@@ -116,7 +116,7 @@ export default function PresentationPlannerPage() {
       "presentationData",
       JSON.stringify({ type: "quick", prompt: quickPrompt, timestamp: Date.now() }),
     )
-    router.push("/presentation-loading")
+    router.push("/outline-editor")
   }
 
   const handleDetailedGenerate = async () => {
@@ -124,7 +124,7 @@ export default function PresentationPlannerPage() {
       "presentationData",
       JSON.stringify({ type: "detailed", formData: formData, timestamp: Date.now() }),
     )
-    router.push("/presentation-loading")
+    router.push("/outline-editor")
   }
 
 
