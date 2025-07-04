@@ -4,7 +4,8 @@ import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Send, Loader2 } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Send, Loader2, Layers } from "lucide-react"
 import { parseIntent, generateResponse, generateSampleContent } from "@/lib/simple-ai-utils"
 
 interface Message {
@@ -21,6 +22,22 @@ interface AIAssistantProps {
   width: number
   onResizeStart: () => void
   onSlideUpdate: (slideId: number, updates: any) => void
+}
+
+const slideTypes = {
+  title: "Title Slide",
+  content: "Content Slide",
+  chart: "Chart & Data",
+  strategy: "Go-to-Market",
+  timeline: "Timeline",
+  comparison: "Comparison",
+  conclusion: "Conclusion",
+}
+
+const slideCategories = {
+  Structure: ["title", "content", "conclusion"],
+  Business: ["strategy", "comparison"],
+  Data: ["chart", "timeline"],
 }
 
 export function AIAssistant({ 
@@ -117,6 +134,34 @@ export function AIAssistant({
       <div className="p-4 border-b bg-white">
         <h3 className="font-semibold">AI Assistant</h3>
         <p className="text-sm text-gray-600">Ask me to add or modify slide content</p>
+      </div>
+
+      {/* Slide Type Selector */}
+      <div className="p-4 border-b bg-gray-50">
+        <div className="flex items-center mb-2">
+          <Layers className="w-4 h-4 mr-2 text-gray-600" />
+          <span className="text-sm font-medium text-gray-700">Change Slide Type</span>
+        </div>
+        <Select
+          value={currentSlide.type}
+          onValueChange={(value) => onSlideUpdate(currentSlide.id, { type: value })}
+        >
+          <SelectTrigger className="w-full bg-white">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(slideCategories).map(([category, types]) => (
+              <div key={category}>
+                <div className="px-2 py-1.5 text-xs font-semibold text-gray-500">{category}</div>
+                {types.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {slideTypes[type as keyof typeof slideTypes]}
+                  </SelectItem>
+                ))}
+              </div>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Messages */}
