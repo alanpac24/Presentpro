@@ -1,5 +1,8 @@
 import { User } from "@/types/user"
 
+// Re-export app constants
+export * from './app-constants'
+
 // Function to get stored tier from localStorage
 function getStoredTier(): "Free" | "Pro" | "Professional" | "Enterprise" {
   if (typeof window === 'undefined') return 'Free'
@@ -42,10 +45,18 @@ export const mockStats = {
   monthlyLimit: 3, // Free tier limit
 }
 
-// Presentation limits by tier
+// Presentation limits by tier (moved to app-constants as PLAN_LIMITS)
 export const PRESENTATION_LIMITS = {
   Free: 3,
   Pro: 10,
   Professional: 50,
   Enterprise: Infinity,
-}
+} as const
+
+// Edit limits by tier (moved to app-constants as PLAN_LIMITS)
+export const EDIT_LIMITS = {
+  Free: 5,
+  Pro: 150,
+  Professional: 500,
+  Enterprise: Infinity,
+} as const
