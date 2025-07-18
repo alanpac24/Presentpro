@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
       contactEmail: validatedData.yourEmail,
     })
     
-    const pdfBlob = await pdf(pdfDoc).toBlob()
+    const pdfBlob = await pdf(pdfDoc as any).toBlob()
     const pdfBuffer = await pdfBlob.arrayBuffer()
     const pdfBase64 = Buffer.from(pdfBuffer).toString('base64')
     
