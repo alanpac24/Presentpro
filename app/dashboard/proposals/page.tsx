@@ -1,5 +1,6 @@
 "use client"
 
+// AI-powered proposal generator with McKinsey-style PDFs
 import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
