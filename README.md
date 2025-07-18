@@ -2,6 +2,8 @@
 
 An AI-powered presentation generation platform built with Next.js, designed to create executive-level presentations with professional precision.
 
+<!-- Latest: AI Proposal Generator with McKinsey-style PDFs -->
+
 ## Features
 
 - 🤖 AI-powered content generation
