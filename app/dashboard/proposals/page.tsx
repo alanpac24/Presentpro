@@ -28,9 +28,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Progress } from "@/components/ui/progress"
 import {
   Search,
   Plus,
@@ -51,6 +53,11 @@ import {
   Clock,
   Mail,
   ArrowUpDown,
+  Sparkles,
+  Building,
+  User,
+  FileText,
+  Loader2,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { PrivateHeader } from "@/components/header"
@@ -156,6 +163,23 @@ export default function ProposalsPage() {
   const [showUploadDialog, setShowUploadDialog] = useState(false)
   const [csvFile, setCsvFile] = useState<File | null>(null)
   const [csvPreview, setCsvPreview] = useState<string[][]>([])
+  const [showGenerateDialog, setShowGenerateDialog] = useState(false)
+  const [generateForm, setGenerateForm] = useState({
+    companyName: "",
+    companyWebsite: "",
+    contactName: "",
+    contactTitle: "",
+    contactEmail: "",
+    linkedinUrl: "",
+    productDescription: "",
+    salesObjective: "demo" as const,
+    yourName: "John Doe",
+    yourEmail: "john@salespro.ai",
+    yourCompany: "SalesPro",
+  })
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [generationProgress, setGenerationProgress] = useState(0)
+  const [generationStatus, setGenerationStatus] = useState("")
 
   const statusColors = {
     draft: "bg-gray-100 text-gray-700",
@@ -269,6 +293,102 @@ Tech Inc,Jane Doe,CTO,jane@techinc.com,Platform Integration,150000`
     }).format(value)
   }
 
+  const handleGenerateProposal = async () => {
+    setIsGenerating(true)
+    setGenerationProgress(0)
+    setGenerationStatus("Researching company...")
+
+    try {
+      // Simulate progress updates
+      const progressSteps = [
+        { progress: 20, status: "Researching company..." },
+        { progress: 40, status: "Analyzing prospect..." },
+        { progress: 60, status: "Generating content with AI..." },
+        { progress: 80, status: "Creating PDF slides..." },
+        { progress: 90, status: "Preparing email..." },
+      ]
+
+      for (const step of progressSteps) {
+        setGenerationProgress(step.progress)
+        setGenerationStatus(step.status)
+        await new Promise(resolve => setTimeout(resolve, 1000))
+      }
+
+      // Make API call
+      const response = await fetch("/api/proposals/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(generateForm),
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        setGenerationProgress(100)
+        setGenerationStatus("Proposal generated successfully!")
+
+        // Download PDF
+        const pdfData = atob(result.data.pdf.base64)
+        const pdfArray = new Uint8Array(pdfData.length)
+        for (let i = 0; i < pdfData.length; i++) {
+          pdfArray[i] = pdfData.charCodeAt(i)
+        }
+        const pdfBlob = new Blob([pdfArray], { type: "application/pdf" })
+        const pdfUrl = URL.createObjectURL(pdfBlob)
+        const a = document.createElement("a")
+        a.href = pdfUrl
+        a.download = result.data.pdf.filename
+        a.click()
+        URL.revokeObjectURL(pdfUrl)
+
+        // Add to proposals list
+        const newProposal: Proposal = {
+          id: proposals.length + 1,
+          companyName: generateForm.companyName,
+          contactName: generateForm.contactName,
+          contactTitle: generateForm.contactTitle,
+          contactEmail: generateForm.contactEmail,
+          proposalType: "AI Generated",
+          status: "draft",
+          sentDate: null,
+          lastModified: new Date().toISOString().split("T")[0],
+          openRate: 0,
+          slideCount: 5,
+          value: 150000,
+        }
+        setProposals([newProposal, ...proposals])
+
+        // Close dialog
+        setTimeout(() => {
+          setShowGenerateDialog(false)
+          setIsGenerating(false)
+          setGenerationProgress(0)
+          setGenerationStatus("")
+          // Reset form
+          setGenerateForm({
+            companyName: "",
+            companyWebsite: "",
+            contactName: "",
+            contactTitle: "",
+            contactEmail: "",
+            linkedinUrl: "",
+            productDescription: "",
+            salesObjective: "demo",
+            yourName: "John Doe",
+            yourEmail: "john@salespro.ai",
+            yourCompany: "SalesPro",
+          })
+        }, 2000)
+      } else {
+        setGenerationStatus("Generation failed: " + result.error)
+        setIsGenerating(false)
+      }
+    } catch (error) {
+      setGenerationStatus("Error: " + (error as Error).message)
+      setIsGenerating(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <PrivateHeader />
@@ -348,6 +468,15 @@ Tech Inc,Jane Doe,CTO,jane@techinc.com,Platform Integration,150000`
                 >
                   <Upload className="w-4 h-4 mr-2" />
                   Upload CSV
+                </Button>
+
+                <Button
+                  size="sm"
+                  onClick={() => setShowGenerateDialog(true)}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  AI Generate
                 </Button>
 
                 <Button
@@ -558,6 +687,183 @@ Tech Inc,Jane Doe,CTO,jane@techinc.com,Platform Integration,150000`
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* AI Generate Dialog */}
+      <Dialog open={showGenerateDialog} onOpenChange={setShowGenerateDialog}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Generate AI-Powered Sales Proposal</DialogTitle>
+            <DialogDescription>
+              Enter prospect information to generate a personalized McKinsey-style proposal
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            {/* Company Information */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                <Building className="w-4 h-4" />
+                Company Information
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="companyName">Company Name *</Label>
+                  <Input
+                    id="companyName"
+                    value={generateForm.companyName}
+                    onChange={(e) => setGenerateForm({ ...generateForm, companyName: e.target.value })}
+                    placeholder="Microsoft"
+                    disabled={isGenerating}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="companyWebsite">Company Website</Label>
+                  <Input
+                    id="companyWebsite"
+                    type="url"
+                    value={generateForm.companyWebsite}
+                    onChange={(e) => setGenerateForm({ ...generateForm, companyWebsite: e.target.value })}
+                    placeholder="https://microsoft.com"
+                    disabled={isGenerating}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Contact Information */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                <User className="w-4 h-4" />
+                Contact Information
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="contactName">Contact Name *</Label>
+                  <Input
+                    id="contactName"
+                    value={generateForm.contactName}
+                    onChange={(e) => setGenerateForm({ ...generateForm, contactName: e.target.value })}
+                    placeholder="Sarah Chen"
+                    disabled={isGenerating}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="contactTitle">Contact Title *</Label>
+                  <Input
+                    id="contactTitle"
+                    value={generateForm.contactTitle}
+                    onChange={(e) => setGenerateForm({ ...generateForm, contactTitle: e.target.value })}
+                    placeholder="VP of Sales"
+                    disabled={isGenerating}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="contactEmail">Contact Email *</Label>
+                  <Input
+                    id="contactEmail"
+                    type="email"
+                    value={generateForm.contactEmail}
+                    onChange={(e) => setGenerateForm({ ...generateForm, contactEmail: e.target.value })}
+                    placeholder="sarah.chen@microsoft.com"
+                    disabled={isGenerating}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="linkedinUrl">LinkedIn URL</Label>
+                  <Input
+                    id="linkedinUrl"
+                    type="url"
+                    value={generateForm.linkedinUrl}
+                    onChange={(e) => setGenerateForm({ ...generateForm, linkedinUrl: e.target.value })}
+                    placeholder="https://linkedin.com/in/sarahchen"
+                    disabled={isGenerating}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Proposal Details */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                Proposal Details
+              </h3>
+              <div>
+                <Label htmlFor="productDescription">Your Product/Service Description *</Label>
+                <Textarea
+                  id="productDescription"
+                  value={generateForm.productDescription}
+                  onChange={(e) => setGenerateForm({ ...generateForm, productDescription: e.target.value })}
+                  placeholder="AI-powered sales automation platform that helps teams close more deals faster..."
+                  rows={3}
+                  disabled={isGenerating}
+                />
+              </div>
+              <div>
+                <Label htmlFor="salesObjective">Sales Objective *</Label>
+                <select
+                  id="salesObjective"
+                  value={generateForm.salesObjective}
+                  onChange={(e) => setGenerateForm({ ...generateForm, salesObjective: e.target.value as any })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={isGenerating}
+                >
+                  <option value="demo">Schedule Demo</option>
+                  <option value="pilot">Start Pilot Program</option>
+                  <option value="close">Close Deal</option>
+                  <option value="discovery">Discovery Call</option>
+                  <option value="renewal">Renewal Discussion</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Generation Progress */}
+            {isGenerating && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                  <span className="text-sm text-gray-600">{generationStatus}</span>
+                </div>
+                <Progress value={generationProgress} className="h-2" />
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowGenerateDialog(false)}
+              disabled={isGenerating}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleGenerateProposal}
+              disabled={
+                isGenerating ||
+                !generateForm.companyName ||
+                !generateForm.contactName ||
+                !generateForm.contactTitle ||
+                !generateForm.contactEmail ||
+                !generateForm.productDescription
+              }
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Generate Proposal
+                </>
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
