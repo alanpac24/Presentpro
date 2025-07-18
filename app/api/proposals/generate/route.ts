@@ -4,6 +4,7 @@ import { pdf } from '@react-pdf/renderer'
 import { researchService } from '@/lib/services/research-service'
 import { aiService } from '@/lib/services/ai-service'
 import ProposalDocument from '@/components/pdf/ProposalDocument'
+import React from 'react'
 
 // Request validation schema
 const GenerateProposalSchema = z.object({
@@ -53,14 +54,12 @@ export async function POST(req: NextRequest) {
     
     // Step 3: Generate PDF
     console.log('Creating PDF document...')
-    const pdfDoc = (
-      <ProposalDocument
-        content={proposalContent}
-        companyName={validatedData.companyName}
-        contactName={validatedData.yourName}
-        contactEmail={validatedData.yourEmail}
-      />
-    )
+    const pdfDoc = React.createElement(ProposalDocument, {
+      content: proposalContent,
+      companyName: validatedData.companyName,
+      contactName: validatedData.yourName,
+      contactEmail: validatedData.yourEmail,
+    })
     
     const pdfBlob = await pdf(pdfDoc).toBlob()
     const pdfBuffer = await pdfBlob.arrayBuffer()
