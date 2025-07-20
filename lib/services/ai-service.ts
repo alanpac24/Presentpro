@@ -724,6 +724,11 @@ ${senderName}`
     bullets?: string[]
     speakerNotes?: string
     chartData?: any
+    metrics?: Array<{
+      label: string
+      value: string
+      trend?: string
+    }>
   }> {
     const { title, context, slideType, slideNumber, mainTopic } = params
     
@@ -773,7 +778,8 @@ ${senderName}`
           userPrompt = `Create data visualization content for a slide titled "${title}" about "${context}" in a presentation on "${mainTopic}".
             Return a JSON object with:
             - content: What the chart/data shows (1-2 sentences)
-            - chartData: Realistic sample data with 6 data points showing growth/trends
+            - chartData: Object with "labels" array and "datasets" array containing label, data array, borderColor, backgroundColor
+            - metrics: Array of 3 key metrics objects with "label", "value", and "trend" properties
             - speakerNotes: Key insights from the data (2-3 sentences)`
           break
           
@@ -817,7 +823,8 @@ ${senderName}`
             borderColor: 'rgb(75, 192, 192)',
             backgroundColor: 'rgba(75, 192, 192, 0.2)',
           }]
-        } : undefined)
+        } : undefined),
+        metrics: aiResponse.metrics
       }
       
     } catch (error) {
@@ -872,10 +879,15 @@ ${senderName}`
           datasets: [{
             label: 'Growth Trajectory',
             data: [45, 52, 67, 78, 92, 110],
-            borderColor: 'rgb(75, 192, 192)',
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgb(59, 130, 246)',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
           }]
         },
+        metrics: [
+          { label: 'Growth Rate', value: '144%', trend: 'Year over year' },
+          { label: 'Efficiency Gain', value: '+40%', trend: 'vs. baseline' },
+          { label: 'ROI Timeline', value: '6 months', trend: 'Payback period' }
+        ],
         speakerNotes: 'As you can see, the growth trajectory demonstrates strong momentum and validates our approach.'
       },
       conclusion: {

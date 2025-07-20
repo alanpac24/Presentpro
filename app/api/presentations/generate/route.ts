@@ -63,6 +63,7 @@ export async function POST(req: NextRequest) {
           bullets: slideContent.bullets,
           speakerNotes: slideContent.speakerNotes,
           chartData: slideContent.chartData,
+          metrics: slideContent.metrics,
           layout: section.layout,
         }
       })

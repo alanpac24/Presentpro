@@ -7,6 +7,10 @@ import { ChevronLeft, ChevronRight, Presentation, Download, Home } from "lucide-
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { PrivateHeader } from "@/components/header"
+import { BarChart } from "@/components/charts/BarChart"
+import { LineChart } from "@/components/charts/LineChart"
+import { MetricBox } from "@/components/slide-elements/MetricBox"
+import { ComparisonTable } from "@/components/slide-elements/ComparisonTable"
 
 interface Slide {
   id: string
@@ -15,6 +19,12 @@ interface Slide {
   bullets?: string[]
   speakerNotes?: string
   type?: string
+  chartData?: any
+  metrics?: Array<{
+    label: string
+    value: string
+    trend?: string
+  }>
 }
 
 export default function PresentationViewerPage() {
@@ -127,41 +137,93 @@ export default function PresentationViewerPage() {
                 {currentSlide.title}
               </h2>
 
+              {/* Metrics Row (if present) */}
+              {currentSlide.metrics && currentSlide.metrics.length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+                  {currentSlide.metrics.map((metric, index) => (
+                    <MetricBox
+                      key={index}
+                      value={metric.value}
+                      label={metric.label}
+                      trend={metric.trend}
+                      color={index === 0 ? "blue" : index === 1 ? "green" : "orange"}
+                    />
+                  ))}
+                </div>
+              )}
+
               {/* Content */}
               {currentSlide.content && (
                 <p className="text-lg text-gray-700 mb-6">{currentSlide.content}</p>
               )}
 
-              {/* Bullets */}
-              {currentSlide.bullets && currentSlide.bullets.length > 0 && (
-                <ul className="space-y-4 text-lg">
-                  {currentSlide.bullets.map((bullet, index) => {
-                    // Handle two-column format (separated by |)
-                    if (bullet.includes("|")) {
-                      const [left, right] = bullet.split("|")
-                      return (
-                        <li key={index} className="flex justify-between items-start">
-                          <span className="text-gray-700 flex-1">{left.trim()}</span>
-                          <span className="text-gray-700 flex-1 text-right">{right.trim()}</span>
-                        </li>
-                      )
-                    }
-                    return (
-                      <li key={index} className="flex items-start">
-                        <span className="text-blue-600 mr-3">•</span>
-                        <span className="text-gray-700">{bullet}</span>
-                      </li>
-                    )
-                  })}
-                </ul>
+              {/* Two Column Comparison */}
+              {currentSlide.type === "twoColumn" && currentSlide.bullets && (
+                <div className="mb-8">
+                  <ComparisonTable
+                    data={currentSlide.bullets.map(bullet => {
+                      if (bullet.includes("|")) {
+                        const [feature, ...rest] = bullet.split(":")
+                        const [option1, option2] = rest.join(":").split("|")
+                        return {
+                          feature: feature.trim(),
+                          option1: option1?.trim() || "",
+                          option2: option2?.trim() || ""
+                        }
+                      }
+                      return { feature: bullet, option1: "", option2: "" }
+                    })}
+                  />
+                </div>
               )}
 
-              {/* Chart placeholder for chart slides */}
-              {currentSlide.type === "chart" && (
-                <div className="mt-6 bg-gray-100 rounded-lg p-8 flex items-center justify-center">
-                  <div className="text-center text-gray-500">
-                    <div className="mb-2">📊</div>
-                    <p className="text-sm">Chart visualization would appear here</p>
+              {/* Regular Bullets */}
+              {currentSlide.type !== "twoColumn" && currentSlide.bullets && currentSlide.bullets.length > 0 && (
+                <div className="space-y-4 text-lg">
+                  {currentSlide.bullets.map((bullet, index) => (
+                    <div key={index} className="flex items-start">
+                      <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-4 flex-shrink-0" />
+                      <span className="text-gray-700">{bullet}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Chart visualization */}
+              {currentSlide.type === "chart" && currentSlide.chartData && (
+                <div className="mt-6 bg-gray-50 rounded-lg p-6 flex items-center justify-center">
+                  {currentSlide.chartData.type === "line" ? (
+                    <LineChart data={currentSlide.chartData} width={500} height={300} />
+                  ) : (
+                    <BarChart data={currentSlide.chartData} width={500} height={300} />
+                  )}
+                </div>
+              )}
+
+              {/* Title Slide Special Layout */}
+              {currentSlide.type === "title" && (
+                <div className="flex-1 flex items-center justify-center">
+                  <div className="text-center">
+                    {currentSlide.content && (
+                      <p className="text-2xl text-gray-600 font-light">{currentSlide.content}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Conclusion Slide with Action Items */}
+              {currentSlide.type === "conclusion" && currentSlide.bullets && (
+                <div className="bg-blue-50 rounded-lg p-8 mt-4">
+                  <h3 className="text-xl font-semibold text-blue-900 mb-4">Next Steps</h3>
+                  <div className="space-y-3">
+                    {currentSlide.bullets.map((bullet, index) => (
+                      <div key={index} className="flex items-start">
+                        <div className="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-medium mr-3 flex-shrink-0">
+                          {index + 1}
+                        </div>
+                        <span className="text-gray-700">{bullet}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
