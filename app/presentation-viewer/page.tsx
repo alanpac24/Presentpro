@@ -6,7 +6,7 @@ import { Presentation, Download, Home } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { PrivateHeader } from "@/components/header"
-import { SlideDeck } from "@/components/SlideDeck"
+import { SlideDeckSimple } from "@/components/SlideDeckSimple"
 
 export default function PresentationViewerPage() {
   const router = useRouter()
@@ -20,88 +20,23 @@ export default function PresentationViewerPage() {
     if (generatedData) {
       try {
         const { slides: generatedSlides, title } = JSON.parse(generatedData)
+        console.log('Generated slides:', generatedSlides)
         
-        // Transform slides to match SlideDeck format
+        // Transform slides - keep it simple
         const transformedSlides = generatedSlides.map((slide: any, index: number) => {
-          // Map slide types to McKinsey framework
-          let mappedType = slide.type
-          if (index === 0 || slide.type === 'title') {
-            mappedType = 'title'
-          } else if (slide.title?.toLowerCase().includes('challenge') || 
-                     slide.title?.toLowerCase().includes('problem')) {
-            mappedType = 'complication'
-          } else if (slide.title?.toLowerCase().includes('solution') || 
-                     slide.title?.toLowerCase().includes('approach')) {
-            mappedType = 'resolution'
-          } else if (slide.title?.toLowerCase().includes('implement') || 
-                     slide.title?.toLowerCase().includes('timeline')) {
-            mappedType = 'implementation'
-          } else if (slide.title?.toLowerCase().includes('investment') || 
-                     slide.title?.toLowerCase().includes('next') ||
-                     slide.type === 'conclusion') {
-            mappedType = 'investment'
-          } else if (slide.type === 'chart' || slide.metrics) {
-            mappedType = 'situation'
-          } else {
-            mappedType = 'situation' // default
-          }
-          
-          // Transform timeline data for implementation slides
-          let timeline = undefined
-          if (mappedType === 'implementation' && slide.bullets) {
-            timeline = slide.bullets.reduce((acc: any[], bullet: string, idx: number) => {
-              if (bullet.includes('Phase') || bullet.includes('Week')) {
-                acc.push({
-                  phase: bullet.split(':')[0] || `Phase ${idx + 1}`,
-                  duration: "2-4 weeks",
-                  activities: []
-                })
-              } else if (acc.length > 0) {
-                acc[acc.length - 1].activities.push(bullet)
-              }
-              return acc
-            }, [])
-          }
-          
-          // Extract investment data from conclusion slides
-          let investment = undefined
-          if (mappedType === 'investment') {
-            investment = {
-              initial: "$50,000",
-              monthly: "$10,000",
-              total: "$170,000",
-              roi: "300%",
-              payback: "4 months"
-            }
-            
-            // Try to extract actual values from content or bullets
-            if (slide.content?.includes('$') || slide.bullets?.some((b: string) => b.includes('$'))) {
-              // Parse investment data from slide content
-              const allText = slide.content + ' ' + (slide.bullets?.join(' ') || '')
-              const dollarMatches = allText.match(/\$[\d,]+/g) || []
-              const percentMatches = allText.match(/\d+%/g) || []
-              
-              if (dollarMatches.length > 0) investment.initial = dollarMatches[0]
-              if (dollarMatches.length > 1) investment.monthly = dollarMatches[1]
-              if (dollarMatches.length > 2) investment.total = dollarMatches[2]
-              if (percentMatches.length > 0) investment.roi = percentMatches[0]
-            }
-          }
-          
           return {
-            id: slide.id,
-            type: mappedType,
-            title: slide.title,
-            subtitle: slide.content,
+            id: slide.id || `slide-${index}`,
+            type: slide.type || 'bullet',
+            title: slide.title || `Slide ${index + 1}`,
+            subtitle: slide.subtitle,
             content: slide.content,
-            bullets: slide.bullets,
-            metrics: slide.metrics,
-            chartData: slide.chartData,
-            timeline: timeline,
-            investment: investment
+            bullets: slide.bullets || [],
+            metrics: slide.metrics || [],
+            chartData: slide.chartData
           }
         })
         
+        console.log('Transformed slides:', transformedSlides)
         setSlides(transformedSlides)
         setPresentationTitle(title)
       } catch (error) {
@@ -160,7 +95,7 @@ export default function PresentationViewerPage() {
 
       {/* Main Content */}
       <div className="px-4 sm:px-6 lg:px-8 py-8">
-        <SlideDeck 
+        <SlideDeckSimple 
           slides={slides}
           companyName="Target Company"
           presenter="Your Sales Team"

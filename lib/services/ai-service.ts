@@ -915,7 +915,8 @@ ${senderName}`
       content: 'content' in template ? template.content || '' : '',
       bullets: 'bullets' in template ? template.bullets : undefined,
       speakerNotes: template.speakerNotes || `This slide covers important aspects of ${title}.`,
-      chartData: 'chartData' in template ? template.chartData : undefined
+      chartData: 'chartData' in template ? template.chartData : undefined,
+      metrics: 'metrics' in template ? template.metrics : undefined
     }
   }
 }
