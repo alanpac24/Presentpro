@@ -14,11 +14,19 @@ export async function POST(req: NextRequest) {
     // Validate request
     const { prompt } = GeneratePresentationSchema.parse(body)
     
-    console.log('Generating presentation for prompt:', prompt)
+    console.log('=== Presentation Generation Request ===')
+    console.log('Prompt:', prompt)
+    console.log('Environment check:')
+    console.log('- OPENAI_API_KEY exists:', !!process.env.OPENAI_API_KEY)
+    console.log('- OPENAI_API_KEY value:', process.env.OPENAI_API_KEY ? `${process.env.OPENAI_API_KEY.substring(0, 7)}...` : 'undefined')
+    console.log('- OPENAI_MODEL:', process.env.OPENAI_MODEL || 'not set')
+    console.log('- NODE_ENV:', process.env.NODE_ENV)
     
     // Check if OpenAI API key is configured
     if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'your-openai-api-key-here') {
       console.warn('OpenAI API key not configured - using enhanced placeholders')
+    } else {
+      console.log('OpenAI API key is configured')
     }
     
     // Extract key information from prompt

@@ -42,16 +42,34 @@ export interface GenerationOptions {
 
 export class AIService {
   private openai: OpenAI | null = null
-  private model: string
 
   constructor() {
-    this.model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
+    // Don't read environment variables in constructor
   }
 
-  private getOpenAI(): OpenAI {
+  private getModel(): string {
+    // Read model at runtime
+    return process.env.OPENAI_MODEL || 'gpt-4o-mini'
+  }
+
+  private hasValidApiKey(): boolean {
+    const apiKey = process.env.OPENAI_API_KEY
+    return !!(apiKey && apiKey !== 'your-openai-api-key-here' && apiKey.trim().length > 0)
+  }
+
+  private getOpenAI(): OpenAI | null {
+    // Check API key validity first
+    if (!this.hasValidApiKey()) {
+      console.log('No valid OpenAI API key found')
+      return null
+    }
+
+    // Create OpenAI client lazily with runtime environment variable
     if (!this.openai) {
+      const apiKey = process.env.OPENAI_API_KEY
+      console.log('Creating OpenAI client with API key:', apiKey ? `${apiKey.substring(0, 7)}...` : 'undefined')
       this.openai = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
+        apiKey: apiKey,
       })
     }
     return this.openai
@@ -67,8 +85,14 @@ export class AIService {
     const prompt = this.buildProposalPrompt(research, options)
     
     try {
-      const completion = await this.getOpenAI().chat.completions.create({
-        model: this.model,
+      const openaiClient = this.getOpenAI()
+      if (!openaiClient) {
+        console.log('OpenAI client not available, using fallback content')
+        return this.getFallbackContent(research, options)
+      }
+
+      const completion = await openaiClient.chat.completions.create({
+        model: this.getModel(),
         messages: [
           {
             role: 'system',
@@ -703,10 +727,15 @@ ${senderName}`
   }> {
     const { title, context, slideType, slideNumber, mainTopic } = params
     
-    // Check if we have an API key
-    if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'your-openai-api-key-here') {
-      console.log('No OpenAI API key found, using placeholder content')
-      // Return better placeholder content if no API key
+    // Check if we have a valid API key
+    if (!this.hasValidApiKey()) {
+      console.log('No valid OpenAI API key found, using placeholder content')
+      return this.generatePlaceholderContent(params)
+    }
+    
+    const openaiClient = this.getOpenAI()
+    if (!openaiClient) {
+      console.log('Failed to create OpenAI client, using placeholder content')
       return this.generatePlaceholderContent(params)
     }
     
@@ -762,8 +791,8 @@ ${senderName}`
       }
       
       // Call OpenAI
-      const completion = await this.getOpenAI().chat.completions.create({
-        model: this.model,
+      const completion = await openaiClient.chat.completions.create({
+        model: this.getModel(),
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
