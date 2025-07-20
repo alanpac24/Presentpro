@@ -153,8 +153,16 @@ export default function TestSalesPage() {
           })}
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">AI-Powered Sales Slide Selection</h2>
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">AI-Powered Sales Slide Selection</h2>
+            <Link href="/test-ai-generation">
+              <Button variant="outline" size="sm">
+                <Presentation className="w-4 h-4 mr-2" />
+                Test AI Engine
+              </Button>
+            </Link>
+          </div>
           <div className="grid md:grid-cols-2 gap-8">
             <div className="space-y-3">
               <h3 className="font-semibold text-gray-900 mb-2">How It Works</h3>
