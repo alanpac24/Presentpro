@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { pdf } from '@react-pdf/renderer'
 import { researchService } from '@/lib/services/research-service'
-import { aiService } from '@/lib/services/ai-service'
+import { getAIService } from '@/lib/services/ai-service'
 import ProposalDocument from '@/components/pdf/ProposalDocument'
 import React from 'react'
 
@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
     
     // Step 2: Generate AI content
     console.log('Generating AI content...')
+    const aiService = getAIService()
     const proposalContent = await aiService.generateProposalContent(research, {
       product: validatedData.productDescription,
       objective: validatedData.salesObjective,

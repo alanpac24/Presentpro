@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { aiService } from '@/lib/services/ai-service'
+import { getAIService } from '@/lib/services/ai-service'
 
 // Request validation schema
 const GeneratePresentationSchema = z.object({
@@ -28,6 +28,9 @@ export async function POST(req: NextRequest) {
     } else {
       console.log('OpenAI API key is configured')
     }
+    
+    // Get AI service instance (this ensures env vars are available)
+    const aiService = getAIService()
     
     // Extract key information from prompt
     const promptAnalysis = await aiService.analyzePrompt(prompt)

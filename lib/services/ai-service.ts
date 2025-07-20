@@ -902,5 +902,13 @@ ${senderName}`
   }
 }
 
-// Export singleton instance
-export const aiService = new AIService()
+// Export a function to get the AI service instance
+// This ensures environment variables are available when the service is created
+let aiServiceInstance: AIService | null = null
+
+export function getAIService(): AIService {
+  if (!aiServiceInstance) {
+    aiServiceInstance = new AIService()
+  }
+  return aiServiceInstance
+}
