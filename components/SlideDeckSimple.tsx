@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight, BarChart3, TrendingUp, Target, Calendar, DollarSign } from 'lucide-react'
@@ -29,8 +29,15 @@ interface SlideDeckProps {
 export function SlideDeckSimple({ slides = [], companyName = "Your Company", presenter = "Sales Team" }: SlideDeckProps) {
   const [currentSlide, setCurrentSlide] = useState(0)
   
+  // Debug logging
+  console.log('SlideDeckSimple received slides:', slides)
+  
   if (!slides || slides.length === 0) {
-    return <div>No slides available</div>
+    return (
+      <div className="text-center p-8 bg-white rounded-lg shadow">
+        <p className="text-gray-600">No slides available. Please generate a presentation first.</p>
+      </div>
+    )
   }
   
   const nextSlide = () => {
@@ -40,6 +47,17 @@ export function SlideDeckSimple({ slides = [], companyName = "Your Company", pre
   const prevSlide = () => {
     setCurrentSlide((prev) => Math.max(prev - 1, 0))
   }
+  
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') prevSlide()
+      if (e.key === 'ArrowRight') nextSlide()
+    }
+    
+    window.addEventListener('keydown', handleKeyPress)
+    return () => window.removeEventListener('keydown', handleKeyPress)
+  }, [currentSlide, slides.length])
   
   const slide = slides[currentSlide]
   if (!slide) {
