@@ -139,8 +139,8 @@ export default function PresentationPlannerPage() {
           })
         )
         
-        // Route directly to presentation editor
-        router.push("/presentation-editor")
+        // Route directly to presentation viewer
+        router.push("/presentation-viewer")
       } else {
         console.error("Generation failed:", result.error)
         // You might want to show an error toast here
