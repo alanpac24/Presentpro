@@ -1059,7 +1059,7 @@ Return JSON with these fields:
           layout: 'planning'
         }
       )
-    } else if (purpose === 'persuade' || lowerPrompt.includes('sales') || lowerPrompt.includes('pitch')) {
+    } else if (purpose === 'persuade' || topic.toLowerCase().includes('sales') || topic.toLowerCase().includes('pitch')) {
       // Generic sales presentation when stage is not specified
       sections.push(
         {
