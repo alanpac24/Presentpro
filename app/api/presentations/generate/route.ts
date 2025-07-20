@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     // Extract key information from prompt
     const promptAnalysis = await aiService.analyzePrompt(prompt)
     
-    // Generate presentation structure
+    // Generate presentation structure with all extracted information
     const presentationStructure = await aiService.generatePresentationStructure({
       topic: promptAnalysis.topic,
       audience: promptAnalysis.audience,
@@ -43,9 +43,14 @@ export async function POST(req: NextRequest) {
       slideCount: promptAnalysis.slideCount || 10,
       salesStage: promptAnalysis.salesStage,
       industry: promptAnalysis.industry,
+      companyName: promptAnalysis.companyName,
+      challenges: promptAnalysis.challenges,
+      competitors: promptAnalysis.competitors,
+      budget: promptAnalysis.budget,
+      timeline: promptAnalysis.timeline,
     })
     
-    // Generate content for each slide
+    // Generate content for each slide with context
     const slides = await Promise.all(
       presentationStructure.sections.map(async (section, index) => {
         const slideContent = await aiService.generateSlideContent({
@@ -55,6 +60,12 @@ export async function POST(req: NextRequest) {
           slideNumber: index + 1,
           totalSlides: presentationStructure.sections.length,
           mainTopic: promptAnalysis.topic,
+          companyName: promptAnalysis.companyName,
+          challenges: promptAnalysis.challenges,
+          industry: promptAnalysis.industry,
+          competitors: promptAnalysis.competitors,
+          budget: promptAnalysis.budget,
+          timeline: promptAnalysis.timeline,
         })
         
         return {
