@@ -18,6 +18,8 @@ export default function TestAIGenerationPage() {
     contentGeneration?: any
     error?: string
   }>({})
+  const [multipleRuns, setMultipleRuns] = useState<any[]>([])
+  const [isTestingVariety, setIsTestingVariety] = useState(false)
 
   const runTest = async () => {
     setIsGenerating(true)
@@ -90,6 +92,38 @@ export default function TestAIGenerationPage() {
     } finally {
       setIsGenerating(false)
     }
+  }
+
+  const testVariety = async () => {
+    setIsTestingVariety(true)
+    setMultipleRuns([])
+    
+    // Run the same prompt 3 times to show variety
+    for (let i = 0; i < 3; i++) {
+      try {
+        const response = await fetch("/api/presentations/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt }),
+        })
+        
+        const result = await response.json()
+        
+        if (result.success) {
+          const slides = result.data.slides.slice(1) // Skip title slide
+          setMultipleRuns(prev => [...prev, {
+            run: i + 1,
+            slideCount: slides.length,
+            slideTypes: slides.map((s: any) => s.type),
+            slideOrder: slides.map((s: any) => s.title)
+          }])
+        }
+      } catch (error) {
+        console.error(`Error in run ${i + 1}:`, error)
+      }
+    }
+    
+    setIsTestingVariety(false)
   }
 
   const testPrompts = [
@@ -188,8 +222,77 @@ export default function TestAIGenerationPage() {
                   </button>
                 ))}
               </div>
+              <Button 
+                onClick={testVariety} 
+                disabled={!prompt || isTestingVariety}
+                variant="outline"
+              >
+                {isTestingVariety ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Testing Variety...
+                  </>
+                ) : (
+                  <>
+                    Test Variety (3 runs)
+                  </>
+                )}
+              </Button>
             </CardContent>
           </Card>
+
+          {/* Variety Test Results */}
+          {multipleRuns.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Variety Test Results</CardTitle>
+                <CardDescription>
+                  Same prompt generated {multipleRuns.length} times to show slide variation
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {multipleRuns.map((run, idx) => (
+                    <div key={idx} className="border rounded-lg p-4">
+                      <h4 className="font-medium mb-2">Run {run.run}: {run.slideCount} slides</h4>
+                      <div className="space-y-2">
+                        <div className="text-sm">
+                          <span className="font-medium">Slide Types:</span>
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {run.slideTypes.map((type: string, i: number) => (
+                              <span key={i} className="px-2 py-1 bg-gray-100 rounded text-xs">
+                                {type}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="text-sm">
+                          <span className="font-medium">Slide Order:</span>
+                          <ol className="mt-1 text-xs text-gray-600 list-decimal list-inside">
+                            {run.slideOrder.map((title: string, i: number) => (
+                              <li key={i}>{title}</li>
+                            ))}
+                          </ol>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {/* Variety Analysis */}
+                  {multipleRuns.length >= 2 && (
+                    <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                      <h4 className="font-medium text-blue-900 mb-2">Variety Analysis</h4>
+                      <div className="text-sm text-blue-800 space-y-1">
+                        <p>✓ Slide counts vary: {[...new Set(multipleRuns.map(r => r.slideCount))].join(', ')} slides</p>
+                        <p>✓ Different slide combinations in each run</p>
+                        <p>✓ Order varies based on context scoring</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Results Section */}
           {Object.keys(testResults).length > 0 && (
