@@ -487,6 +487,297 @@ Would you be open to a brief 20-minute call next week to discuss how we can help
 Best regards,
 ${senderName}`
   }
+
+  /**
+   * Analyze a presentation prompt to extract key information
+   */
+  async analyzePrompt(prompt: string): Promise<{
+    topic: string
+    audience: string
+    purpose: string
+    slideCount?: number
+  }> {
+    // Simple extraction logic - in production, this would use AI
+    const lowerPrompt = prompt.toLowerCase()
+    
+    // Extract slide count if mentioned
+    const slideMatch = prompt.match(/(\d+)\s*slide/i)
+    const slideCount = slideMatch ? parseInt(slideMatch[1]) : undefined
+    
+    // Determine purpose
+    let purpose = 'inform'
+    if (lowerPrompt.includes('sales') || lowerPrompt.includes('pitch')) purpose = 'persuade'
+    if (lowerPrompt.includes('training') || lowerPrompt.includes('teach')) purpose = 'educate'
+    if (lowerPrompt.includes('review') || lowerPrompt.includes('report')) purpose = 'report'
+    
+    // Determine audience
+    let audience = 'general'
+    if (lowerPrompt.includes('executive') || lowerPrompt.includes('board')) audience = 'executives'
+    if (lowerPrompt.includes('team') || lowerPrompt.includes('staff')) audience = 'team'
+    if (lowerPrompt.includes('client') || lowerPrompt.includes('customer')) audience = 'clients'
+    
+    // Extract topic (first 50 chars of prompt as fallback)
+    const topic = prompt.length > 50 ? prompt.substring(0, 50) + '...' : prompt
+    
+    return {
+      topic,
+      audience,
+      purpose,
+      slideCount
+    }
+  }
+
+  /**
+   * Generate presentation structure based on analysis
+   */
+  async generatePresentationStructure(params: {
+    topic: string
+    audience: string
+    purpose: string
+    slideCount: number
+  }): Promise<{
+    title: string
+    sections: Array<{
+      title: string
+      description: string
+      slideType: string
+      layout: string
+    }>
+  }> {
+    const { topic, audience, purpose, slideCount } = params
+    
+    // Generate title
+    const title = topic.length > 50 ? topic.substring(0, 47) + '...' : topic
+    
+    // Generate sections based on purpose
+    const sections = []
+    
+    // Always start with title slide
+    sections.push({
+      title: 'Title Slide',
+      description: title,
+      slideType: 'title',
+      layout: 'center'
+    })
+    
+    if (purpose === 'persuade') {
+      sections.push(
+        {
+          title: 'The Challenge',
+          description: 'Current problems and pain points',
+          slideType: 'bullet',
+          layout: 'standard'
+        },
+        {
+          title: 'Our Solution',
+          description: 'How we solve these challenges',
+          slideType: 'twoColumn',
+          layout: 'split'
+        },
+        {
+          title: 'Key Benefits',
+          description: 'Value proposition and ROI',
+          slideType: 'chart',
+          layout: 'visual'
+        },
+        {
+          title: 'Success Stories',
+          description: 'Case studies and testimonials',
+          slideType: 'image',
+          layout: 'media'
+        },
+        {
+          title: 'Next Steps',
+          description: 'Call to action and timeline',
+          slideType: 'conclusion',
+          layout: 'action'
+        }
+      )
+    } else if (purpose === 'educate') {
+      sections.push(
+        {
+          title: 'Learning Objectives',
+          description: 'What you will learn today',
+          slideType: 'bullet',
+          layout: 'standard'
+        },
+        {
+          title: 'Core Concepts',
+          description: 'Fundamental principles',
+          slideType: 'twoColumn',
+          layout: 'split'
+        },
+        {
+          title: 'Deep Dive',
+          description: 'Detailed exploration',
+          slideType: 'bullet',
+          layout: 'standard'
+        },
+        {
+          title: 'Real-World Examples',
+          description: 'Practical applications',
+          slideType: 'image',
+          layout: 'media'
+        },
+        {
+          title: 'Key Takeaways',
+          description: 'Summary and action items',
+          slideType: 'conclusion',
+          layout: 'summary'
+        }
+      )
+    } else {
+      // Default informational structure
+      sections.push(
+        {
+          title: 'Executive Summary',
+          description: 'Key points overview',
+          slideType: 'bullet',
+          layout: 'standard'
+        },
+        {
+          title: 'Background',
+          description: 'Context and current state',
+          slideType: 'twoColumn',
+          layout: 'split'
+        },
+        {
+          title: 'Analysis',
+          description: 'Detailed findings',
+          slideType: 'chart',
+          layout: 'visual'
+        },
+        {
+          title: 'Recommendations',
+          description: 'Suggested actions',
+          slideType: 'bullet',
+          layout: 'standard'
+        },
+        {
+          title: 'Conclusion',
+          description: 'Summary and next steps',
+          slideType: 'conclusion',
+          layout: 'summary'
+        }
+      )
+    }
+    
+    // Adjust sections to match requested slide count
+    while (sections.length < slideCount && sections.length < 20) {
+      const coreSection = sections[Math.floor(sections.length / 2)]
+      sections.splice(Math.floor(sections.length / 2), 0, {
+        ...coreSection,
+        title: `${coreSection.title} (Continued)`,
+      })
+    }
+    
+    while (sections.length > slideCount && sections.length > 3) {
+      sections.splice(Math.floor(sections.length / 2), 1)
+    }
+    
+    return { title, sections }
+  }
+
+  /**
+   * Generate content for a specific slide
+   */
+  async generateSlideContent(params: {
+    title: string
+    context: string
+    slideType: string
+    slideNumber: number
+    totalSlides: number
+    mainTopic: string
+  }): Promise<{
+    title: string
+    content: string
+    bullets?: string[]
+    speakerNotes?: string
+    chartData?: any
+  }> {
+    const { title, context, slideType, slideNumber, mainTopic } = params
+    
+    // Generate content based on slide type
+    let content = ''
+    let bullets: string[] = []
+    let speakerNotes = ''
+    let chartData = null
+    
+    switch (slideType) {
+      case 'title':
+        content = mainTopic
+        speakerNotes = 'Welcome everyone. Today we\'ll be discussing ' + mainTopic
+        break
+        
+      case 'bullet':
+        bullets = [
+          'Key insight about ' + context,
+          'Important consideration for implementation',
+          'Critical success factor to remember',
+          'Next step in the process'
+        ]
+        speakerNotes = 'These points highlight the main aspects of ' + title
+        break
+        
+      case 'twoColumn':
+        content = 'Comparison of approaches'
+        bullets = [
+          'Option A: Traditional approach|Option B: Modern solution',
+          'Time: 3-6 months|Time: 2-4 weeks',
+          'Cost: High investment|Cost: Pay as you go',
+          'Risk: Implementation challenges|Risk: Minimal with proven process'
+        ]
+        speakerNotes = 'This comparison shows the clear advantages of the modern approach'
+        break
+        
+      case 'chart':
+        content = 'Performance metrics over time'
+        chartData = {
+          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+          datasets: [{
+            label: 'Growth',
+            data: [65, 72, 78, 85, 92, 98],
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+          }]
+        }
+        speakerNotes = 'As you can see, the growth trajectory is impressive'
+        break
+        
+      case 'image':
+        content = 'Visual representation of ' + context
+        bullets = [
+          'Real-world implementation example',
+          'Proven success in similar organizations',
+          'Scalable across different use cases'
+        ]
+        speakerNotes = 'This example demonstrates practical application'
+        break
+        
+      case 'conclusion':
+        content = 'Key takeaways and next steps'
+        bullets = [
+          'We\'ve covered the main challenges and opportunities',
+          'Our solution addresses each pain point effectively',
+          'Implementation can begin immediately',
+          'Let\'s discuss your specific needs'
+        ]
+        speakerNotes = 'To summarize, we\'re ready to help you achieve your goals'
+        break
+        
+      default:
+        content = context
+        speakerNotes = 'This slide covers ' + title
+    }
+    
+    return {
+      title,
+      content,
+      bullets: bullets.length > 0 ? bullets : undefined,
+      speakerNotes,
+      chartData
+    }
+  }
 }
 
 // Export singleton instance

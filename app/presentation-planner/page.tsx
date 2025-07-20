@@ -28,6 +28,7 @@ import {
   User,
   Settings,
   LogOut,
+  Loader2,
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -86,6 +87,7 @@ export default function PresentationPlannerPage() {
   const router = useRouter()
   const [mode, setMode] = useState<"quick" | "detailed">("quick")
   const [quickPrompt, setQuickPrompt] = useState("")
+  const [isGenerating, setIsGenerating] = useState(false)
 
   const [formData, setFormData] = useState<PresentationData>({
     title: "",
@@ -112,11 +114,43 @@ export default function PresentationPlannerPage() {
 
   const handleQuickGenerate = async () => {
     if (!quickPrompt.trim()) return
-    sessionStorage.setItem(
-      "presentationData",
-      JSON.stringify({ type: "quick", prompt: quickPrompt, timestamp: Date.now() }),
-    )
-    router.push("/outline-editor")
+    
+    // Show loading state
+    setIsGenerating(true)
+    
+    try {
+      // Call API to generate presentation content
+      const response = await fetch("/api/presentations/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: quickPrompt }),
+      })
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        // Store generated presentation data
+        sessionStorage.setItem(
+          "generatedPresentation",
+          JSON.stringify({
+            slides: result.data.slides,
+            title: result.data.title,
+            timestamp: Date.now()
+          })
+        )
+        
+        // Route directly to presentation editor
+        router.push("/presentation-editor")
+      } else {
+        console.error("Generation failed:", result.error)
+        // You might want to show an error toast here
+      }
+    } catch (error) {
+      console.error("Error generating presentation:", error)
+      // You might want to show an error toast here
+    } finally {
+      setIsGenerating(false)
+    }
   }
 
   const handleDetailedGenerate = async () => {
@@ -251,14 +285,26 @@ export default function PresentationPlannerPage() {
                   <div className="text-center pt-2">
                     <Button
                       onClick={handleQuickGenerate}
-                      disabled={!quickPrompt.trim()}
+                      disabled={!quickPrompt.trim() || isGenerating}
                       className="bg-gray-900 hover:bg-gray-800 disabled:bg-gray-300 text-white font-medium h-12 sm:h-14 px-6 sm:px-8 text-sm rounded-xl transition-all duration-200 hover:shadow-lg"
                     >
-                      Generate Presentation
-                      <ArrowRight className="w-4 h-4 ml-2" />
+                      {isGenerating ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          Generate Presentation
+                          <ArrowRight className="w-4 h-4 ml-2" />
+                        </>
+                      )}
                     </Button>
-                    {!quickPrompt.trim() && (
+                    {!quickPrompt.trim() && !isGenerating && (
                       <p className="text-xs text-gray-500 mt-4">Enter a description above to generate your presentation</p>
+                    )}
+                    {isGenerating && (
+                      <p className="text-xs text-gray-500 mt-4">Creating your AI-powered presentation...</p>
                     )}
                   </div>
                 </div>

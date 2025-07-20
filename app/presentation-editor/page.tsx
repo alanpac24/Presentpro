@@ -57,6 +57,7 @@ export default function PresentationEditorPage() {
   const [isMobile, setIsMobile] = useState(false)
   const [currentElements, setCurrentElements] = useState<any[]>([])
   const [pendingAIAction, setPendingAIAction] = useState<any>(null)
+  const [isLoadingGenerated, setIsLoadingGenerated] = useState(true)
   
   // Edit usage tracking
   const {
@@ -76,6 +77,52 @@ export default function PresentationEditorPage() {
     : null
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [lastSavedAt, setLastSavedAt] = useState(Date.now())
+
+  // Load AI-generated presentation if available
+  useEffect(() => {
+    const generatedData = sessionStorage.getItem("generatedPresentation")
+    if (generatedData) {
+      try {
+        const { slides: generatedSlides, title } = JSON.parse(generatedData)
+        
+        // Transform generated slides to match our format
+        const formattedSlides = generatedSlides.map((slide: any, index: number) => ({
+          id: index + 1,
+          title: slide.title,
+          type: slide.type || "content",
+          content: formatSlideContent(slide),
+        }))
+        
+        setSlides(formattedSlides)
+        setPresentationTitle(title)
+        
+        // Clear the session storage
+        sessionStorage.removeItem("generatedPresentation")
+      } catch (error) {
+        console.error("Error loading generated presentation:", error)
+      }
+    }
+    setIsLoadingGenerated(false)
+  }, [])
+
+  // Helper function to format slide content
+  const formatSlideContent = (slide: any) => {
+    let content = `## ${slide.title}\n\n`
+    
+    if (slide.content) {
+      content += slide.content + '\n\n'
+    }
+    
+    if (slide.bullets && slide.bullets.length > 0) {
+      content += slide.bullets.map((bullet: string) => `• ${bullet}`).join('\n')
+    }
+    
+    if (slide.speakerNotes) {
+      content += `\n\n---\n**Speaker Notes:** ${slide.speakerNotes}`
+    }
+    
+    return content
+  }
 
   // Auto-save when there are changes
   useEffect(() => {
