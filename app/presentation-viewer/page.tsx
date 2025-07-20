@@ -160,6 +160,15 @@ export default function PresentationViewerPage() {
               kpis: slide.metrics,
               summary: slide.summary
             }
+          } else if (slide.primaryActivities || slide.supportActivities || slide.layers) {
+            // Value Chain format
+            componentType = 'valueChain'
+            slideData = {
+              title: slide.title,
+              subtitle: slide.subtitle,
+              primaryActivities: slide.primaryActivities || [],
+              supportActivities: slide.supportActivities || slide.layers || []
+            }
           }
           
           return {

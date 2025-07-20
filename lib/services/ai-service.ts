@@ -736,6 +736,16 @@ Return JSON with these fields:
             })
           }
           
+          // Add market sizing for industry context
+          if (industry) {
+            sections.push({
+              title: 'Market Opportunity',
+              description: `${industry} market potential and growth`,
+              slideType: 'marketSizing',
+              layout: 'analysis'
+            })
+          }
+          
           // Add competitive landscape if competitors mentioned
           if (competitors && competitors.length > 0) {
             sections.push({
@@ -752,6 +762,14 @@ Return JSON with these fields:
               layout: 'comparison'
             })
           }
+          
+          // Add value chain analysis
+          sections.push({
+            title: 'Value Chain Opportunities',
+            description: 'Where we can optimize your operations',
+            slideType: 'valueChain',
+            layout: 'process'
+          })
           
           sections.push(
             {
@@ -1041,6 +1059,81 @@ Return JSON with these fields:
           layout: 'planning'
         }
       )
+    } else if (purpose === 'persuade' || lowerPrompt.includes('sales') || lowerPrompt.includes('pitch')) {
+      // Generic sales presentation when stage is not specified
+      sections.push(
+        {
+          title: 'Executive Summary',
+          description: 'Value proposition overview',
+          slideType: 'executiveSummary',
+          layout: 'executive'
+        }
+      )
+      
+      // Problem identification
+      if (challenges && challenges.length > 0) {
+        sections.push({
+          title: 'The Challenge',
+          description: 'Understanding your pain points',
+          slideType: 'hypothesisTree',
+          layout: 'analysis'
+        })
+      } else {
+        sections.push({
+          title: 'Market Challenges',
+          description: 'Common industry pain points',
+          slideType: 'content',
+          layout: 'bullets'
+        })
+      }
+      
+      // Solution presentation
+      sections.push({
+        title: 'Our Solution',
+        description: 'How we address your needs',
+        slideType: 'valueChain',
+        layout: 'solution'
+      })
+      
+      // Financial justification
+      sections.push({
+        title: 'Business Case',
+        description: 'ROI and financial benefits',
+        slideType: 'roiCalculation',
+        layout: 'financial'
+      })
+      
+      // Implementation approach
+      sections.push({
+        title: 'Implementation Roadmap',
+        description: 'Path to success',
+        slideType: 'roadmap',
+        layout: 'timeline'
+      })
+      
+      // Success metrics
+      sections.push({
+        title: 'Success Metrics',
+        description: 'How we measure impact',
+        slideType: 'kpiDashboard',
+        layout: 'metrics'
+      })
+      
+      // Social proof
+      sections.push({
+        title: 'Client Success Stories',
+        description: 'Proven results',
+        slideType: 'benchmark',
+        layout: 'comparison'
+      })
+      
+      // Clear CTA
+      sections.push({
+        title: 'Next Steps',
+        description: 'Moving forward together',
+        slideType: 'quickWins',
+        layout: 'action'
+      })
     } else {
       // Default informational structure with McKinsey components
       sections.push(
