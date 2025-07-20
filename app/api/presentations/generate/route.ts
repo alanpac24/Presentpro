@@ -69,17 +69,12 @@ export async function POST(req: NextRequest) {
         })
         
         return {
+          // Include all McKinsey-specific fields first
+          ...slideContent,
+          // Then override with specific values
           id: `slide-${index + 1}`,
           type: section.slideType,
-          title: slideContent.title,
-          content: slideContent.content,
-          bullets: slideContent.bullets,
-          speakerNotes: slideContent.speakerNotes,
-          chartData: slideContent.chartData,
-          metrics: slideContent.metrics,
           layout: section.layout,
-          // Include all McKinsey-specific fields
-          ...slideContent
         }
       })
     )
