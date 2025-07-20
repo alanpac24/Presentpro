@@ -266,3 +266,97 @@ html {
     @apply bg-background text-foreground;
   }
 }
+
+/* Professional McKinsey-style animations */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.8);
+  }
+}
+
+/* Slide deck animations */
+.slide-enter {
+  animation: slideInUp 0.5s ease-out;
+}
+
+.fade-enter {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Professional shadows and gradients */
+.shadow-elegant {
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
+}
+
+.shadow-glow {
+  box-shadow: 0 0 40px rgba(59, 130, 246, 0.15);
+}
+
+.gradient-primary {
+  background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+}
+
+.gradient-accent {
+  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+}
+
+/* Chart animations */
+.chart-bar {
+  animation: slideInUp 0.5s ease-out;
+  animation-fill-mode: both;
+}
+
+.chart-line {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: drawLine 2s ease-out forwards;
+}
+
+@keyframes drawLine {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Professional bullet animations */
+.bullet-enter {
+  animation: slideInUp 0.3s ease-out;
+  animation-fill-mode: both;
+}
+
+.bullet-enter:nth-child(2) { animation-delay: 0.1s; }
+.bullet-enter:nth-child(3) { animation-delay: 0.2s; }
+.bullet-enter:nth-child(4) { animation-delay: 0.3s; }
+.bullet-enter:nth-child(5) { animation-delay: 0.4s; }

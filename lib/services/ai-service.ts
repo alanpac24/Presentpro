@@ -593,32 +593,38 @@ ${senderName}`
     if (purpose === 'persuade') {
       sections.push(
         {
+          title: 'Current Market Situation',
+          description: 'Industry trends and your position',
+          slideType: 'chart',
+          layout: 'visual'
+        },
+        {
           title: 'The Challenge',
-          description: 'Current problems and pain points',
+          description: 'Key problems preventing growth',
           slideType: 'bullet',
           layout: 'standard'
         },
         {
-          title: 'Our Solution',
+          title: 'Our Solution Approach',
           description: 'How we solve these challenges',
           slideType: 'twoColumn',
           layout: 'split'
         },
         {
-          title: 'Key Benefits',
-          description: 'Value proposition and ROI',
+          title: 'Expected Results & ROI',
+          description: 'Measurable outcomes and benefits',
           slideType: 'chart',
           layout: 'visual'
         },
         {
-          title: 'Success Stories',
-          description: 'Case studies and testimonials',
-          slideType: 'image',
-          layout: 'media'
+          title: 'Implementation Timeline',
+          description: 'Phased approach to success',
+          slideType: 'bullet',
+          layout: 'timeline'
         },
         {
-          title: 'Next Steps',
-          description: 'Call to action and timeline',
+          title: 'Investment & Next Steps',
+          description: 'Pricing and immediate actions',
           slideType: 'conclusion',
           layout: 'action'
         }
