@@ -855,10 +855,10 @@ ${senderName}`
     
     return {
       title,
-      content: template.content || '',
-      bullets: template.bullets,
+      content: 'content' in template ? template.content || '' : '',
+      bullets: 'bullets' in template ? template.bullets : undefined,
       speakerNotes: template.speakerNotes || `This slide covers important aspects of ${title}.`,
-      chartData: template.chartData
+      chartData: 'chartData' in template ? template.chartData : undefined
     }
   }
 }
