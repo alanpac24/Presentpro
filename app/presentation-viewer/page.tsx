@@ -6,7 +6,7 @@ import { Presentation, Download, Home } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { PrivateHeader } from "@/components/header"
-import { SlideDeckSimple } from "@/components/SlideDeckSimple"
+import { SlideDeckPro } from "@/components/SlideDeckPro"
 
 export default function PresentationViewerPage() {
   const router = useRouter()
@@ -22,17 +22,75 @@ export default function PresentationViewerPage() {
         const { slides: generatedSlides, title } = JSON.parse(generatedData)
         console.log('Generated slides:', generatedSlides)
         
-        // Transform slides - keep it simple
+        // Transform slides to component-based format
         const transformedSlides = generatedSlides.map((slide: any, index: number) => {
-          return {
-            id: slide.id || `slide-${index}`,
-            type: slide.type || 'bullet',
+          // Map slide types to our component types
+          let componentType = slide.type || 'content'
+          if (componentType === 'bullet') componentType = 'content'
+          if (componentType === 'twoColumn') componentType = 'comparison'
+          if (componentType === 'conclusion') componentType = 'content'
+          
+          // Prepare data based on slide type
+          let slideData: any = {
             title: slide.title || `Slide ${index + 1}`,
             subtitle: slide.subtitle,
             content: slide.content,
-            bullets: slide.bullets || [],
-            metrics: slide.metrics || [],
-            chartData: slide.chartData
+            bullets: slide.bullets
+          }
+          
+          // Type-specific data transformations
+          if (componentType === 'title' || index === 0) {
+            componentType = 'title'
+            slideData = {
+              title: slide.title,
+              subtitle: slide.content,
+              presenter: 'Your Sales Team',
+              company: 'Target Company',
+              date: new Date().toLocaleDateString()
+            }
+          } else if (slide.metrics && slide.metrics.length > 0) {
+            componentType = 'metrics'
+            slideData = {
+              title: slide.title,
+              subtitle: slide.subtitle,
+              metrics: slide.metrics
+            }
+          } else if (slide.chartData) {
+            componentType = 'chart'
+            slideData = {
+              title: slide.title,
+              subtitle: slide.subtitle,
+              chartType: 'bar',
+              data: slide.chartData
+            }
+          } else if (componentType === 'comparison' && slide.bullets) {
+            // Transform bullets into comparison format
+            const comparisons = slide.bullets.map((bullet: string) => {
+              if (bullet.includes('|')) {
+                const [left, right] = bullet.split('|')
+                const feature = left.includes(':') ? left.split(':')[0] : 'Feature'
+                return {
+                  feature: feature.trim(),
+                  left: left.includes(':') ? left.split(':')[1].trim() : left.trim(),
+                  right: right.trim()
+                }
+              }
+              return { feature: bullet, left: '', right: '' }
+            })
+            
+            slideData = {
+              title: slide.title,
+              subtitle: slide.subtitle,
+              leftTitle: 'Traditional',
+              rightTitle: 'Modern',
+              comparisons
+            }
+          }
+          
+          return {
+            id: slide.id || `slide-${index}`,
+            type: componentType,
+            data: slideData
           }
         })
         
@@ -95,11 +153,7 @@ export default function PresentationViewerPage() {
 
       {/* Main Content */}
       <div className="px-4 sm:px-6 lg:px-8 py-8">
-        <SlideDeckSimple 
-          slides={slides}
-          companyName="Target Company"
-          presenter="Your Sales Team"
-        />
+        <SlideDeckPro slides={slides} />
       </div>
     </div>
   )
