@@ -41,6 +41,8 @@ export async function POST(req: NextRequest) {
       audience: promptAnalysis.audience,
       purpose: promptAnalysis.purpose,
       slideCount: promptAnalysis.slideCount || 10,
+      salesStage: promptAnalysis.salesStage,
+      industry: promptAnalysis.industry,
     })
     
     // Generate content for each slide
@@ -116,7 +118,14 @@ export async function GET() {
     features: {
       aiGeneration: true,
       promptAnalysis: true,
-      slideTypes: ['title', 'bullet', 'twoColumn', 'chart', 'image', 'conclusion'],
+      slideTypes: [
+        'title', 'content', 'bullet', 'twoColumn', 'chart', 'metrics', 'comparison', 'timeline',
+        'executiveSummary', 'matrix', 'waterfallChart', 'swotAnalysis', 'valueChain', 
+        'roiCalculation', 'roadmap', 'quickWins', 'marketSizing', 'heatmap', 
+        'competitiveLandscape', 'processFlow', 'kpiDashboard', 'riskMatrix', 
+        'benchmark', 'stakeholderMap', 'costBenefit', 'initiativePrioritization',
+        'hypothesisTree', 'decisionTree', 'orgStructure'
+      ],
       themes: ['professional', 'modern', 'minimal'],
     }
   })

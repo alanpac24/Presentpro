@@ -85,6 +85,81 @@ export default function PresentationViewerPage() {
               rightTitle: 'Modern',
               comparisons
             }
+          } else if (slide.keyMessage && slide.supportingPoints) {
+            // Executive Summary format
+            componentType = 'executiveSummary'
+            slideData = {
+              title: slide.title,
+              keyMessage: slide.keyMessage,
+              supportingPoints: slide.supportingPoints,
+              recommendation: slide.recommendation
+            }
+          } else if (slide.xAxis && slide.yAxis && slide.quadrants) {
+            // Matrix format
+            componentType = 'matrix'
+            slideData = {
+              title: slide.title,
+              subtitle: slide.subtitle,
+              xAxis: slide.xAxis,
+              yAxis: slide.yAxis,
+              quadrants: slide.quadrants
+            }
+          } else if (slide.investment && slide.returns) {
+            // ROI Calculation format
+            componentType = 'roiCalculation'
+            slideData = {
+              title: slide.title,
+              subtitle: slide.subtitle,
+              investment: slide.investment,
+              returns: slide.returns,
+              metrics: slide.metrics
+            }
+          } else if (slide.phases) {
+            // Roadmap format
+            componentType = 'roadmap'
+            slideData = {
+              title: slide.title,
+              subtitle: slide.subtitle,
+              phases: slide.phases
+            }
+          } else if (slide.timeframes) {
+            // Quick Wins format
+            componentType = 'quickWins'
+            slideData = {
+              title: slide.title,
+              subtitle: slide.subtitle,
+              timeframes: slide.timeframes
+            }
+          } else if (slide.competitors && slide.xAxis && slide.yAxis) {
+            // Competitive Landscape format
+            componentType = 'competitiveLandscape'
+            slideData = {
+              title: slide.title,
+              subtitle: slide.subtitle,
+              xAxis: slide.xAxis,
+              yAxis: slide.yAxis,
+              competitors: slide.competitors
+            }
+          } else if (slide.strengths && slide.weaknesses && slide.opportunities && slide.threats) {
+            // SWOT Analysis format
+            componentType = 'swotAnalysis'
+            slideData = {
+              title: slide.title,
+              subtitle: slide.subtitle,
+              strengths: slide.strengths,
+              weaknesses: slide.weaknesses,
+              opportunities: slide.opportunities,
+              threats: slide.threats
+            }
+          } else if (slide.summary && slide.metrics && slide.metrics.some((m: any) => m.status)) {
+            // KPI Dashboard format
+            componentType = 'kpiDashboard'
+            slideData = {
+              title: slide.title,
+              subtitle: slide.subtitle,
+              kpis: slide.metrics,
+              summary: slide.summary
+            }
           }
           
           return {

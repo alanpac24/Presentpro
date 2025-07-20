@@ -526,6 +526,8 @@ ${senderName}`
     audience: string
     purpose: string
     slideCount?: number
+    salesStage?: string
+    industry?: string
   }> {
     // Simple extraction logic - in production, this would use AI
     const lowerPrompt = prompt.toLowerCase()
@@ -539,12 +541,31 @@ ${senderName}`
     if (lowerPrompt.includes('sales') || lowerPrompt.includes('pitch')) purpose = 'persuade'
     if (lowerPrompt.includes('training') || lowerPrompt.includes('teach')) purpose = 'educate'
     if (lowerPrompt.includes('review') || lowerPrompt.includes('report')) purpose = 'report'
+    if (lowerPrompt.includes('proposal') || lowerPrompt.includes('rfp')) purpose = 'proposal'
     
     // Determine audience
     let audience = 'general'
     if (lowerPrompt.includes('executive') || lowerPrompt.includes('board')) audience = 'executives'
     if (lowerPrompt.includes('team') || lowerPrompt.includes('staff')) audience = 'team'
     if (lowerPrompt.includes('client') || lowerPrompt.includes('customer')) audience = 'clients'
+    if (lowerPrompt.includes('investor') || lowerPrompt.includes('vc')) audience = 'investors'
+    
+    // Determine sales stage if applicable
+    let salesStage = undefined
+    if (purpose === 'persuade' || lowerPrompt.includes('sales')) {
+      if (lowerPrompt.includes('discovery') || lowerPrompt.includes('initial')) salesStage = 'discovery'
+      else if (lowerPrompt.includes('demo') || lowerPrompt.includes('demonstration')) salesStage = 'demo'
+      else if (lowerPrompt.includes('proposal') || lowerPrompt.includes('quote')) salesStage = 'proposal'
+      else if (lowerPrompt.includes('close') || lowerPrompt.includes('final')) salesStage = 'closing'
+    }
+    
+    // Detect industry keywords
+    let industry = undefined
+    if (lowerPrompt.includes('software') || lowerPrompt.includes('saas')) industry = 'software'
+    else if (lowerPrompt.includes('finance') || lowerPrompt.includes('banking')) industry = 'finance'
+    else if (lowerPrompt.includes('healthcare') || lowerPrompt.includes('medical')) industry = 'healthcare'
+    else if (lowerPrompt.includes('retail') || lowerPrompt.includes('ecommerce')) industry = 'retail'
+    else if (lowerPrompt.includes('manufacturing') || lowerPrompt.includes('industrial')) industry = 'manufacturing'
     
     // Extract topic (first 50 chars of prompt as fallback)
     const topic = prompt.length > 50 ? prompt.substring(0, 50) + '...' : prompt
@@ -553,7 +574,9 @@ ${senderName}`
       topic,
       audience,
       purpose,
-      slideCount
+      slideCount,
+      salesStage,
+      industry
     }
   }
 
@@ -565,6 +588,8 @@ ${senderName}`
     audience: string
     purpose: string
     slideCount: number
+    salesStage?: string
+    industry?: string
   }): Promise<{
     title: string
     sections: Array<{
@@ -574,7 +599,7 @@ ${senderName}`
       layout: string
     }>
   }> {
-    const { topic, audience, purpose, slideCount } = params
+    const { topic, audience, purpose, slideCount, salesStage, industry } = params
     
     // Generate title
     const title = topic.length > 50 ? topic.substring(0, 47) + '...' : topic
@@ -590,121 +615,308 @@ ${senderName}`
       layout: 'center'
     })
     
-    if (purpose === 'persuade') {
+    // Sales-specific presentations
+    if (purpose === 'persuade' && salesStage) {
+      switch (salesStage) {
+        case 'discovery':
+          sections.push(
+            {
+              title: 'Executive Summary',
+              description: 'Understanding your challenges and opportunities',
+              slideType: 'executiveSummary',
+              layout: 'executive'
+            },
+            {
+              title: 'Current State Analysis',
+              description: 'Your business landscape and pain points',
+              slideType: 'swotAnalysis',
+              layout: 'matrix'
+            },
+            {
+              title: 'Industry Benchmarks',
+              description: 'How you compare to best-in-class',
+              slideType: 'benchmark',
+              layout: 'comparison'
+            },
+            {
+              title: 'Opportunity Areas',
+              description: 'Where we can create value together',
+              slideType: 'matrix',
+              layout: 'strategic'
+            },
+            {
+              title: 'Next Steps',
+              description: 'Proposed engagement approach',
+              slideType: 'processFlow',
+              layout: 'timeline'
+            }
+          )
+          break
+          
+        case 'demo':
+          sections.push(
+            {
+              title: 'Your Challenges',
+              description: 'Key problems we\'ll address',
+              slideType: 'content',
+              layout: 'bullets'
+            },
+            {
+              title: 'Solution Overview',
+              description: 'How our platform solves your needs',
+              slideType: 'valueChain',
+              layout: 'process'
+            },
+            {
+              title: 'Live Demonstration',
+              description: 'See the solution in action',
+              slideType: 'content',
+              layout: 'demo'
+            },
+            {
+              title: 'ROI Analysis',
+              description: 'Expected returns and payback',
+              slideType: 'roiCalculation',
+              layout: 'financial'
+            },
+            {
+              title: 'Success Stories',
+              description: 'Similar companies achieving results',
+              slideType: 'metrics',
+              layout: 'kpis'
+            },
+            {
+              title: 'Implementation Plan',
+              description: 'Your path to success',
+              slideType: 'roadmap',
+              layout: 'gantt'
+            }
+          )
+          break
+          
+        case 'proposal':
+          sections.push(
+            {
+              title: 'Executive Summary',
+              description: 'Proposal overview and key benefits',
+              slideType: 'executiveSummary',
+              layout: 'executive'
+            },
+            {
+              title: 'Understanding Your Needs',
+              description: 'Business requirements and objectives',
+              slideType: 'content',
+              layout: 'bullets'
+            },
+            {
+              title: 'Proposed Solution',
+              description: 'Comprehensive approach to your challenges',
+              slideType: 'processFlow',
+              layout: 'solution'
+            },
+            {
+              title: 'Why Choose Us',
+              description: 'Competitive advantages and differentiators',
+              slideType: 'competitiveLandscape',
+              layout: 'positioning'
+            },
+            {
+              title: 'Implementation Roadmap',
+              description: 'Detailed project timeline',
+              slideType: 'roadmap',
+              layout: 'gantt'
+            },
+            {
+              title: 'Quick Wins',
+              description: 'Immediate value delivery',
+              slideType: 'quickWins',
+              layout: 'timeline'
+            },
+            {
+              title: 'Investment & ROI',
+              description: 'Pricing and expected returns',
+              slideType: 'costBenefit',
+              layout: 'financial'
+            },
+            {
+              title: 'Risk Mitigation',
+              description: 'Ensuring project success',
+              slideType: 'riskMatrix',
+              layout: 'matrix'
+            },
+            {
+              title: 'Next Steps',
+              description: 'Moving forward together',
+              slideType: 'content',
+              layout: 'action'
+            }
+          )
+          break
+          
+        default:
+          // Generic sales presentation
+          sections.push(
+            {
+              title: 'Market Opportunity',
+              description: 'Industry trends and growth potential',
+              slideType: 'marketSizing',
+              layout: 'funnel'
+            },
+            {
+              title: 'The Challenge',
+              description: 'Problems facing your industry',
+              slideType: 'content',
+              layout: 'bullets'
+            },
+            {
+              title: 'Our Solution',
+              description: 'How we address these challenges',
+              slideType: 'matrix',
+              layout: 'solution'
+            },
+            {
+              title: 'ROI & Benefits',
+              description: 'Financial and operational impact',
+              slideType: 'roiCalculation',
+              layout: 'financial'
+            },
+            {
+              title: 'Implementation',
+              description: 'Getting started quickly',
+              slideType: 'quickWins',
+              layout: 'timeline'
+            }
+          )
+      }
+    } else if (purpose === 'persuade') {
+      // Non-sales persuasive presentation (investors, internal, etc.)
       sections.push(
         {
-          title: 'Current Market Situation',
-          description: 'Industry trends and your position',
-          slideType: 'chart',
-          layout: 'visual'
+          title: 'Executive Summary',
+          description: 'Key messages and recommendations',
+          slideType: 'executiveSummary',
+          layout: 'executive'
         },
         {
-          title: 'The Challenge',
-          description: 'Key problems preventing growth',
-          slideType: 'bullet',
-          layout: 'standard'
+          title: 'Market Analysis',
+          description: 'Current landscape and opportunities',
+          slideType: 'competitiveLandscape',
+          layout: 'market'
         },
         {
-          title: 'Our Solution Approach',
-          description: 'How we solve these challenges',
-          slideType: 'twoColumn',
-          layout: 'split'
+          title: 'Strategic Options',
+          description: 'Paths forward evaluation',
+          slideType: 'matrix',
+          layout: 'strategic'
         },
         {
-          title: 'Expected Results & ROI',
-          description: 'Measurable outcomes and benefits',
-          slideType: 'chart',
-          layout: 'visual'
+          title: 'Financial Projections',
+          description: 'Expected outcomes and returns',
+          slideType: 'waterfallChart',
+          layout: 'financial'
         },
         {
-          title: 'Implementation Timeline',
-          description: 'Phased approach to success',
-          slideType: 'bullet',
-          layout: 'timeline'
+          title: 'Implementation Plan',
+          description: 'Execution roadmap',
+          slideType: 'roadmap',
+          layout: 'gantt'
         },
         {
-          title: 'Investment & Next Steps',
-          description: 'Pricing and immediate actions',
-          slideType: 'conclusion',
-          layout: 'action'
+          title: 'Key Success Factors',
+          description: 'Critical elements for success',
+          slideType: 'kpiDashboard',
+          layout: 'metrics'
         }
       )
-    } else if (purpose === 'educate') {
+    } else if (purpose === 'report') {
+      // Status reports and updates
       sections.push(
         {
-          title: 'Learning Objectives',
-          description: 'What you will learn today',
-          slideType: 'bullet',
-          layout: 'standard'
+          title: 'Executive Dashboard',
+          description: 'Key metrics overview',
+          slideType: 'kpiDashboard',
+          layout: 'dashboard'
         },
         {
-          title: 'Core Concepts',
-          description: 'Fundamental principles',
-          slideType: 'twoColumn',
-          layout: 'split'
+          title: 'Performance Analysis',
+          description: 'Results vs targets',
+          slideType: 'heatmap',
+          layout: 'analysis'
         },
         {
-          title: 'Deep Dive',
-          description: 'Detailed exploration',
-          slideType: 'bullet',
-          layout: 'standard'
+          title: 'Progress Update',
+          description: 'Milestone achievements',
+          slideType: 'roadmap',
+          layout: 'status'
         },
         {
-          title: 'Real-World Examples',
-          description: 'Practical applications',
-          slideType: 'image',
-          layout: 'media'
+          title: 'Challenges & Risks',
+          description: 'Issues requiring attention',
+          slideType: 'riskMatrix',
+          layout: 'matrix'
         },
         {
-          title: 'Key Takeaways',
-          description: 'Summary and action items',
-          slideType: 'conclusion',
-          layout: 'summary'
+          title: 'Next Period Focus',
+          description: 'Upcoming priorities',
+          slideType: 'initiativePrioritization',
+          layout: 'planning'
         }
       )
     } else {
-      // Default informational structure
+      // Default informational structure with McKinsey components
       sections.push(
         {
           title: 'Executive Summary',
           description: 'Key points overview',
-          slideType: 'bullet',
-          layout: 'standard'
+          slideType: 'executiveSummary',
+          layout: 'executive'
         },
         {
-          title: 'Background',
-          description: 'Context and current state',
-          slideType: 'twoColumn',
-          layout: 'split'
+          title: 'Situation Analysis',
+          description: 'Current state assessment',
+          slideType: 'swotAnalysis',
+          layout: 'analysis'
         },
         {
-          title: 'Analysis',
-          description: 'Detailed findings',
-          slideType: 'chart',
-          layout: 'visual'
+          title: 'Key Findings',
+          description: 'Data-driven insights',
+          slideType: 'metrics',
+          layout: 'insights'
         },
         {
           title: 'Recommendations',
-          description: 'Suggested actions',
-          slideType: 'bullet',
-          layout: 'standard'
+          description: 'Strategic actions',
+          slideType: 'matrix',
+          layout: 'strategic'
         },
         {
-          title: 'Conclusion',
-          description: 'Summary and next steps',
-          slideType: 'conclusion',
-          layout: 'summary'
+          title: 'Implementation',
+          description: 'Next steps and timeline',
+          slideType: 'processFlow',
+          layout: 'action'
         }
       )
     }
     
     // Adjust sections to match requested slide count
     while (sections.length < slideCount && sections.length < 20) {
-      const coreSection = sections[Math.floor(sections.length / 2)]
-      sections.splice(Math.floor(sections.length / 2), 0, {
-        ...coreSection,
-        title: `${coreSection.title} (Continued)`,
-      })
+      // Add relevant supporting slides based on context
+      if (purpose === 'persuade' && sections.length < slideCount) {
+        const additionalSlides = [
+          { title: 'Stakeholder Impact', description: 'Key stakeholder benefits', slideType: 'stakeholderMap', layout: 'matrix' },
+          { title: 'Decision Framework', description: 'Evaluation criteria', slideType: 'decisionTree', layout: 'framework' },
+          { title: 'Competitive Analysis', description: 'Market positioning', slideType: 'benchmark', layout: 'comparison' },
+          { title: 'Financial Details', description: 'Detailed cost breakdown', slideType: 'costBenefit', layout: 'financial' }
+        ]
+        const nextSlide = additionalSlides[sections.length % additionalSlides.length]
+        sections.splice(sections.length - 1, 0, nextSlide)
+      } else {
+        const coreSection = sections[Math.floor(sections.length / 2)]
+        sections.splice(Math.floor(sections.length / 2), 0, {
+          ...coreSection,
+          title: `${coreSection.title} (Continued)`,
+        })
+      }
     }
     
     while (sections.length > slideCount && sections.length > 3) {
@@ -795,6 +1007,88 @@ ${senderName}`
             - content: Summary statement (1 sentence)
             - bullets: Array of 4 key takeaways or next steps
             - speakerNotes: Closing remarks and call to action (2-3 sentences)`
+          break
+          
+        case 'executiveSummary':
+          userPrompt = `Create an executive summary slide titled "${title}" about "${context}" for "${mainTopic}".
+            Return a JSON object with:
+            - keyMessage: The main value proposition or finding (1-2 sentences)
+            - supportingPoints: Array of 3 objects with "label", "value", and "description" properties
+            - recommendation: Clear next step or action (1 sentence)
+            - speakerNotes: Opening statement to frame the discussion (2-3 sentences)`
+          break
+          
+        case 'matrix':
+          userPrompt = `Create a 2x2 strategic matrix slide titled "${title}" about "${context}" for "${mainTopic}".
+            Return a JSON object with:
+            - xAxis: Label for horizontal axis
+            - yAxis: Label for vertical axis
+            - quadrants: Array of 4 objects with "label", "items" (array of 2-3 items), and "color" (green/blue/yellow/red)
+            - speakerNotes: Key insights from the matrix (2-3 sentences)`
+          break
+          
+        case 'roiCalculation':
+          userPrompt = `Create an ROI calculation slide titled "${title}" about "${context}" for "${mainTopic}".
+            Return a JSON object with:
+            - investment: Object with "label" and "value" (e.g., "$100K")
+            - returns: Array of 3-5 objects with "year" and "value"
+            - metrics: Object with "roi" (percentage), "payback" (timeframe), and optionally "npv"
+            - speakerNotes: Financial justification (2-3 sentences)`
+          break
+          
+        case 'roadmap':
+          userPrompt = `Create an implementation roadmap slide titled "${title}" about "${context}" for "${mainTopic}".
+            Return a JSON object with:
+            - phases: Array of 3-4 phase objects, each with:
+              - name: Phase name
+              - duration: Timeframe
+              - workstreams: Array of workstream objects with "name" and "activities" (array of 2-3 activities)
+            - speakerNotes: Implementation approach overview (2-3 sentences)`
+          break
+          
+        case 'quickWins':
+          userPrompt = `Create a quick wins slide titled "${title}" about "${context}" for "${mainTopic}".
+            Return a JSON object with:
+            - timeframes: Array of timeframe objects (30/60/90 days), each with:
+              - period: Time period label
+              - actions: Array of 2-3 action objects with "action", "impact", and "owner"
+            - speakerNotes: Immediate value delivery message (2-3 sentences)`
+          break
+          
+        case 'competitiveLandscape':
+          userPrompt = `Create a competitive landscape slide titled "${title}" about "${context}" for "${mainTopic}".
+            Return a JSON object with:
+            - xAxis: Competitive dimension label
+            - yAxis: Market dimension label
+            - competitors: Array of 5-6 competitor objects with "name", "x" (0-100), "y" (0-100), "size" (small/medium/large), and "isUs" (boolean)
+            - speakerNotes: Competitive positioning insight (2-3 sentences)`
+          break
+          
+        case 'swotAnalysis':
+          userPrompt = `Create a SWOT analysis slide titled "${title}" about "${context}" for "${mainTopic}".
+            Return a JSON object with:
+            - strengths: Array of 4 internal strengths
+            - weaknesses: Array of 4 internal weaknesses
+            - opportunities: Array of 4 external opportunities
+            - threats: Array of 4 external threats
+            - speakerNotes: Strategic implications (2-3 sentences)`
+          break
+          
+        case 'metrics':
+        case 'kpiDashboard':
+          userPrompt = `Create a KPI dashboard slide titled "${title}" about "${context}" for "${mainTopic}".
+            Return a JSON object with:
+            - metrics: Array of 4-6 metric objects with "label", "value", "trend", and optional "color" (blue/green/orange/red)
+            - summary: Overall performance statement (1 sentence)
+            - speakerNotes: Key performance insights (2-3 sentences)`
+          break
+          
+        case 'content':
+        case 'bullet':
+          userPrompt = `Create content for a slide titled "${title}" about "${context}" in a presentation on "${mainTopic}".
+            Return a JSON object with:
+            - bullets: An array of 4-5 key bullet points (each 1-2 lines, specific and actionable)
+            - speakerNotes: What to say when presenting this slide (2-3 sentences)`
           break
           
         default:
