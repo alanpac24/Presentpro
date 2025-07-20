@@ -41,14 +41,20 @@ export interface GenerationOptions {
 }
 
 export class AIService {
-  private openai: OpenAI
+  private openai: OpenAI | null = null
   private model: string
 
   constructor() {
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    })
     this.model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
+  }
+
+  private getOpenAI(): OpenAI {
+    if (!this.openai) {
+      this.openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      })
+    }
+    return this.openai
   }
 
   /**
@@ -61,7 +67,7 @@ export class AIService {
     const prompt = this.buildProposalPrompt(research, options)
     
     try {
-      const completion = await this.openai.chat.completions.create({
+      const completion = await this.getOpenAI().chat.completions.create({
         model: this.model,
         messages: [
           {
@@ -699,9 +705,12 @@ ${senderName}`
     
     // Check if we have an API key
     if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'your-openai-api-key-here') {
+      console.log('No OpenAI API key found, using placeholder content')
       // Return better placeholder content if no API key
       return this.generatePlaceholderContent(params)
     }
+    
+    console.log('Using OpenAI API for slide generation')
     
     try {
       // Generate prompts based on slide type
@@ -753,7 +762,7 @@ ${senderName}`
       }
       
       // Call OpenAI
-      const completion = await this.openai.chat.completions.create({
+      const completion = await this.getOpenAI().chat.completions.create({
         model: this.model,
         messages: [
           { role: 'system', content: systemPrompt },
@@ -784,6 +793,7 @@ ${senderName}`
       
     } catch (error) {
       console.error('Error generating AI content:', error)
+      console.error('Error details:', error instanceof Error ? error.message : 'Unknown error')
       // Fallback to placeholder content
       return this.generatePlaceholderContent(params)
     }
