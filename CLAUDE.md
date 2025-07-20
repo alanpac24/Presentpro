@@ -47,12 +47,17 @@ npm run lint
 
 /components            # Reusable components
   /ui                 # shadcn/ui components (Button, Card, etc.)
+  /slides              # 30+ McKinsey-style slide templates
+    types.ts          # TypeScript interfaces for all slides
+    index.ts          # Slide component registry
   header.tsx          # PrivateHeader component
   user-dropdown.tsx   # User menu with avatar
 
 /lib                  # Utilities and shared code
   utils.ts           # cn() utility for className merging
   constants.ts       # Mock data (mockUser, mockStats)
+  /services          # Business logic services
+    ai-service.ts    # AI content generation for slides
 
 /types               # TypeScript type definitions
   user.ts           # User and UserSettings interfaces
@@ -117,6 +122,23 @@ npm run lint
 3. **Mock Data**: Add to `/lib/constants.ts` or component state
 4. **Type Safety**: Define interfaces in `/types` for shared types
 5. **Styling**: Use Tailwind classes, extend in `tailwind.config.ts` if needed
+
+## Slide Components
+
+The project includes 30+ professionally designed McKinsey-style slide templates in `/components/slides/`. These are categorized into:
+
+1. **Foundation Slides**: TitleSlide, ContentSlide, ExecutiveSummarySlide
+2. **Data & Analytics**: MetricsSlide, ChartSlide, KPIDashboardSlide, HeatmapSlide, etc.
+3. **Strategic Frameworks**: SWOTAnalysisSlide, MatrixSlide, ValueChainSlide, CompetitiveLandscapeSlide, etc.
+4. **Implementation**: RoadmapSlide, TimelineSlide, ProcessFlowSlide, QuickWinsSlide, etc.
+
+Each slide:
+- Has a TypeScript interface in `/components/slides/types.ts`
+- Follows McKinsey consulting presentation standards
+- Integrates with AI service for dynamic content generation
+- Uses consistent design patterns with Tailwind CSS
+
+For detailed documentation, see `SLIDE_COMPONENTS.md`.
 
 ## Current Limitations
 
