@@ -56,7 +56,7 @@ export class EmailService {
         html,
         text: options.body, // Plain text fallback
         attachments: options.attachments,
-        reply_to: options.replyTo
+        replyTo: options.replyTo
       })
 
       if (error) {
