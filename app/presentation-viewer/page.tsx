@@ -85,14 +85,14 @@ export default function PresentationViewerPage() {
               rightTitle: 'Modern',
               comparisons
             }
-          } else if (slide.keyMessage && slide.supportingPoints) {
+          } else if (slide.keyMessage) {
             // Executive Summary format
             componentType = 'executiveSummary'
             slideData = {
               title: slide.title,
               keyMessage: slide.keyMessage,
-              supportingPoints: slide.supportingPoints,
-              recommendation: slide.recommendation
+              supportingPoints: slide.supportingPoints || [],
+              recommendation: slide.recommendation || ''
             }
           } else if (slide.xAxis && slide.yAxis && slide.quadrants) {
             // Matrix format

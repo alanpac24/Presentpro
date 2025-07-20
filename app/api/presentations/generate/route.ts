@@ -78,6 +78,8 @@ export async function POST(req: NextRequest) {
           chartData: slideContent.chartData,
           metrics: slideContent.metrics,
           layout: section.layout,
+          // Include all McKinsey-specific fields
+          ...slideContent
         }
       })
     )

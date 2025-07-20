@@ -27,33 +27,37 @@ export function ExecutiveSummarySlide({ data, className = '' }: ExecutiveSummary
       </div>
 
       {/* Supporting Points Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        {data.supportingPoints.map((point, idx) => (
-          <div key={idx} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-600">{point.label}</span>
-              <TrendingUp className="w-4 h-4 text-green-600" />
+      {data.supportingPoints && data.supportingPoints.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          {data.supportingPoints.map((point, idx) => (
+            <div key={idx} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-600">{point.label}</span>
+                <TrendingUp className="w-4 h-4 text-green-600" />
+              </div>
+              <div className="text-2xl font-bold text-gray-900 mb-1">
+                {point.value}
+              </div>
+              <p className="text-sm text-gray-600">
+                {point.description}
+              </p>
             </div>
-            <div className="text-2xl font-bold text-gray-900 mb-1">
-              {point.value}
-            </div>
-            <p className="text-sm text-gray-600">
-              {point.description}
-            </p>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Recommendation */}
-      <div className="mt-auto bg-gray-50 rounded-lg p-6">
-        <div className="flex items-start">
-          <ArrowRight className="w-6 h-6 text-blue-600 mr-3 mt-0.5 flex-shrink-0" />
-          <div>
-            <h4 className="font-semibold text-gray-900 mb-1">Recommendation</h4>
-            <p className="text-gray-700">{data.recommendation}</p>
+      {data.recommendation && (
+        <div className="mt-auto bg-gray-50 rounded-lg p-6">
+          <div className="flex items-start">
+            <ArrowRight className="w-6 h-6 text-blue-600 mr-3 mt-0.5 flex-shrink-0" />
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-1">Recommendation</h4>
+              <p className="text-gray-700">{data.recommendation}</p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
