@@ -697,85 +697,168 @@ ${senderName}`
   }> {
     const { title, context, slideType, slideNumber, mainTopic } = params
     
-    // Generate content based on slide type
-    let content = ''
-    let bullets: string[] = []
-    let speakerNotes = ''
-    let chartData = null
+    // Check if we have an API key
+    if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'your-openai-api-key-here') {
+      // Return better placeholder content if no API key
+      return this.generatePlaceholderContent(params)
+    }
     
-    switch (slideType) {
-      case 'title':
-        content = mainTopic
-        speakerNotes = 'Welcome everyone. Today we\'ll be discussing ' + mainTopic
-        break
-        
-      case 'bullet':
-        bullets = [
-          'Key insight about ' + context,
-          'Important consideration for implementation',
-          'Critical success factor to remember',
-          'Next step in the process'
-        ]
-        speakerNotes = 'These points highlight the main aspects of ' + title
-        break
-        
-      case 'twoColumn':
-        content = 'Comparison of approaches'
-        bullets = [
-          'Option A: Traditional approach|Option B: Modern solution',
-          'Time: 3-6 months|Time: 2-4 weeks',
-          'Cost: High investment|Cost: Pay as you go',
-          'Risk: Implementation challenges|Risk: Minimal with proven process'
-        ]
-        speakerNotes = 'This comparison shows the clear advantages of the modern approach'
-        break
-        
-      case 'chart':
-        content = 'Performance metrics over time'
-        chartData = {
+    try {
+      // Generate prompts based on slide type
+      let systemPrompt = 'You are an expert presentation designer creating professional business slides.'
+      let userPrompt = ''
+      
+      switch (slideType) {
+        case 'title':
+          userPrompt = `Create a compelling title slide for a presentation about "${mainTopic}". 
+            Return a JSON object with:
+            - content: A powerful subtitle or tagline (1 sentence)
+            - speakerNotes: Opening remarks to grab attention (2-3 sentences)`
+          break
+          
+        case 'bullet':
+          userPrompt = `Create content for a slide titled "${title}" about "${context}" in a presentation on "${mainTopic}".
+            Return a JSON object with:
+            - bullets: An array of 4-5 key bullet points (each 1-2 lines, specific and actionable)
+            - speakerNotes: What to say when presenting this slide (2-3 sentences)`
+          break
+          
+        case 'twoColumn':
+          userPrompt = `Create a comparison slide titled "${title}" about "${context}" for a presentation on "${mainTopic}".
+            Return a JSON object with:
+            - content: Brief intro to the comparison (1 sentence)
+            - bullets: An array of 4-5 comparisons in format "Option A: description|Option B: description"
+            - speakerNotes: Key message about the comparison (2-3 sentences)`
+          break
+          
+        case 'chart':
+          userPrompt = `Create data visualization content for a slide titled "${title}" about "${context}" in a presentation on "${mainTopic}".
+            Return a JSON object with:
+            - content: What the chart/data shows (1-2 sentences)
+            - chartData: Realistic sample data with 6 data points showing growth/trends
+            - speakerNotes: Key insights from the data (2-3 sentences)`
+          break
+          
+        case 'conclusion':
+          userPrompt = `Create a conclusion slide titled "${title}" for a presentation about "${mainTopic}".
+            Return a JSON object with:
+            - content: Summary statement (1 sentence)
+            - bullets: Array of 4 key takeaways or next steps
+            - speakerNotes: Closing remarks and call to action (2-3 sentences)`
+          break
+          
+        default:
+          userPrompt = `Create content for a slide titled "${title}" about "${context}" in a presentation on "${mainTopic}".
+            Return a JSON object with appropriate content, bullets (if needed), and speakerNotes.`
+      }
+      
+      // Call OpenAI
+      const completion = await this.openai.chat.completions.create({
+        model: this.model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.7,
+        response_format: { type: 'json_object' }
+      })
+      
+      const aiResponse = JSON.parse(completion.choices[0].message.content || '{}')
+      
+      // Merge AI response with required fields
+      return {
+        title,
+        content: aiResponse.content || '',
+        bullets: aiResponse.bullets,
+        speakerNotes: aiResponse.speakerNotes || '',
+        chartData: aiResponse.chartData || (slideType === 'chart' ? {
           labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
           datasets: [{
-            label: 'Growth',
+            label: 'Performance',
             data: [65, 72, 78, 85, 92, 98],
             borderColor: 'rgb(75, 192, 192)',
             backgroundColor: 'rgba(75, 192, 192, 0.2)',
           }]
-        }
-        speakerNotes = 'As you can see, the growth trajectory is impressive'
-        break
-        
-      case 'image':
-        content = 'Visual representation of ' + context
-        bullets = [
-          'Real-world implementation example',
-          'Proven success in similar organizations',
-          'Scalable across different use cases'
-        ]
-        speakerNotes = 'This example demonstrates practical application'
-        break
-        
-      case 'conclusion':
-        content = 'Key takeaways and next steps'
-        bullets = [
-          'We\'ve covered the main challenges and opportunities',
-          'Our solution addresses each pain point effectively',
-          'Implementation can begin immediately',
-          'Let\'s discuss your specific needs'
-        ]
-        speakerNotes = 'To summarize, we\'re ready to help you achieve your goals'
-        break
-        
-      default:
-        content = context
-        speakerNotes = 'This slide covers ' + title
+        } : undefined)
+      }
+      
+    } catch (error) {
+      console.error('Error generating AI content:', error)
+      // Fallback to placeholder content
+      return this.generatePlaceholderContent(params)
     }
+  }
+  
+  /**
+   * Generate better placeholder content when AI is not available
+   */
+  private generatePlaceholderContent(params: {
+    title: string
+    context: string
+    slideType: string
+    mainTopic: string
+  }) {
+    const { title, context, slideType, mainTopic } = params
+    
+    const templates = {
+      title: {
+        content: mainTopic,
+        speakerNotes: `Welcome everyone. Today we'll explore ${mainTopic} and its impact on your business.`
+      },
+      bullet: {
+        bullets: [
+          `Understanding the core aspects of ${context}`,
+          `Key benefits and value propositions for your organization`,
+          `Implementation strategies and best practices`,
+          `Measuring success and ROI`,
+          `Next steps and action items`
+        ],
+        speakerNotes: `This slide covers the essential elements of ${title}. Each point addresses a critical aspect of our solution.`
+      },
+      twoColumn: {
+        content: 'Comparing traditional vs. modern approaches',
+        bullets: [
+          'Speed: Weeks of setup|Speed: Minutes to deploy',
+          'Cost: High upfront investment|Cost: Pay-as-you-go model',
+          'Flexibility: Limited customization|Flexibility: Fully adaptable',
+          'Support: Business hours only|Support: 24/7 availability',
+          'Scale: Manual scaling required|Scale: Automatic scaling'
+        ],
+        speakerNotes: 'This comparison clearly shows the advantages of adopting a modern solution.'
+      },
+      chart: {
+        content: 'Performance metrics showing significant growth',
+        chartData: {
+          labels: ['Q1', 'Q2', 'Q3', 'Q4', 'Q1 Next', 'Q2 Next'],
+          datasets: [{
+            label: 'Growth Trajectory',
+            data: [45, 52, 67, 78, 92, 110],
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+          }]
+        },
+        speakerNotes: 'As you can see, the growth trajectory demonstrates strong momentum and validates our approach.'
+      },
+      conclusion: {
+        content: 'Your path to success starts here',
+        bullets: [
+          `${mainTopic} provides immediate value and long-term benefits`,
+          'Implementation can begin within days, not months',
+          'Our team is ready to support your transformation',
+          'Schedule a follow-up meeting to discuss next steps'
+        ],
+        speakerNotes: 'In summary, we\'re excited to partner with you on this journey. Let\'s schedule time to discuss how we can get started.'
+      }
+    }
+    
+    const template = templates[slideType as keyof typeof templates] || templates.bullet
     
     return {
       title,
-      content,
-      bullets: bullets.length > 0 ? bullets : undefined,
-      speakerNotes,
-      chartData
+      content: template.content || '',
+      bullets: template.bullets,
+      speakerNotes: template.speakerNotes || `This slide covers important aspects of ${title}.`,
+      chartData: template.chartData
     }
   }
 }

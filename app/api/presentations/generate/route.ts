@@ -16,6 +16,11 @@ export async function POST(req: NextRequest) {
     
     console.log('Generating presentation for prompt:', prompt)
     
+    // Check if OpenAI API key is configured
+    if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'your-openai-api-key-here') {
+      console.warn('OpenAI API key not configured - using enhanced placeholders')
+    }
+    
     // Extract key information from prompt
     const promptAnalysis = await aiService.analyzePrompt(prompt)
     
