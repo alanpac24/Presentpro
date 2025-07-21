@@ -1601,6 +1601,7 @@ Return JSON with these fields:
    */
   private getSlideSystemPrompt(slideType: string): string {
     const prompts: Record<string, string> = {
+      title: 'Create a title slide. Generate fields: title (main presentation title), subtitle (optional tagline), presenter (who is presenting), company (company being presented to), date. Return simple strings only.',
       executiveSummary: 'You are creating an executive summary slide. Generate a compelling key message, 3 supporting points with metrics, and a clear recommendation. Be concise and impactful.',
       swotAnalysis: 'You are creating a SWOT analysis slide. Generate 3-4 items for each category (Strengths, Weaknesses, Opportunities, Threats). Be specific and relevant to the company context.',
       competitiveLandscape: 'You are creating a competitive landscape slide. Position competitors on a 2x2 matrix with relevant axes. Include the company being presented to and mark them distinctly.',
@@ -1644,7 +1645,9 @@ Return JSON with these fields:
     prompt += '\nGenerate appropriate content in JSON format for this slide type. Include all required fields based on the slide type.'
     
     // Add specific format hints for certain slide types
-    if (slideType === 'customerVoice') {
+    if (slideType === 'title') {
+      prompt += '\nFormat: { "title": "Main Title", "subtitle": "Optional Subtitle", "presenter": "Name", "company": "Company Name", "date": "Date" }'
+    } else if (slideType === 'customerVoice') {
       prompt += '\nFormat: { "customerQuotes": ["quote1", "quote2"], "painPoints": [{"functionalArea": "area", "challenge": "challenge", "impact": "High"}] }'
     } else if (slideType === 'roi') {
       prompt += '\nFormat: { "totalInvestment": {"software": "$X", "implementation": "$Y", "training": "$Z"}, "annualSavings": [{"category": "cat", "amount": "$X", "description": "desc"}], "paybackPeriod": "X months", "threeYearROI": "X%" }'
@@ -1661,6 +1664,13 @@ Return JSON with these fields:
     
     // Return type-specific placeholder content
     const placeholders: Record<string, any> = {
+      title: {
+        title: title || 'Strategic Presentation',
+        subtitle: `Transforming ${companyName}'s Future`,
+        presenter: 'Your Team',
+        company: companyName,
+        date: new Date().toLocaleDateString()
+      },
       executiveSummary: {
         title,
         keyMessage: `Transform ${companyName}'s operations with strategic initiatives`,

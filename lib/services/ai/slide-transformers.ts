@@ -10,16 +10,37 @@ export const slideTransformers: SlideTransformer[] = [
   // Title slide (first slide or explicit title type)
   {
     condition: (slide, index) => slide.type === 'title' || index === 0,
-    transform: (slide) => ({
-      type: 'title',
-      data: {
-        title: typeof slide.title === 'string' ? slide.title : (slide.title?.text || 'Presentation'),
-        subtitle: typeof slide.subtitle === 'string' ? slide.subtitle : (slide.subtitle || slide.content || ''),
-        presenter: typeof slide.presenter === 'string' ? slide.presenter : (slide.presenter?.name || 'Your Sales Team'),
-        company: typeof slide.company === 'string' ? slide.company : (slide.company?.name || slide.companyName || 'Target Company'),
-        date: slide.date || new Date().toLocaleDateString()
+    transform: (slide) => {
+      // Extract string values from potentially nested objects
+      const extractString = (value: any, fallback: string): string => {
+        if (typeof value === 'string') return value
+        if (typeof value === 'object' && value !== null) {
+          // Check common object patterns
+          if (value.text) return String(value.text)
+          if (value.name) return String(value.name)
+          if (value.value) return String(value.value)
+          // Try to stringify if it's a simple object
+          try {
+            const str = JSON.stringify(value)
+            console.warn(`Title slide field was object, stringified: ${str}`)
+          } catch (e) {
+            console.warn(`Title slide field was non-stringifiable object`)
+          }
+        }
+        return fallback
       }
-    })
+
+      return {
+        type: 'title',
+        data: {
+          title: extractString(slide.title || slide.mainTitle, 'Presentation'),
+          subtitle: extractString(slide.subtitle || slide.content, ''),
+          presenter: extractString(slide.presenter, 'Your Sales Team'),
+          company: extractString(slide.company || slide.companyName, 'Target Company'),
+          date: extractString(slide.date, new Date().toLocaleDateString())
+        }
+      }
+    }
   },
 
   // Executive Summary
