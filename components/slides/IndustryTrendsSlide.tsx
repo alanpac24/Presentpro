@@ -20,7 +20,7 @@ export function IndustryTrendsSlide({ data, className = '' }: IndustryTrendsSlid
       </div>
 
       <div className="flex-1 space-y-4">
-        {data.trends.map((trend, index) => (
+        {data.trends && data.trends.map((trend, index) => (
           <div 
             key={index} 
             className="bg-gradient-to-r from-blue-50 to-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-all"

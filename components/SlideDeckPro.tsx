@@ -1,10 +1,52 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Component, ReactNode } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react'
 import { slideComponents, SlideType } from '@/components/slides'
+
+// Error boundary component
+class ErrorBoundary extends Component<
+  { children: ReactNode; slideNumber: number; slideType: string },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: any) {
+    super(props)
+    this.state = { hasError: false, error: null }
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error }
+  }
+
+  componentDidCatch(error: Error, errorInfo: any) {
+    console.error('Error caught by boundary:', error, errorInfo)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="h-full flex items-center justify-center">
+          <div className="text-center p-8 max-w-md">
+            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Error in Slide {this.props.slideNumber}
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Unable to render {this.props.slideType} slide
+            </p>
+            <p className="text-xs text-gray-500">
+              {this.state.error?.message || 'Unknown error'}
+            </p>
+          </div>
+        </div>
+      )
+    }
+
+    return this.props.children
+  }
+}
 
 interface SlideData {
   id: string
@@ -91,11 +133,13 @@ export function SlideDeckPro({ slides = [], className = '' }: SlideDeckProProps)
             isTransitioning ? 'opacity-0' : 'opacity-100'
           }`}
         >
-          <SlideComponent 
-            id={slide.id}
-            data={slide.data}
-            className="slide-enter"
-          />
+          <ErrorBoundary slideNumber={currentSlide + 1} slideType={slide.type}>
+            <SlideComponent 
+              id={slide.id}
+              data={slide.data}
+              className="slide-enter"
+            />
+          </ErrorBoundary>
         </div>
       </Card>
       

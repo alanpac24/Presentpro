@@ -1661,7 +1661,15 @@ Return JSON with these fields:
         subtitle: `${industry} competitive positioning`,
         xAxis: 'Market Share',
         yAxis: 'Innovation Capability',
-        competitors: [
+        competitors: params.competitors && params.competitors.length > 0 ? [
+          { name: companyName, x: 65, y: 70, size: 'large', isUs: true },
+          ...params.competitors.slice(0, 3).map((comp, i) => ({
+            name: comp,
+            x: [80, 45, 30][i],
+            y: [60, 85, 40][i],
+            size: ['large', 'medium', 'small'][i]
+          }))
+        ] : [
           { name: companyName, x: 65, y: 70, size: 'large', isUs: true },
           { name: 'Competitor A', x: 80, y: 60, size: 'large' },
           { name: 'Competitor B', x: 45, y: 85, size: 'medium' },
@@ -1733,12 +1741,16 @@ Return JSON with these fields:
       customerVoice: {
         title: 'What We Heard',
         subtitle: 'Understanding your unique challenges',
-        customerQuotes: [
+        customerQuotes: params.challenges && params.challenges.length > 0 ? params.challenges.map(c => `"${c}"`) : [
           'We need to streamline our operations and reduce manual processes',
           'Our current system cannot scale with our growth plans',
           'Integration between systems is causing data silos'
         ],
-        painPoints: [
+        painPoints: params.challenges && params.challenges.length > 0 ? params.challenges.map((c, i) => ({
+          functionalArea: ['Operations', 'IT', 'Finance', 'Sales'][i % 4],
+          challenge: c,
+          impact: i === 0 ? 'Critical' : 'High'
+        })) : [
           { functionalArea: 'Operations', challenge: 'Manual processes taking 40% of team time', impact: 'High' },
           { functionalArea: 'IT', challenge: 'Legacy systems limiting innovation', impact: 'Critical' }
         ]
@@ -1809,13 +1821,18 @@ Return JSON with these fields:
         title: 'Why Act Now',
         subtitle: 'The cost of waiting',
         urgencyFactors: [
-          { factor: 'Competitive Pressure', impact: 'Competitors gaining 20% efficiency advantage', timeline: 'Immediate' },
+          { 
+            factor: params.timeline && params.timeline.toLowerCase().includes('urgent') ? 'Urgent Timeline' : 'Competitive Pressure', 
+            impact: params.timeline || 'Competitors gaining 20% efficiency advantage', 
+            timeline: params.timeline || 'Immediate' 
+          },
           { factor: 'Market Changes', impact: 'New regulations requiring compliance by Q3', timeline: 'Q3 2024' }
         ],
         opportunities: [
           { opportunity: 'Early Adopter Pricing', benefit: '30% discount for Q1 sign-ups', expiryDate: 'March 31, 2024' }
         ],
-        costOfDelay: { monthlyCost: '$200K', yearlyCost: '$2.4M' }
+        costOfDelay: { monthlyCost: '$200K', yearlyCost: '$2.4M' },
+        lostOpportunities: params.challenges ? params.challenges.slice(0, 2).map(c => `Lost revenue from ${c}`) : []
       },
       valueProp: {
         title: 'Value Proposition',
@@ -1836,8 +1853,18 @@ Return JSON with these fields:
       roi: {
         title: 'Return on Investment',
         subtitle: 'Your financial benefits',
-        totalInvestment: { software: '$150K', implementation: '$50K', training: '$25K', firstYearTotal: '$225K' },
-        annualSavings: [
+        totalInvestment: { 
+          software: params.budget || '$150K', 
+          implementation: params.budget ? `${Math.round(parseInt(params.budget.replace(/[^0-9]/g, '')) * 0.33)}` : '$50K', 
+          training: '$25K', 
+          firstYearTotal: params.budget || '$225K' 
+        },
+        annualSavings: params.challenges && params.challenges.length > 0 ? 
+          params.challenges.slice(0, 3).map((c, i) => ({
+            category: c,
+            amount: ['$500K', '$300K', '$200K'][i] || '$100K',
+            description: `Addressing ${c}`
+          })) : [
           { category: 'Labor Cost Reduction', amount: '$500K', description: 'Automation of manual tasks' },
           { category: 'Efficiency Gains', amount: '$300K', description: 'Faster processing and decisions' }
         ],
