@@ -490,10 +490,12 @@ ${senderName}`
       const openaiClient = this.getOpenAI()
       
       if (!openaiClient) {
+        console.log('analyzePrompt: No OpenAI client, using fallback')
         // Fallback to keyword extraction if no OpenAI
         return this.analyzePromptFallback(prompt)
       }
 
+      console.log('analyzePrompt: Using OpenAI for prompt analysis')
       const systemPrompt = `You are an expert at analyzing business presentation requests. Extract key information from the user's prompt and return it as structured JSON.
 
 Focus on identifying:
@@ -1540,17 +1542,17 @@ Return JSON with these fields:
     
     // Check if we have a valid API key
     if (!this.hasValidApiKey()) {
-      console.log('No valid OpenAI API key found, using placeholder content')
+      console.log('generateSlideContent: No valid OpenAI API key found, using placeholder content')
       return this.generatePlaceholderContent(params)
     }
     
     const openaiClient = this.getOpenAI()
     if (!openaiClient) {
-      console.log('Failed to create OpenAI client, using placeholder content')
+      console.log('generateSlideContent: Failed to create OpenAI client, using placeholder content')
       return this.generatePlaceholderContent(params)
     }
     
-    console.log('Using OpenAI API for slide generation')
+    console.log(`generateSlideContent: Using OpenAI API for ${slideType} slide generation`)
     
     try {
       // Generate prompts based on slide type with context
@@ -1577,6 +1579,7 @@ Return JSON with these fields:
       const content = completion.choices[0]?.message?.content
       if (!content) throw new Error('No content generated')
 
+      console.log(`generateSlideContent: Received response for ${slideType}`)
       const parsed = JSON.parse(content)
       
       // Ensure title is included
@@ -1585,7 +1588,10 @@ Return JSON with these fields:
         ...parsed
       }
     } catch (error) {
-      console.error('Slide generation error:', error)
+      console.error(`Slide generation error for ${slideType}:`, error)
+      if (error instanceof Error) {
+        console.error('Error details:', error.message)
+      }
       return this.generatePlaceholderContent(params)
     }
   }
@@ -1602,6 +1608,16 @@ Return JSON with these fields:
       quickWins: 'You are creating a quick wins slide. Organize actions by timeframe (30 days, 60 days, 90 days) with specific actions and their impact.',
       valueChain: 'You are creating a value chain slide. Include 4-5 primary activities and 3-4 support activities relevant to the business.',
       roadmap: 'You are creating an implementation roadmap. Include 3-4 phases with duration, key workstreams, and activities for each phase.',
+      // Sales-oriented slides
+      customerVoice: 'Create a customer voice slide. Generate customerQuotes array with relevant pain points, and painPoints array with functionalArea, challenge, and impact.',
+      whyUs: 'Create a why us slide. Generate differentiators array with differentiator, description, and proof. Include clientResults and awards if relevant.',
+      whyNow: 'Create a why now slide. Generate urgencyFactors array with factor, impact, and timeline. Include opportunities and costOfDelay.',
+      valueProp: 'Create a value proposition slide. Generate mainValue statement and valuePillars array with pillar, description, and metrics.',
+      pricing: 'Create a pricing slide. Generate pricingTiers array with tierName, price, features, and mark one as isRecommended.',
+      roi: 'Create ROI slide. Generate totalInvestment object, annualSavings array, and calculate paybackPeriod and threeYearROI.',
+      solutionOverview: 'Create solution overview. Generate keyFeatures array with feature and description for each.',
+      productDeepDive: 'Create product deep dive. Generate coreFeatures array, businessBenefits array, and technicalDetails object.',
+      nextSteps: 'Create next steps slide. Generate immediateActions array with action, owner, and timeline.',
       // Add more as needed
       default: 'You are creating a business presentation slide. Generate relevant content based on the context provided. Be professional, concise, and data-driven.'
     }
@@ -1625,7 +1641,14 @@ Return JSON with these fields:
     if (budget) prompt += `Budget: ${budget}\n`
     if (timeline) prompt += `Timeline: ${timeline}\n`
     
-    prompt += '\nGenerate appropriate content in JSON format for this slide type.'
+    prompt += '\nGenerate appropriate content in JSON format for this slide type. Include all required fields based on the slide type.'
+    
+    // Add specific format hints for certain slide types
+    if (slideType === 'customerVoice') {
+      prompt += '\nFormat: { "customerQuotes": ["quote1", "quote2"], "painPoints": [{"functionalArea": "area", "challenge": "challenge", "impact": "High"}] }'
+    } else if (slideType === 'roi') {
+      prompt += '\nFormat: { "totalInvestment": {"software": "$X", "implementation": "$Y", "training": "$Z"}, "annualSavings": [{"category": "cat", "amount": "$X", "description": "desc"}], "paybackPeriod": "X months", "threeYearROI": "X%" }'
+    }
     
     return prompt
   }
