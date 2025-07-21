@@ -403,3 +403,486 @@ export interface MarketSizingSlideData {
   growth?: string
 }
 
+// Sales-Oriented Slides
+
+// Cover & Context Module
+export interface CoverSlideData {
+  proposalTitle: string
+  clientName: string
+  clientLogo?: string
+  vendorName: string
+  vendorLogo?: string
+  proposalDate: string
+  salesRepName: string
+  salesRepTitle: string
+  salesRepContact?: string
+  proposalSubtitle?: string
+  dealReferenceId?: string
+}
+
+export interface AgendaSlideData {
+  title: string
+  agendaSections: Array<{
+    section: string
+    description?: string
+    estimatedTime?: string
+    icon?: string
+  }>
+}
+
+// Customer Understanding Module
+export interface CustomerVoiceSlideData {
+  title: string
+  subtitle?: string
+  customerQuotes: string[]
+  painPoints: Array<{
+    functionalArea: string
+    challenge: string
+    impact: string
+  }>
+  stakeholders?: Array<{
+    name: string
+    role: string
+  }>
+}
+
+export interface IndustryTrendsSlideData {
+  title: string
+  subtitle?: string
+  trends: Array<{
+    trend: string
+    impact: string
+    statistic?: string
+    source?: string
+  }>
+}
+
+export interface BusinessImpactSlideData {
+  title: string
+  subtitle?: string
+  kpis: Array<{
+    name: string
+    current: string
+    ideal: string
+    cost?: string
+    improvement?: string
+  }>
+}
+
+// Solution Module
+export interface SolutionOverviewSlideData {
+  title: string
+  solutionName: string
+  tagline?: string
+  keyFeatures: Array<{
+    feature: string
+    description: string
+    icon?: string
+  }>
+  screenshot?: string
+}
+
+export interface ProductDeepDiveSlideData {
+  title: string
+  productName?: string
+  coreFeatures: Array<{
+    feature: string
+    description: string
+    howItWorks?: string
+  }>
+  businessBenefits: string[]
+  technicalDetails?: {
+    architecture?: string
+    security?: string
+    integrations?: string[]
+  }
+  demoAvailable?: boolean
+}
+
+export interface CaseStudySlideData {
+  title: string
+  customerName: string
+  customerLogo?: string
+  challenge: string
+  solution: string
+  metrics: Array<{
+    metric: string
+    value: string
+    improvement?: string
+  }>
+  quote?: string
+  quoteAuthor?: string
+  quoteTitle?: string
+}
+
+// Value Proposition Module
+export interface ROICalculatorSlideData {
+  title: string
+  subtitle?: string
+  inputs: Array<{
+    label: string
+    value: string
+    unit?: string
+  }>
+  outputs: Array<{
+    label: string
+    value: string
+    unit?: string
+    highlight?: boolean
+  }>
+  assumptions?: string[]
+  disclaimer?: string
+}
+
+export interface CompetitiveDifferentiationSlideData {
+  title: string
+  subtitle?: string
+  competitors: string[]
+  features: Array<{
+    feature: string
+    us: string | boolean
+    competitors: (string | boolean)[]
+  }>
+  differentiators?: string[]
+}
+
+export interface GoalAlignmentSlideData {
+  title: string
+  subtitle?: string
+  goals: Array<{
+    customerGoal: string
+    ourCapability: string
+    impact: string
+    priority?: 'high' | 'medium' | 'low'
+  }>
+}
+
+// Pricing & Commercials Module
+export interface PricingTiersSlideData {
+  title: string
+  subtitle?: string
+  tiers: Array<{
+    name: string
+    price: string
+    period?: string
+    features: string[]
+    recommended?: boolean
+  }>
+  discountNote?: string
+}
+
+
+export interface TermsConditionsSlideData {
+  title: string
+  subtitle?: string
+  contractDuration: string
+  paymentTerms: string
+  slaTerms?: string
+  supportTerms?: string
+  terminationClause?: string
+  additionalTerms?: string[]
+}
+
+// Technical Module
+export interface ArchitectureDiagramSlideData {
+  title: string
+  subtitle?: string
+  components: Array<{
+    name: string
+    type: 'frontend' | 'backend' | 'database' | 'integration' | 'external'
+    description?: string
+  }>
+  integrations: Array<{
+    from: string
+    to: string
+    type?: string
+  }>
+  diagramUrl?: string
+}
+
+export interface SecurityComplianceSlideData {
+  title: string
+  subtitle?: string
+  certifications: Array<{
+    name: string
+    icon?: string
+    description?: string
+  }>
+  securityFeatures: Array<{
+    feature: string
+    description: string
+    icon?: string
+  }>
+  policies?: string[]
+}
+
+// Next Steps Module
+export interface MutualActionPlanSlideData {
+  title: string
+  subtitle?: string
+  milestones: Array<{
+    milestone: string
+    date: string
+    owner: string
+    status?: 'completed' | 'in-progress' | 'upcoming'
+    dependencies?: string[]
+  }>
+}
+
+export interface CallToActionSlideData {
+  title: string
+  subtitle?: string
+  ctaDescription: string
+  ctaText: string
+  ctaLink?: string
+  additionalActions?: Array<{
+    action: string
+    deadline?: string
+  }>
+}
+
+// Sales-oriented slide data interfaces
+
+// Value Proposition Module
+export interface WhyUsSlideData {
+  title: string
+  subtitle?: string
+  differentiators: Array<{
+    differentiator: string
+    description: string
+    proof?: string
+    icon?: string
+  }>
+  clientResults?: Array<{
+    metric: string
+    description: string
+  }>
+  awards?: Array<{
+    award: string
+    year?: string
+  }>
+  partnershipLevel?: string
+}
+
+export interface WhyNowSlideData {
+  title: string
+  subtitle?: string
+  urgencyFactors: Array<{
+    factor: string
+    impact: string
+    timeline?: string
+  }>
+  opportunities: Array<{
+    opportunity: string
+    benefit: string
+    expiryDate?: string
+  }>
+  costOfDelay?: {
+    dailyCost?: string
+    monthlyCost?: string
+    yearlyCost?: string
+    lostOpportunities?: string[]
+  }
+  callToAction?: string
+}
+
+export interface ValuePropSlideData {
+  title: string
+  subtitle?: string
+  mainValue: string
+  valuePillars: Array<{
+    pillar: string
+    description: string
+    metrics?: string[]
+  }>
+  beforeAfter?: {
+    before: string[]
+    after: string[]
+  }
+  uniqueSellingPoint?: string
+}
+
+// Pricing & Commercials Module
+export interface PricingSlideData {
+  title: string
+  subtitle?: string
+  pricingTiers: Array<{
+    tierName: string
+    description?: string
+    price: string
+    billingPeriod?: string
+    setupFee?: string
+    features?: string[]
+    limitations?: string[]
+    isRecommended?: boolean
+  }>
+  volumeDiscounts?: Array<{
+    volume: string
+    discount: string
+  }>
+  paymentTerms?: {
+    options?: string[]
+    contractLength?: string
+    earlyTermination?: string
+  }
+  customQuote?: string
+}
+
+export interface ROISlideData {
+  title: string
+  subtitle?: string
+  totalInvestment: {
+    software: string
+    implementation: string
+    training: string
+    firstYearTotal?: string
+  }
+  annualSavings: Array<{
+    category: string
+    amount: string
+    description?: string
+  }>
+  totalAnnualSavings?: string
+  paybackPeriod: string
+  threeYearROI: string
+  netPresentValue?: string
+  additionalBenefits?: string[]
+  assumptions?: string[]
+}
+
+export interface InvestmentSummarySlideData {
+  title: string
+  subtitle?: string
+  packages: Array<{
+    packageName: string
+    description?: string
+    totalPrice: string
+    pricePerUser?: string
+    includedItems: string[]
+    paymentTerms?: string
+    contractLength?: string
+    validUntil?: string
+    optionalAddOns?: Array<{
+      item: string
+      price: string
+    }>
+  }>
+  executiveSponsorIncentive?: string
+  additionalServices?: Array<{
+    service: string
+    price?: string
+  }>
+  termsConditions?: string
+}
+
+// Technical Module
+export interface TechnicalArchitectureSlideData {
+  title: string
+  subtitle?: string
+  architectureLayers: Array<{
+    layer: string
+    description: string
+    technologies?: string[]
+  }>
+  keyFeatures: string[]
+  securityMeasures: string[]
+  performanceMetrics?: {
+    uptime?: string
+    responseTime?: string
+    scalability?: string
+  }
+  deploymentOptions?: string[]
+}
+
+export interface ImplementationTimelineSlideData {
+  title: string
+  subtitle?: string
+  totalDuration: string
+  startDate?: string
+  phases: Array<{
+    phase: string
+    duration: string
+    description?: string
+    deliverables?: string[]
+    milestones?: string[]
+  }>
+  keySuccessFactors?: string[]
+  risks?: Array<{
+    risk: string
+    mitigation: string
+  }>
+}
+
+// Next Steps Module
+export interface NextStepsSlideData {
+  title: string
+  subtitle?: string
+  immediateActions: Array<{
+    action: string
+    owner?: string
+    timeline?: string
+  }>
+  decisionCriteria?: string[]
+  stakeholders?: Array<{
+    name: string
+    role: string
+    involvement?: string
+  }>
+  proposedTimeline?: {
+    contractSigning?: string
+    kickoff?: string
+    goLive?: string
+  }
+  callToAction?: string
+  contactInfo?: {
+    email?: string
+    phone?: string
+  }
+}
+
+export interface ContactSlideData {
+  title: string
+  subtitle?: string
+  companyName: string
+  companyLogo?: string
+  tagline?: string
+  addresses?: Array<{
+    label?: string
+    street: string
+    city: string
+    state: string
+    zip: string
+    country?: string
+  }>
+  website?: string
+  email?: string
+  phone?: string
+  socialLinks?: Array<{
+    platform: string
+    url: string
+  }>
+  teamContacts: Array<{
+    name: string
+    title: string
+    email?: string
+    phone?: string
+    linkedin?: string
+  }>
+  legalText?: string
+}
+
+export interface ThankYouSlideData {
+  title: string
+  subtitle?: string
+  icon?: 'heart' | 'star' | 'handshake'
+  messages?: string[]
+  contactPrompt?: string
+  contactInfo?: {
+    email?: string
+    phone?: string
+    website?: string
+  }
+  closingStatement?: string
+  companyLogo?: string
+}
+

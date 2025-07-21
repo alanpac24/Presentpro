@@ -662,6 +662,26 @@ Return JSON with these fields:
       orgStructure: 0,
       metrics: 0,
       content: 0,
+      // Sales-oriented slides
+      cover: 0,
+      agenda: 0,
+      customerVoice: 0,
+      industryTrends: 0,
+      businessImpact: 0,
+      solutionOverview: 0,
+      productDeepDive: 0,
+      caseStudy: 0,
+      whyUs: 0,
+      whyNow: 0,
+      valueProp: 0,
+      pricing: 0,
+      roi: 0,
+      investmentSummary: 0,
+      technicalArchitecture: 0,
+      implementationTimeline: 0,
+      nextSteps: 0,
+      contact: 0,
+      thankYou: 0,
     }
 
     const { prompt = '', salesStage, industry, challenges, competitors, budget, timeline } = params
@@ -748,6 +768,86 @@ Return JSON with these fields:
     if (lowerPrompt.includes('stakeholder') || lowerPrompt.includes('buy-in')) scores.stakeholderMap += 50
     if (salesStage === 'proposal' && challenges && challenges.length > 2) scores.stakeholderMap += 25
 
+    // Sales-oriented slide scoring
+    // Cover and contact slides
+    if (salesStage === 'proposal' || salesStage === 'closing') {
+      scores.cover += 80
+      scores.contact += 70
+      scores.thankYou += 60
+    }
+    
+    // Agenda slide
+    if (salesStage === 'proposal' || salesStage === 'demo') scores.agenda += 70
+    if (lowerPrompt.includes('agenda') || lowerPrompt.includes('overview')) scores.agenda += 40
+    
+    // Customer voice and understanding
+    if (salesStage === 'discovery' || salesStage === 'proposal') {
+      scores.customerVoice += 60
+      scores.businessImpact += 50
+    }
+    if (challenges && challenges.length > 0) {
+      scores.customerVoice += 40 + (challenges.length * 10)
+      scores.businessImpact += 45 + (challenges.length * 10)
+    }
+    
+    // Industry and market analysis
+    if (industry) {
+      scores.industryTrends += 50
+      scores.businessImpact += 30
+    }
+    if (lowerPrompt.includes('trend') || lowerPrompt.includes('market')) scores.industryTrends += 40
+    
+    // Solution and product slides
+    if (salesStage === 'demo' || salesStage === 'proposal') {
+      scores.solutionOverview += 70
+      scores.productDeepDive += 60
+      scores.caseStudy += 50
+    }
+    if (lowerPrompt.includes('solution') || lowerPrompt.includes('product')) {
+      scores.solutionOverview += 50
+      scores.productDeepDive += 40
+    }
+    if (lowerPrompt.includes('case study') || lowerPrompt.includes('success')) scores.caseStudy += 60
+    
+    // Value proposition slides
+    if (salesStage === 'proposal' || salesStage === 'closing') {
+      scores.whyUs += 55
+      scores.whyNow += 60
+      scores.valueProp += 65
+    }
+    if (timeline && (timeline.toLowerCase().includes('urgent') || timeline.toLowerCase().includes('asap'))) {
+      scores.whyNow += 70
+    }
+    
+    // Pricing and commercial slides
+    if (budget || salesStage === 'proposal' || salesStage === 'closing') {
+      scores.pricing += 60
+      scores.roi += 55
+      scores.investmentSummary += 50
+    }
+    if (lowerPrompt.includes('price') || lowerPrompt.includes('cost')) {
+      scores.pricing += 50
+      scores.investmentSummary += 40
+    }
+    
+    // Technical slides
+    if (lowerPrompt.includes('technical') || lowerPrompt.includes('architecture')) {
+      scores.technicalArchitecture += 60
+    }
+    if (salesStage === 'demo') scores.technicalArchitecture += 30
+    
+    // Implementation timeline
+    if (timeline || lowerPrompt.includes('implement') || lowerPrompt.includes('rollout')) {
+      scores.implementationTimeline += 50
+    }
+    if (salesStage === 'proposal') scores.implementationTimeline += 40
+    
+    // Next steps
+    if (salesStage === 'proposal' || salesStage === 'closing') {
+      scores.nextSteps += 70
+    }
+    if (lowerPrompt.includes('next') || lowerPrompt.includes('action')) scores.nextSteps += 40
+
     return scores
   }
 
@@ -756,12 +856,15 @@ Return JSON with these fields:
    */
   private getSlideAlternatives(): Record<string, string[]> {
     return {
-      analysis: ['swotAnalysis', 'hypothesisTree', 'riskMatrix'],
-      financial: ['roiCalculation', 'costBenefit', 'waterfallChart'],
-      strategic: ['valueChain', 'processFlow', 'initiativePrioritization'],
-      competitive: ['competitiveLandscape', 'benchmark', 'matrix'],
-      timeline: ['roadmap', 'quickWins', 'timeline'],
-      metrics: ['kpiDashboard', 'metrics', 'heatmap']
+      analysis: ['swotAnalysis', 'hypothesisTree', 'riskMatrix', 'businessImpact'],
+      financial: ['roiCalculation', 'costBenefit', 'waterfallChart', 'roi', 'pricing', 'investmentSummary'],
+      strategic: ['valueChain', 'processFlow', 'initiativePrioritization', 'valueProp'],
+      competitive: ['competitiveLandscape', 'benchmark', 'matrix', 'whyUs'],
+      timeline: ['roadmap', 'quickWins', 'timeline', 'implementationTimeline', 'whyNow'],
+      metrics: ['kpiDashboard', 'metrics', 'heatmap', 'businessImpact'],
+      customer: ['customerVoice', 'caseStudy', 'industryTrends'],
+      solution: ['solutionOverview', 'productDeepDive', 'technicalArchitecture'],
+      action: ['nextSteps', 'contact', 'whyNow']
     }
   }
 
@@ -797,13 +900,19 @@ Return JSON with these fields:
     // Generate sections based on purpose
     const sections = []
     
-    // Always start with title slide
-    sections.push({
-      title: 'Title Slide',
-      description: title,
-      slideType: 'title',
-      layout: 'center'
-    })
+    // Always start with title slide unless we have a cover slide in the recipe
+    const templateRecipes = this.getTemplateRecipes(salesStage || 'general')
+    const selectedRecipe = templateRecipes[Math.floor(Math.random() * templateRecipes.length)]
+    const hasCoverSlide = selectedRecipe.includes('cover')
+    
+    if (!hasCoverSlide) {
+      sections.push({
+        title: 'Title Slide',
+        description: title,
+        slideType: 'title',
+        layout: 'center'
+      })
+    }
 
     // Get slide scores based on context
     const slideScores = this.scoreSlides({
@@ -817,11 +926,7 @@ Return JSON with these fields:
       timeline
     })
 
-    // Define template recipes for each sales stage
-    const templateRecipes = this.getTemplateRecipes(salesStage || 'general')
-    
-    // Select a recipe randomly for variety
-    const selectedRecipe = templateRecipes[Math.floor(Math.random() * templateRecipes.length)]
+    // Recipe is already selected above, no need to select again
     
     // Build slide list based on recipe and scores
     const slideCandidates = this.buildSlideCandidates(
@@ -859,7 +964,11 @@ Return JSON with these fields:
           // Recipe C: Quick assessment
           ['executiveSummary', 'swotAnalysis', 'benchmark', 'quickWins', 'initiativePrioritization', 'roadmap'],
           // Recipe D: Industry-focused
-          ['marketSizing', 'competitiveLandscape', 'valueChain', 'benchmark', 'hypothesisTree', 'matrix']
+          ['marketSizing', 'competitiveLandscape', 'valueChain', 'benchmark', 'hypothesisTree', 'matrix'],
+          // Recipe E: Sales-oriented discovery
+          ['cover', 'agenda', 'customerVoice', 'industryTrends', 'businessImpact', 'solutionOverview', 'whyNow', 'nextSteps', 'contact'],
+          // Recipe F: Customer-centric discovery
+          ['cover', 'executiveSummary', 'customerVoice', 'businessImpact', 'industryTrends', 'competitiveLandscape', 'quickWins', 'nextSteps']
         ]
       
       case 'demo':
@@ -871,7 +980,11 @@ Return JSON with these fields:
           // Recipe C: Executive demo
           ['executiveSummary', 'competitiveLandscape', 'content', 'roiCalculation', 'quickWins', 'metrics'],
           // Recipe D: Technical demo
-          ['hypothesisTree', 'processFlow', 'content', 'kpiDashboard', 'roadmap', 'riskMatrix']
+          ['hypothesisTree', 'processFlow', 'content', 'kpiDashboard', 'roadmap', 'riskMatrix'],
+          // Recipe E: Product-focused demo
+          ['cover', 'agenda', 'solutionOverview', 'productDeepDive', 'caseStudy', 'technicalArchitecture', 'roi', 'implementationTimeline', 'nextSteps'],
+          // Recipe F: Value-focused demo
+          ['cover', 'businessImpact', 'solutionOverview', 'productDeepDive', 'valueProp', 'caseStudy', 'quickWins', 'nextSteps', 'contact']
         ]
       
       case 'proposal':
@@ -883,7 +996,13 @@ Return JSON with these fields:
           // Recipe C: Quick decision proposal
           ['executiveSummary', 'benchmark', 'valueChain', 'quickWins', 'roiCalculation', 'processFlow'],
           // Recipe D: Comprehensive proposal
-          ['executiveSummary', 'swotAnalysis', 'competitiveLandscape', 'valueChain', 'roiCalculation', 'roadmap', 'kpiDashboard', 'riskMatrix']
+          ['executiveSummary', 'swotAnalysis', 'competitiveLandscape', 'valueChain', 'roiCalculation', 'roadmap', 'kpiDashboard', 'riskMatrix'],
+          // Recipe E: Sales proposal standard
+          ['cover', 'agenda', 'executiveSummary', 'customerVoice', 'businessImpact', 'solutionOverview', 'whyUs', 'valueProp', 'pricing', 'roi', 'implementationTimeline', 'nextSteps', 'contact', 'thankYou'],
+          // Recipe F: Compact sales proposal
+          ['cover', 'agenda', 'businessImpact', 'solutionOverview', 'caseStudy', 'whyUs', 'whyNow', 'investmentSummary', 'nextSteps', 'thankYou'],
+          // Recipe G: Executive sales proposal
+          ['cover', 'executiveSummary', 'industryTrends', 'businessImpact', 'valueProp', 'caseStudy', 'roi', 'whyNow', 'nextSteps', 'contact']
         ]
       
       case 'closing':
@@ -893,7 +1012,11 @@ Return JSON with these fields:
           // Recipe B: Value-focused closing
           ['executiveSummary', 'costBenefit', 'benchmark', 'metrics', 'roadmap'],
           // Recipe C: Risk mitigation closing
-          ['executiveSummary', 'riskMatrix', 'quickWins', 'stakeholderMap', 'processFlow']
+          ['executiveSummary', 'riskMatrix', 'quickWins', 'stakeholderMap', 'processFlow'],
+          // Recipe D: Sales closing standard
+          ['cover', 'whyNow', 'valueProp', 'roi', 'investmentSummary', 'nextSteps', 'thankYou'],
+          // Recipe E: Executive closing
+          ['cover', 'executiveSummary', 'whyUs', 'whyNow', 'pricing', 'nextSteps', 'contact']
         ]
       
       default:
@@ -901,7 +1024,10 @@ Return JSON with these fields:
           // Generic sales presentations
           ['marketSizing', 'content', 'matrix', 'roiCalculation', 'quickWins'],
           ['executiveSummary', 'swotAnalysis', 'valueChain', 'metrics', 'roadmap'],
-          ['content', 'competitiveLandscape', 'processFlow', 'costBenefit', 'initiativePrioritization']
+          ['content', 'competitiveLandscape', 'processFlow', 'costBenefit', 'initiativePrioritization'],
+          // Sales-oriented generic
+          ['cover', 'agenda', 'businessImpact', 'solutionOverview', 'valueProp', 'pricing', 'nextSteps', 'contact'],
+          ['cover', 'industryTrends', 'customerVoice', 'solutionOverview', 'caseStudy', 'roi', 'nextSteps']
         ]
     }
   }
@@ -1109,6 +1235,102 @@ Return JSON with these fields:
         title: 'Organization Design',
         description: 'Team structure and capabilities',
         layout: 'hierarchy'
+      },
+      // Sales-oriented slides
+      cover: {
+        title: 'Proposal Cover',
+        description: `Tailored proposal for ${companyName}`,
+        layout: 'cover'
+      },
+      agenda: {
+        title: 'Meeting Agenda',
+        description: "What we'll cover today",
+        layout: 'agenda'
+      },
+      customerVoice: {
+        title: 'What We Heard',
+        description: 'Understanding your challenges and needs',
+        layout: 'customer'
+      },
+      industryTrends: {
+        title: 'Industry Landscape',
+        description: `Key trends shaping ${industry}`,
+        layout: 'trends'
+      },
+      businessImpact: {
+        title: 'Business Impact Analysis',
+        description: 'Current state vs. desired outcomes',
+        layout: 'impact'
+      },
+      solutionOverview: {
+        title: 'Our Solution',
+        description: 'How we address your specific needs',
+        layout: 'solution'
+      },
+      productDeepDive: {
+        title: 'Solution Deep Dive',
+        description: 'Detailed capabilities and features',
+        layout: 'product'
+      },
+      caseStudy: {
+        title: 'Success Story',
+        description: 'Similar client transformation',
+        layout: 'case'
+      },
+      whyUs: {
+        title: 'Why Partner With Us',
+        description: 'Our unique differentiators',
+        layout: 'differentiators'
+      },
+      whyNow: {
+        title: 'Why Act Now',
+        description: 'The urgency and opportunity',
+        layout: 'urgency'
+      },
+      valueProp: {
+        title: 'Value Proposition',
+        description: 'Your transformation journey',
+        layout: 'value'
+      },
+      pricing: {
+        title: 'Investment Options',
+        description: 'Flexible pricing to meet your needs',
+        layout: 'pricing'
+      },
+      roi: {
+        title: 'Return on Investment',
+        description: 'Financial benefits and payback',
+        layout: 'roi'
+      },
+      investmentSummary: {
+        title: 'Investment Summary',
+        description: 'Package options and terms',
+        layout: 'investment'
+      },
+      technicalArchitecture: {
+        title: 'Technical Architecture',
+        description: 'System design and security',
+        layout: 'technical'
+      },
+      implementationTimeline: {
+        title: 'Implementation Plan',
+        description: 'Phased rollout approach',
+        layout: 'timeline'
+      },
+      nextSteps: {
+        title: 'Next Steps',
+        description: 'Moving forward together',
+        layout: 'action'
+      },
+      contact: {
+        title: 'Contact Information',
+        description: 'Your dedicated team',
+        layout: 'contact'
+      },
+      thankYou: {
+        title: 'Thank You',
+        description: 'We appreciate your time',
+        layout: 'closing'
       }
     }
     
@@ -1192,24 +1414,43 @@ Return JSON with these fields:
     
     // Ensure logical flow by reordering certain slide types
     const flowOrder = [
+      'cover',
+      'agenda',
       'executiveSummary',
+      'customerVoice',
+      'industryTrends',
       'marketSizing',
+      'businessImpact',
       'swotAnalysis',
       'hypothesisTree',
       'competitiveLandscape',
       'benchmark',
+      'solutionOverview',
+      'productDeepDive',
       'valueChain',
       'processFlow',
       'content',
+      'caseStudy',
+      'whyUs',
+      'valueProp',
+      'whyNow',
+      'pricing',
       'roiCalculation',
+      'roi',
       'costBenefit',
+      'investmentSummary',
+      'technicalArchitecture',
       'quickWins',
       'roadmap',
+      'implementationTimeline',
       'kpiDashboard',
       'metrics',
       'riskMatrix',
       'stakeholderMap',
-      'initiativePrioritization'
+      'initiativePrioritization',
+      'nextSteps',
+      'contact',
+      'thankYou'
     ]
     
     // Sort by flow order with some randomness

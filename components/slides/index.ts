@@ -27,6 +27,27 @@ export { HypothesisTreeSlide } from './HypothesisTreeSlide'
 export { DecisionTreeSlide } from './DecisionTreeSlide'
 export { OrgStructureSlide } from './OrgStructureSlide'
 
+// Sales-oriented slides
+export { CoverSlide } from './CoverSlide'
+export { AgendaSlide } from './AgendaSlide'
+export { CustomerVoiceSlide } from './CustomerVoiceSlide'
+export { IndustryTrendsSlide } from './IndustryTrendsSlide'
+export { BusinessImpactSlide } from './BusinessImpactSlide'
+export { SolutionOverviewSlide } from './SolutionOverviewSlide'
+export { ProductDeepDiveSlide } from './ProductDeepDiveSlide'
+export { CaseStudySlide } from './CaseStudySlide'
+export { WhyUsSlide } from './WhyUsSlide'
+export { WhyNowSlide } from './WhyNowSlide'
+export { ValuePropSlide } from './ValuePropSlide'
+export { PricingSlide } from './PricingSlide'
+export { ROISlide } from './ROISlide'
+export { InvestmentSummarySlide } from './InvestmentSummarySlide'
+export { TechnicalArchitectureSlide } from './TechnicalArchitectureSlide'
+export { ImplementationTimelineSlide } from './ImplementationTimelineSlide'
+export { NextStepsSlide } from './NextStepsSlide'
+export { ContactSlide } from './ContactSlide'
+export { ThankYouSlide } from './ThankYouSlide'
+
 export * from './types'
 
 // Slide component mapping
@@ -58,6 +79,27 @@ import { HypothesisTreeSlide } from './HypothesisTreeSlide'
 import { DecisionTreeSlide } from './DecisionTreeSlide'
 import { OrgStructureSlide } from './OrgStructureSlide'
 
+// Sales-oriented slide imports
+import { CoverSlide } from './CoverSlide'
+import { AgendaSlide } from './AgendaSlide'
+import { CustomerVoiceSlide } from './CustomerVoiceSlide'
+import { IndustryTrendsSlide } from './IndustryTrendsSlide'
+import { BusinessImpactSlide } from './BusinessImpactSlide'
+import { SolutionOverviewSlide } from './SolutionOverviewSlide'
+import { ProductDeepDiveSlide } from './ProductDeepDiveSlide'
+import { CaseStudySlide } from './CaseStudySlide'
+import { WhyUsSlide } from './WhyUsSlide'
+import { WhyNowSlide } from './WhyNowSlide'
+import { ValuePropSlide } from './ValuePropSlide'
+import { PricingSlide } from './PricingSlide'
+import { ROISlide } from './ROISlide'
+import { InvestmentSummarySlide } from './InvestmentSummarySlide'
+import { TechnicalArchitectureSlide } from './TechnicalArchitectureSlide'
+import { ImplementationTimelineSlide } from './ImplementationTimelineSlide'
+import { NextStepsSlide } from './NextStepsSlide'
+import { ContactSlide } from './ContactSlide'
+import { ThankYouSlide } from './ThankYouSlide'
+
 export const slideComponents = {
   title: TitleSlide,
   content: ContentSlide,
@@ -86,6 +128,26 @@ export const slideComponents = {
   hypothesisTree: HypothesisTreeSlide,
   decisionTree: DecisionTreeSlide,
   orgStructure: OrgStructureSlide,
+  // Sales-oriented slides
+  cover: CoverSlide,
+  agenda: AgendaSlide,
+  customerVoice: CustomerVoiceSlide,
+  industryTrends: IndustryTrendsSlide,
+  businessImpact: BusinessImpactSlide,
+  solutionOverview: SolutionOverviewSlide,
+  productDeepDive: ProductDeepDiveSlide,
+  caseStudy: CaseStudySlide,
+  whyUs: WhyUsSlide,
+  whyNow: WhyNowSlide,
+  valueProp: ValuePropSlide,
+  pricing: PricingSlide,
+  roi: ROISlide,
+  investmentSummary: InvestmentSummarySlide,
+  technicalArchitecture: TechnicalArchitectureSlide,
+  implementationTimeline: ImplementationTimelineSlide,
+  nextSteps: NextStepsSlide,
+  contact: ContactSlide,
+  thankYou: ThankYouSlide,
   // Legacy mappings
   bullet: ContentSlide,
   twoColumn: ComparisonSlide,
