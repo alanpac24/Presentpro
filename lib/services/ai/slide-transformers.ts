@@ -627,18 +627,7 @@ export const slideTransformers: SlideTransformer[] = [
     })
   },
 
-  // Other sales slides with simpler structures
-  {
-    condition: (slide) => [].includes(slide.type),
-    transform: (slide) => ({
-      type: slide.type,
-      data: {
-        title: slide.title || slide.type.charAt(0).toUpperCase() + slide.type.slice(1).replace(/([A-Z])/g, ' $1').trim(),
-        subtitle: slide.subtitle,
-        ...slide
-      }
-    })
-  },
+  // Other sales slides with simpler structures (removed - all have specific transformers now)
 
   // Default content slide
   {
