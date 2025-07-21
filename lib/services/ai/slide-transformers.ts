@@ -13,10 +13,10 @@ export const slideTransformers: SlideTransformer[] = [
     transform: (slide) => ({
       type: 'title',
       data: {
-        title: slide.title,
-        subtitle: slide.content || slide.subtitle,
-        presenter: slide.presenter || 'Your Sales Team',
-        company: slide.company || 'Target Company',
+        title: typeof slide.title === 'string' ? slide.title : (slide.title?.text || 'Presentation'),
+        subtitle: typeof slide.subtitle === 'string' ? slide.subtitle : (slide.subtitle || slide.content || ''),
+        presenter: typeof slide.presenter === 'string' ? slide.presenter : (slide.presenter?.name || 'Your Sales Team'),
+        company: typeof slide.company === 'string' ? slide.company : (slide.company?.name || slide.companyName || 'Target Company'),
         date: slide.date || new Date().toLocaleDateString()
       }
     })
@@ -646,11 +646,20 @@ export const slideTransformers: SlideTransformer[] = [
 ]
 
 export function transformSlide(slide: any, index: number): { type: string; data: any } {
+  // Log the slide data for debugging
+  if (index === 0 || slide.type === 'title') {
+    console.log('Title slide raw data:', JSON.stringify(slide, null, 2))
+  }
+  
   // Find the first matching transformer
   const transformer = slideTransformers.find(t => t.condition(slide, index))
   
   if (transformer) {
-    return transformer.transform(slide)
+    const transformed = transformer.transform(slide)
+    if (index === 0 || slide.type === 'title') {
+      console.log('Title slide transformed data:', JSON.stringify(transformed, null, 2))
+    }
+    return transformed
   }
   
   // Fallback to content slide
