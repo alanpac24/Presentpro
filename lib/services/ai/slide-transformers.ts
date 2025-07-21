@@ -487,10 +487,81 @@ export const slideTransformers: SlideTransformer[] = [
     })
   },
 
+  // CustomerVoice Slide
+  {
+    condition: (slide) => slide.type === 'customerVoice',
+    transform: (slide) => ({
+      type: 'customerVoice',
+      data: {
+        title: slide.title || 'Voice of the Customer',
+        subtitle: slide.subtitle || 'What we heard from stakeholders',
+        customerQuotes: slide.customerQuotes || [],
+        painPoints: slide.painPoints || [],
+        stakeholders: slide.stakeholders || []
+      }
+    })
+  },
+
+  // Contact Slide
+  {
+    condition: (slide) => slide.type === 'contact',
+    transform: (slide) => ({
+      type: 'contact',
+      data: {
+        title: slide.title || 'Contact Us',
+        subtitle: slide.subtitle || 'Get in touch with our team',
+        companyName: slide.companyName || 'Your Company',
+        companyLogo: slide.companyLogo,
+        tagline: slide.tagline,
+        addresses: slide.addresses || [],
+        website: slide.website,
+        email: slide.email,
+        phone: slide.phone,
+        socialLinks: slide.socialLinks || [],
+        teamContacts: slide.teamContacts || [],
+        legalText: slide.legalText
+      }
+    })
+  },
+
+  // ThankYou Slide
+  {
+    condition: (slide) => slide.type === 'thankYou',
+    transform: (slide) => ({
+      type: 'thankYou',
+      data: {
+        title: slide.title || 'Thank You',
+        subtitle: slide.subtitle,
+        icon: slide.icon || 'heart',
+        messages: slide.messages || [],
+        contactPrompt: slide.contactPrompt,
+        contactInfo: slide.contactInfo,
+        closingStatement: slide.closingStatement,
+        companyLogo: slide.companyLogo
+      }
+    })
+  },
+
+  // InvestmentSummary Slide
+  {
+    condition: (slide) => slide.type === 'investmentSummary',
+    transform: (slide) => ({
+      type: 'investmentSummary',
+      data: {
+        title: slide.title || 'Investment Summary',
+        subtitle: slide.subtitle || 'Pricing and package options',
+        packages: slide.packages || [],
+        executiveSponsorIncentive: slide.executiveSponsorIncentive,
+        additionalServices: slide.additionalServices || [],
+        termsConditions: slide.termsConditions
+      }
+    })
+  },
+
   // Other sales slides with simpler structures
   {
-    condition: (slide) => ['customerVoice', 'industryTrends', 'caseStudy', 'investmentSummary', 
-                          'technicalArchitecture', 'implementationTimeline', 'contact', 'thankYou'].includes(slide.type),
+    condition: (slide) => ['industryTrends', 'caseStudy', 
+                          'technicalArchitecture', 'implementationTimeline'].includes(slide.type),
     transform: (slide) => ({
       type: slide.type,
       data: {

@@ -28,7 +28,7 @@ export function InvestmentSummarySlide({ data, className = '' }: InvestmentSumma
 
       <div className="flex-1 space-y-6">
         {/* Package Details */}
-        {data.packages.map((pkg, index) => (
+        {data.packages && data.packages.map((pkg, index) => (
           <div key={index} className="bg-white border-2 border-gray-200 rounded-lg p-6 hover:border-blue-400 hover:shadow-lg transition-all">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center">
@@ -55,7 +55,7 @@ export function InvestmentSummarySlide({ data, className = '' }: InvestmentSumma
               <div>
                 <h4 className="font-semibold text-gray-800 mb-2">What's Included</h4>
                 <ul className="space-y-1">
-                  {pkg.includedItems.map((item, iIndex) => (
+                  {pkg.includedItems && pkg.includedItems.map((item, iIndex) => (
                     <li key={iIndex} className="text-sm text-gray-700 flex items-start">
                       <span className="text-green-600 mr-2">✓</span>
                       {item}

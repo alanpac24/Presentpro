@@ -26,7 +26,7 @@ export function CustomerVoiceSlide({ data, className = '' }: CustomerVoiceSlideP
             <Quote className="w-5 h-5 mr-2 text-blue-600" />
             What We Heard
           </h3>
-          {data.customerQuotes.map((quote, index) => (
+          {data.customerQuotes && data.customerQuotes.map((quote, index) => (
             <div key={index} className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-r-lg">
               <p className="text-gray-700 italic">"{quote}"</p>
             </div>
@@ -39,7 +39,7 @@ export function CustomerVoiceSlide({ data, className = '' }: CustomerVoiceSlideP
             <AlertCircle className="w-5 h-5 mr-2 text-red-600" />
             Key Pain Points
           </h3>
-          {data.painPoints.map((point, index) => (
+          {data.painPoints && data.painPoints.map((point, index) => (
             <div key={index} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
               <div className="font-semibold text-gray-900 mb-1">
                 {point.functionalArea}

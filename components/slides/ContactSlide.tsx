@@ -115,7 +115,7 @@ export function ContactSlide({ data, className = '' }: ContactSlideProps) {
           {/* Team Contacts */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Team</h3>
-            {data.teamContacts.map((contact, index) => (
+            {data.teamContacts && data.teamContacts.map((contact, index) => (
               <div key={index} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                 <h4 className="font-semibold text-gray-900">{contact.name}</h4>
                 <p className="text-sm text-gray-600 mb-2">{contact.title}</p>
