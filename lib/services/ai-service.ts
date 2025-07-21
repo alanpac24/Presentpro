@@ -1710,6 +1710,191 @@ Return JSON with these fields:
           }
         ]
       },
+      // Sales-oriented placeholder content
+      cover: {
+        proposalTitle: title,
+        clientName: companyName,
+        vendorName: 'Your Company',
+        proposalDate: new Date().toLocaleDateString(),
+        salesRepName: 'Your Name',
+        salesRepTitle: 'Account Executive',
+        proposalSubtitle: 'Transforming Your Business Through Innovation'
+      },
+      agenda: {
+        title: 'Meeting Agenda',
+        agendaSections: [
+          { section: 'Understanding Your Challenges', estimatedTime: '10 min' },
+          { section: 'Our Solution Approach', estimatedTime: '15 min' },
+          { section: 'Value Proposition & ROI', estimatedTime: '10 min' },
+          { section: 'Implementation Plan', estimatedTime: '10 min' },
+          { section: 'Next Steps', estimatedTime: '5 min' }
+        ]
+      },
+      customerVoice: {
+        title: 'What We Heard',
+        subtitle: 'Understanding your unique challenges',
+        customerQuotes: [
+          'We need to streamline our operations and reduce manual processes',
+          'Our current system cannot scale with our growth plans',
+          'Integration between systems is causing data silos'
+        ],
+        painPoints: [
+          { functionalArea: 'Operations', challenge: 'Manual processes taking 40% of team time', impact: 'High' },
+          { functionalArea: 'IT', challenge: 'Legacy systems limiting innovation', impact: 'Critical' }
+        ]
+      },
+      industryTrends: {
+        title: 'Industry Landscape',
+        subtitle: `Key trends shaping ${industry}`,
+        trends: [
+          { trend: 'Digital Transformation Acceleration', impact: '85% of companies increasing digital investments', statistic: '85%', source: 'Gartner 2024' },
+          { trend: 'AI and Automation Adoption', impact: 'Automation can reduce costs by 30-40%', statistic: '30-40%', source: 'McKinsey' }
+        ]
+      },
+      businessImpact: {
+        title: 'Business Impact Analysis',
+        subtitle: 'Current state vs. desired outcomes',
+        kpis: [
+          { name: 'Process Efficiency', current: '60%', ideal: '90%', improvement: '50%', cost: '$2M annually' },
+          { name: 'Time to Market', current: '6 months', ideal: '2 months', improvement: '67%' }
+        ]
+      },
+      solutionOverview: {
+        title: 'Our Solution',
+        solutionName: 'Enterprise Platform',
+        tagline: 'Unified, scalable, intelligent',
+        keyFeatures: [
+          { feature: 'Process Automation', description: 'Automate 80% of manual tasks' },
+          { feature: 'Real-time Analytics', description: 'Make data-driven decisions instantly' },
+          { feature: 'Seamless Integration', description: 'Connect all your systems effortlessly' }
+        ]
+      },
+      productDeepDive: {
+        title: 'Solution Deep Dive',
+        productName: 'Enterprise Solution Suite',
+        coreFeatures: [
+          { feature: 'Workflow Automation', description: 'Visual workflow builder with AI assistance', howItWorks: 'Drag-and-drop interface with pre-built templates' },
+          { feature: 'Advanced Analytics', description: 'Real-time dashboards and predictive insights', howItWorks: 'ML-powered analytics engine' }
+        ],
+        businessBenefits: ['50% reduction in operational costs', '3x faster time to market', '99.9% system uptime'],
+        technicalDetails: { architecture: 'Cloud-native microservices', security: 'SOC2 Type II certified' }
+      },
+      caseStudy: {
+        title: 'Success Story',
+        customerName: 'Fortune 500 Retailer',
+        challenge: 'Manual inventory management causing $5M in annual losses',
+        solution: 'Implemented our AI-powered inventory optimization system',
+        metrics: [
+          { metric: '$3.2M', value: 'Annual savings', improvement: '+64%' },
+          { metric: '85%', value: 'Inventory accuracy', improvement: '+40%' },
+          { metric: '2 weeks', value: 'Implementation time' }
+        ],
+        quote: 'This solution transformed our operations and delivered ROI in just 3 months',
+        quoteAuthor: 'Jane Smith',
+        quoteTitle: 'COO'
+      },
+      whyUs: {
+        title: 'Why Partner With Us',
+        subtitle: 'Your trusted transformation partner',
+        differentiators: [
+          { differentiator: 'Industry Leadership', description: '15 years of proven success', proof: '#1 in Gartner Magic Quadrant' },
+          { differentiator: 'Expert Team', description: '500+ certified professionals', proof: '98% customer satisfaction' }
+        ],
+        clientResults: [
+          { metric: '250+', description: 'Enterprise clients' },
+          { metric: '$1B+', description: 'Value delivered' }
+        ]
+      },
+      whyNow: {
+        title: 'Why Act Now',
+        subtitle: 'The cost of waiting',
+        urgencyFactors: [
+          { factor: 'Competitive Pressure', impact: 'Competitors gaining 20% efficiency advantage', timeline: 'Immediate' },
+          { factor: 'Market Changes', impact: 'New regulations requiring compliance by Q3', timeline: 'Q3 2024' }
+        ],
+        opportunities: [
+          { opportunity: 'Early Adopter Pricing', benefit: '30% discount for Q1 sign-ups', expiryDate: 'March 31, 2024' }
+        ],
+        costOfDelay: { monthlyCost: '$200K', yearlyCost: '$2.4M' }
+      },
+      valueProp: {
+        title: 'Value Proposition',
+        mainValue: `Transform ${companyName} into a digital leader with 3x ROI in 12 months`,
+        valuePillars: [
+          { pillar: 'Operational Excellence', description: 'Automate and optimize all core processes', metrics: ['50% cost reduction', '80% faster processing'] },
+          { pillar: 'Innovation Enablement', description: 'Build on modern, scalable platform', metrics: ['10x scalability', 'API-first architecture'] }
+        ]
+      },
+      pricing: {
+        title: 'Investment Options',
+        subtitle: 'Flexible pricing to meet your needs',
+        pricingTiers: [
+          { tierName: 'Professional', price: '$50K', billingPeriod: 'per year', features: ['Core features', 'Standard support', 'Up to 100 users'] },
+          { tierName: 'Enterprise', price: '$150K', billingPeriod: 'per year', features: ['All features', 'Priority support', 'Unlimited users'], isRecommended: true }
+        ]
+      },
+      roi: {
+        title: 'Return on Investment',
+        subtitle: 'Your financial benefits',
+        totalInvestment: { software: '$150K', implementation: '$50K', training: '$25K', firstYearTotal: '$225K' },
+        annualSavings: [
+          { category: 'Labor Cost Reduction', amount: '$500K', description: 'Automation of manual tasks' },
+          { category: 'Efficiency Gains', amount: '$300K', description: 'Faster processing and decisions' }
+        ],
+        totalAnnualSavings: '$800K',
+        paybackPeriod: '3.4 months',
+        threeYearROI: '356%'
+      },
+      investmentSummary: {
+        title: 'Investment Summary',
+        packages: [
+          {
+            packageName: 'Enterprise Package',
+            totalPrice: '$225K',
+            includedItems: ['Software licenses', 'Implementation services', 'Training & certification', '24/7 support'],
+            contractLength: '3 years'
+          }
+        ]
+      },
+      technicalArchitecture: {
+        title: 'Technical Architecture',
+        architectureLayers: [
+          { layer: 'Presentation Layer', description: 'React-based responsive UI', technologies: ['React', 'TypeScript'] },
+          { layer: 'Application Layer', description: 'Microservices architecture', technologies: ['Node.js', 'Python'] }
+        ],
+        keyFeatures: ['Auto-scaling', 'Multi-region deployment', '99.99% uptime SLA'],
+        securityMeasures: ['End-to-end encryption', 'SOC2 compliance', 'Regular security audits']
+      },
+      implementationTimeline: {
+        title: 'Implementation Plan',
+        totalDuration: '12 weeks',
+        phases: [
+          { phase: 'Discovery & Planning', duration: '2 weeks', deliverables: ['Requirements document', 'Project plan'] },
+          { phase: 'Implementation', duration: '8 weeks', deliverables: ['System configuration', 'Integrations'] },
+          { phase: 'Go-Live', duration: '2 weeks', deliverables: ['Training complete', 'Production launch'] }
+        ]
+      },
+      nextSteps: {
+        title: 'Next Steps',
+        immediateActions: [
+          { action: 'Schedule technical deep-dive', timeline: 'This week' },
+          { action: 'Align stakeholders', timeline: 'Next week' },
+          { action: 'Sign contract', timeline: 'By March 31' }
+        ]
+      },
+      contact: {
+        title: 'Contact Information',
+        companyName: 'Your Company',
+        teamContacts: [
+          { name: 'John Doe', title: 'Account Executive', email: 'john@company.com', phone: '555-0100' }
+        ]
+      },
+      thankYou: {
+        title: 'Thank You',
+        messages: ['We appreciate your time today', 'Looking forward to partnering with you'],
+        contactPrompt: 'Questions? Reach out anytime:',
+        contactInfo: { email: 'sales@company.com' }
+      },
       // Add more placeholder types as needed
       default: {
         title,

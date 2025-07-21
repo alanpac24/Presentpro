@@ -169,6 +169,199 @@ export default function PresentationViewerPage() {
               primaryActivities: slide.primaryActivities || [],
               supportActivities: slide.supportActivities || slide.layers || []
             }
+          } else if (componentType === 'cover') {
+            // Cover slide format
+            slideData = {
+              title: slide.title,
+              proposalTitle: slide.proposalTitle || slide.title,
+              clientName: slide.clientName || 'Client Name',
+              vendorName: slide.vendorName || 'Your Company',
+              proposalDate: slide.proposalDate || new Date().toLocaleDateString(),
+              salesRepName: slide.salesRepName || 'Your Name',
+              salesRepTitle: slide.salesRepTitle || 'Title',
+              ...slide
+            }
+          } else if (componentType === 'agenda') {
+            // Agenda slide format
+            slideData = {
+              title: slide.title,
+              agendaSections: slide.agendaSections || slide.sections || [],
+              ...slide
+            }
+          } else if (componentType === 'customerVoice') {
+            // Customer Voice slide format
+            slideData = {
+              title: slide.title,
+              subtitle: slide.subtitle,
+              customerQuotes: slide.customerQuotes || slide.quotes || [],
+              painPoints: slide.painPoints || [],
+              stakeholders: slide.stakeholders || [],
+              ...slide
+            }
+          } else if (componentType === 'industryTrends') {
+            // Industry Trends slide format
+            slideData = {
+              title: slide.title,
+              subtitle: slide.subtitle,
+              trends: slide.trends || [],
+              ...slide
+            }
+          } else if (componentType === 'businessImpact') {
+            // Business Impact slide format
+            slideData = {
+              title: slide.title,
+              subtitle: slide.subtitle,
+              kpis: slide.kpis || slide.metrics || [],
+              ...slide
+            }
+          } else if (componentType === 'solutionOverview') {
+            // Solution Overview slide format
+            slideData = {
+              title: slide.title,
+              solutionName: slide.solutionName || 'Solution Name',
+              keyFeatures: slide.keyFeatures || slide.features || [],
+              ...slide
+            }
+          } else if (componentType === 'productDeepDive') {
+            // Product Deep Dive slide format
+            slideData = {
+              title: slide.title,
+              productName: slide.productName,
+              coreFeatures: slide.coreFeatures || slide.features || [],
+              businessBenefits: slide.businessBenefits || [],
+              technicalDetails: slide.technicalDetails || {},
+              ...slide
+            }
+          } else if (componentType === 'caseStudy') {
+            // Case Study slide format
+            slideData = {
+              title: slide.title,
+              customerName: slide.customerName || 'Customer Name',
+              challenge: slide.challenge || '',
+              solution: slide.solution || '',
+              metrics: slide.metrics || slide.results || [],
+              quote: slide.quote,
+              quoteAuthor: slide.quoteAuthor,
+              ...slide
+            }
+          } else if (componentType === 'whyUs') {
+            // Why Us slide format
+            slideData = {
+              title: slide.title,
+              subtitle: slide.subtitle,
+              differentiators: slide.differentiators || [],
+              clientResults: slide.clientResults || [],
+              awards: slide.awards || [],
+              ...slide
+            }
+          } else if (componentType === 'whyNow') {
+            // Why Now slide format
+            slideData = {
+              title: slide.title,
+              subtitle: slide.subtitle,
+              urgencyFactors: slide.urgencyFactors || [],
+              opportunities: slide.opportunities || [],
+              costOfDelay: slide.costOfDelay || {},
+              ...slide
+            }
+          } else if (componentType === 'valueProp') {
+            // Value Proposition slide format
+            slideData = {
+              title: slide.title,
+              subtitle: slide.subtitle,
+              mainValue: slide.mainValue || '',
+              valuePillars: slide.valuePillars || [],
+              beforeAfter: slide.beforeAfter || {},
+              ...slide
+            }
+          } else if (componentType === 'pricing') {
+            // Pricing slide format
+            slideData = {
+              title: slide.title,
+              subtitle: slide.subtitle,
+              pricingTiers: slide.pricingTiers || slide.tiers || [],
+              volumeDiscounts: slide.volumeDiscounts,
+              paymentTerms: slide.paymentTerms,
+              ...slide
+            }
+          } else if (componentType === 'roi' && !slide.investment) {
+            // ROI slide format (new sales version)
+            slideData = {
+              title: slide.title,
+              subtitle: slide.subtitle,
+              totalInvestment: slide.totalInvestment || {},
+              annualSavings: slide.annualSavings || [],
+              paybackPeriod: slide.paybackPeriod || '',
+              threeYearROI: slide.threeYearROI || '',
+              ...slide
+            }
+          } else if (componentType === 'investmentSummary') {
+            // Investment Summary slide format
+            slideData = {
+              title: slide.title,
+              subtitle: slide.subtitle,
+              packages: slide.packages || [],
+              executiveSponsorIncentive: slide.executiveSponsorIncentive,
+              additionalServices: slide.additionalServices || [],
+              ...slide
+            }
+          } else if (componentType === 'technicalArchitecture') {
+            // Technical Architecture slide format
+            slideData = {
+              title: slide.title,
+              subtitle: slide.subtitle,
+              architectureLayers: slide.architectureLayers || slide.layers || [],
+              keyFeatures: slide.keyFeatures || [],
+              securityMeasures: slide.securityMeasures || [],
+              performanceMetrics: slide.performanceMetrics || {},
+              ...slide
+            }
+          } else if (componentType === 'implementationTimeline') {
+            // Implementation Timeline slide format
+            slideData = {
+              title: slide.title,
+              subtitle: slide.subtitle,
+              totalDuration: slide.totalDuration || '',
+              phases: slide.phases || [],
+              keySuccessFactors: slide.keySuccessFactors || [],
+              risks: slide.risks || [],
+              ...slide
+            }
+          } else if (componentType === 'nextSteps') {
+            // Next Steps slide format
+            slideData = {
+              title: slide.title,
+              subtitle: slide.subtitle,
+              immediateActions: slide.immediateActions || slide.actions || [],
+              decisionCriteria: slide.decisionCriteria || [],
+              stakeholders: slide.stakeholders || [],
+              proposedTimeline: slide.proposedTimeline || {},
+              ...slide
+            }
+          } else if (componentType === 'contact') {
+            // Contact slide format
+            slideData = {
+              title: slide.title,
+              subtitle: slide.subtitle,
+              companyName: slide.companyName || 'Your Company',
+              teamContacts: slide.teamContacts || slide.contacts || [],
+              addresses: slide.addresses || [],
+              website: slide.website,
+              email: slide.email,
+              phone: slide.phone,
+              ...slide
+            }
+          } else if (componentType === 'thankYou') {
+            // Thank You slide format
+            slideData = {
+              title: slide.title || 'Thank You',
+              subtitle: slide.subtitle,
+              icon: slide.icon || 'heart',
+              messages: slide.messages || [],
+              contactPrompt: slide.contactPrompt,
+              contactInfo: slide.contactInfo || {},
+              ...slide
+            }
           }
           
           return {
