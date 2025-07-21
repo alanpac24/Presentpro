@@ -472,6 +472,7 @@ export interface BusinessImpactSlideData {
 // Solution Module
 export interface SolutionOverviewSlideData {
   title: string
+  subtitle?: string
   solutionName: string
   tagline?: string
   keyFeatures: Array<{
@@ -484,6 +485,7 @@ export interface SolutionOverviewSlideData {
 
 export interface ProductDeepDiveSlideData {
   title: string
+  subtitle?: string
   productName?: string
   coreFeatures: Array<{
     feature: string
