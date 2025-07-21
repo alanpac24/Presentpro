@@ -238,6 +238,240 @@ export const slideTransformers: SlideTransformer[] = [
     })
   },
 
+  // ValueProp
+  {
+    condition: (slide) => slide.type === 'valueProp',
+    transform: (slide) => ({
+      type: 'valueProp',
+      data: {
+        title: slide.title || 'Value Proposition',
+        subtitle: slide.subtitle || 'Your transformation journey',
+        mainValue: slide.mainValue || 'We deliver measurable business outcomes through innovative solutions',
+        valuePillars: slide.valuePillars || [
+          { 
+            pillar: 'Efficiency', 
+            description: 'Streamline operations and reduce costs',
+            metrics: ['30% time savings', '25% cost reduction']
+          },
+          { 
+            pillar: 'Growth', 
+            description: 'Expand market reach and revenue',
+            metrics: ['40% revenue growth', 'New market entry']
+          },
+          { 
+            pillar: 'Innovation', 
+            description: 'Stay ahead with cutting-edge technology',
+            metrics: ['First-to-market advantage', 'Future-ready platform']
+          }
+        ],
+        beforeAfter: slide.beforeAfter,
+        uniqueSellingPoint: slide.uniqueSellingPoint
+      }
+    })
+  },
+
+  // WhyUs
+  {
+    condition: (slide) => slide.type === 'whyUs',
+    transform: (slide) => ({
+      type: 'whyUs',
+      data: {
+        title: slide.title || 'Why Partner With Us',
+        subtitle: slide.subtitle || 'Our unique differentiators',
+        differentiators: slide.differentiators || [
+          {
+            differentiator: 'Proven Track Record',
+            description: 'Successfully delivered 500+ transformations',
+            proof: '95% client satisfaction rate'
+          },
+          {
+            differentiator: 'Industry Expertise',
+            description: 'Deep domain knowledge and best practices',
+            proof: '20+ years of experience'
+          }
+        ],
+        clientResults: slide.clientResults || [],
+        awards: slide.awards || [],
+        partnershipLevel: slide.partnershipLevel
+      }
+    })
+  },
+
+  // WhyNow
+  {
+    condition: (slide) => slide.type === 'whyNow',
+    transform: (slide) => ({
+      type: 'whyNow',
+      data: {
+        title: slide.title || 'Why Act Now',
+        subtitle: slide.subtitle || 'The urgency and opportunity',
+        urgencyFactors: slide.urgencyFactors || [
+          {
+            factor: 'Market Dynamics',
+            impact: 'Competitors are already moving ahead',
+            timeline: 'Next 6 months critical'
+          },
+          {
+            factor: 'Cost of Delay',
+            impact: 'Every month of delay costs opportunity',
+            timeline: 'Immediate action needed'
+          }
+        ],
+        opportunities: slide.opportunities || [
+          {
+            opportunity: 'First Mover Advantage',
+            benefit: 'Capture market share before competitors'
+          }
+        ],
+        costOfDelay: slide.costOfDelay,
+        callToAction: slide.callToAction || 'Start your transformation journey today'
+      }
+    })
+  },
+
+  // Pricing
+  {
+    condition: (slide) => slide.type === 'pricing',
+    transform: (slide) => ({
+      type: 'pricing',
+      data: {
+        title: slide.title || 'Investment Options',
+        subtitle: slide.subtitle || 'Flexible pricing to meet your needs',
+        pricingTiers: slide.pricingTiers || [
+          {
+            tierName: 'Starter',
+            price: '$X/month',
+            description: 'For small teams',
+            features: ['Core features', 'Basic support'],
+            limitations: ['Limited users']
+          },
+          {
+            tierName: 'Professional',
+            price: '$XX/month',
+            description: 'For growing businesses',
+            features: ['All features', 'Priority support', 'Advanced analytics'],
+            isRecommended: true
+          },
+          {
+            tierName: 'Enterprise',
+            price: 'Custom',
+            description: 'For large organizations',
+            features: ['Unlimited everything', 'Dedicated support', 'Custom features']
+          }
+        ],
+        volumeDiscounts: slide.volumeDiscounts,
+        paymentTerms: slide.paymentTerms,
+        customQuote: slide.customQuote
+      }
+    })
+  },
+
+  // Agenda
+  {
+    condition: (slide) => slide.type === 'agenda',
+    transform: (slide) => ({
+      type: 'agenda',
+      data: {
+        title: slide.title || 'Meeting Agenda',
+        agendaSections: slide.agendaSections || slide.sections || [
+          { section: 'Understanding Your Needs', estimatedTime: '10 min' },
+          { section: 'Our Solution Approach', estimatedTime: '20 min' },
+          { section: 'Value & Investment', estimatedTime: '15 min' },
+          { section: 'Next Steps', estimatedTime: '5 min' }
+        ]
+      }
+    })
+  },
+
+  // BusinessImpact
+  {
+    condition: (slide) => slide.type === 'businessImpact',
+    transform: (slide) => ({
+      type: 'businessImpact',
+      data: {
+        title: slide.title || 'Business Impact Analysis',
+        subtitle: slide.subtitle || 'Current state vs. desired outcomes',
+        kpis: slide.kpis || [
+          {
+            name: 'Operational Efficiency',
+            current: '60%',
+            ideal: '90%',
+            improvement: '50%'
+          }
+        ]
+      }
+    })
+  },
+
+  // NextSteps
+  {
+    condition: (slide) => slide.type === 'nextSteps',
+    transform: (slide) => ({
+      type: 'nextSteps',
+      data: {
+        title: slide.title || 'Next Steps',
+        subtitle: slide.subtitle || 'Moving forward together',
+        immediateActions: slide.immediateActions || slide.actions || [
+          { action: 'Schedule follow-up meeting', owner: 'Both', timeline: 'This week' },
+          { action: 'Share detailed proposal', owner: 'Us', timeline: '2 days' },
+          { action: 'Internal review', owner: 'You', timeline: '1 week' }
+        ],
+        decisionCriteria: slide.decisionCriteria || [],
+        stakeholders: slide.stakeholders || [],
+        timeline: slide.timeline
+      }
+    })
+  },
+
+  // SolutionOverview
+  {
+    condition: (slide) => slide.type === 'solutionOverview',
+    transform: (slide) => ({
+      type: 'solutionOverview',
+      data: {
+        title: slide.title || 'Our Solution',
+        subtitle: slide.subtitle || 'How we address your specific needs',
+        solutionStatement: slide.solutionStatement || 'Comprehensive solution tailored to your needs',
+        keyFeatures: slide.keyFeatures || slide.features || [
+          { feature: 'Scalable Architecture', description: 'Grows with your business' },
+          { feature: 'User-Friendly Interface', description: 'Minimal training required' },
+          { feature: 'Advanced Analytics', description: 'Data-driven insights' }
+        ],
+        deploymentModel: slide.deploymentModel,
+        supportModel: slide.supportModel
+      }
+    })
+  },
+
+  // ProductDeepDive
+  {
+    condition: (slide) => slide.type === 'productDeepDive',
+    transform: (slide) => ({
+      type: 'productDeepDive',
+      data: {
+        title: slide.title || 'Solution Deep Dive',
+        subtitle: slide.subtitle || 'Detailed capabilities and features',
+        coreFeatures: slide.coreFeatures || slide.features || [],
+        businessBenefits: slide.businessBenefits || [],
+        technicalDetails: slide.technicalDetails || { architecture: '', security: '', integrations: [] }
+      }
+    })
+  },
+
+  // Other sales slides with simpler structures
+  {
+    condition: (slide) => ['customerVoice', 'industryTrends', 'caseStudy', 'roi', 'investmentSummary', 
+                          'technicalArchitecture', 'implementationTimeline', 'contact', 'thankYou'].includes(slide.type),
+    transform: (slide) => ({
+      type: slide.type,
+      data: {
+        title: slide.title || slide.type.charAt(0).toUpperCase() + slide.type.slice(1).replace(/([A-Z])/g, ' $1').trim(),
+        subtitle: slide.subtitle,
+        ...slide
+      }
+    })
+  },
+
   // Default content slide
   {
     condition: () => true,

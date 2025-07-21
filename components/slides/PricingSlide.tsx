@@ -1,12 +1,18 @@
 import React from 'react'
 import { BaseSlideProps, PricingSlideData } from './types'
 import { Check, Star, Zap } from 'lucide-react'
+import { SlideLayout, SlideHeader } from './shared'
 
 interface PricingSlideProps extends BaseSlideProps {
   data: PricingSlideData
 }
 
 export function PricingSlide({ data, className = '' }: PricingSlideProps) {
+  // Add defensive checks for arrays
+  const pricingTiers = data.pricingTiers || []
+  const volumeDiscounts = data.volumeDiscounts || []
+  const paymentTerms = data.paymentTerms || {}
+
   const getTierIcon = (tier: string) => {
     if (tier.toLowerCase().includes('enterprise') || tier.toLowerCase().includes('premium')) {
       return <Star className="w-6 h-6" />
@@ -17,21 +23,16 @@ export function PricingSlide({ data, className = '' }: PricingSlideProps) {
   }
 
   return (
-    <div className={`h-full flex flex-col ${className}`}>
-      <div className="mb-6">
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-          {data.title}
-        </h2>
-        {data.subtitle && (
-          <p className="text-lg text-gray-600">{data.subtitle}</p>
-        )}
-        <div className="w-20 h-1 bg-blue-600 mt-4"></div>
-      </div>
+    <SlideLayout className={className}>
+      <SlideHeader 
+        title={data.title}
+        subtitle={data.subtitle}
+      />
 
       <div className="flex-1 space-y-6">
         {/* Pricing Tiers */}
         <div className="grid md:grid-cols-3 gap-4">
-          {data.pricingTiers.map((tier, index) => (
+          {pricingTiers.map((tier, index) => (
             <div 
               key={index} 
               className={`bg-white border-2 rounded-lg p-6 relative transition-all ${
@@ -70,7 +71,7 @@ export function PricingSlide({ data, className = '' }: PricingSlideProps) {
 
               {tier.features && tier.features.length > 0 && (
                 <ul className="space-y-2 mb-6">
-                  {tier.features.map((feature, fIndex) => (
+                  {(tier.features || []).map((feature, fIndex) => (
                     <li key={fIndex} className="flex items-start text-sm">
                       <Check className="w-4 h-4 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
                       <span className="text-gray-700">{feature}</span>
@@ -83,7 +84,7 @@ export function PricingSlide({ data, className = '' }: PricingSlideProps) {
                 <div className="border-t pt-4">
                   <p className="text-xs text-gray-500 mb-2">Limitations:</p>
                   <ul className="space-y-1">
-                    {tier.limitations.map((limitation, lIndex) => (
+                    {(tier.limitations || []).map((limitation, lIndex) => (
                       <li key={lIndex} className="text-xs text-gray-500">
                         • {limitation}
                       </li>
@@ -96,11 +97,11 @@ export function PricingSlide({ data, className = '' }: PricingSlideProps) {
         </div>
 
         {/* Volume Discounts */}
-        {data.volumeDiscounts && data.volumeDiscounts.length > 0 && (
+        {volumeDiscounts.length > 0 && (
           <div className="bg-blue-50 rounded-lg p-4">
             <h4 className="font-semibold text-gray-900 mb-2">Volume Discounts Available</h4>
             <div className="grid md:grid-cols-4 gap-2">
-              {data.volumeDiscounts.map((discount, index) => (
+              {volumeDiscounts.map((discount, index) => (
                 <div key={index} className="text-center">
                   <p className="text-sm text-gray-700">{discount.volume}</p>
                   <p className="font-semibold text-blue-600">{discount.discount}</p>
@@ -111,23 +112,23 @@ export function PricingSlide({ data, className = '' }: PricingSlideProps) {
         )}
 
         {/* Payment Terms */}
-        {data.paymentTerms && (
+        {paymentTerms && Object.keys(paymentTerms).length > 0 && (
           <div className="bg-gray-50 rounded-lg p-4 grid md:grid-cols-2 gap-4">
             <div>
               <h4 className="font-semibold text-gray-900 mb-2">Payment Options</h4>
               <ul className="text-sm text-gray-700 space-y-1">
-                {data.paymentTerms.options?.map((option, index) => (
+                {(paymentTerms.options || []).map((option, index) => (
                   <li key={index}>• {option}</li>
                 ))}
               </ul>
             </div>
-            {data.paymentTerms.contractLength && (
+            {paymentTerms.contractLength && (
               <div>
                 <h4 className="font-semibold text-gray-900 mb-2">Contract Terms</h4>
-                <p className="text-sm text-gray-700">{data.paymentTerms.contractLength}</p>
-                {data.paymentTerms.earlyTermination && (
+                <p className="text-sm text-gray-700">{paymentTerms.contractLength}</p>
+                {paymentTerms.earlyTermination && (
                   <p className="text-xs text-gray-500 mt-1">
-                    Early termination: {data.paymentTerms.earlyTermination}
+                    Early termination: {paymentTerms.earlyTermination}
                   </p>
                 )}
               </div>
@@ -144,6 +145,6 @@ export function PricingSlide({ data, className = '' }: PricingSlideProps) {
           </div>
         )}
       </div>
-    </div>
+    </SlideLayout>
   )
 }
