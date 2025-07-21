@@ -1,6 +1,7 @@
 import React from 'react'
 import { BaseSlideProps, ChartSlideData } from './types'
 import { BarChart3, LineChart, PieChart } from 'lucide-react'
+import { SlideLayout, SlideHeader } from './shared'
 
 interface ChartSlideProps extends BaseSlideProps {
   data: ChartSlideData
@@ -17,16 +18,11 @@ export function ChartSlide({ data, className = '' }: ChartSlideProps) {
   }[data.chartType] || BarChart3
 
   return (
-    <div className={`h-full flex flex-col ${className}`}>
-      <div className="mb-6">
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-          {data.title}
-        </h2>
-        {data.subtitle && (
-          <p className="text-lg text-gray-600">{data.subtitle}</p>
-        )}
-        <div className="w-20 h-1 bg-blue-600 mt-4"></div>
-      </div>
+    <SlideLayout className={className}>
+      <SlideHeader 
+        title={data.title}
+        subtitle={data.subtitle}
+      />
 
       <div className="flex-1 bg-gray-50 rounded-xl p-6 border border-gray-200">
         {data.chartType === 'bar' && (
@@ -96,6 +92,6 @@ export function ChartSlide({ data, className = '' }: ChartSlideProps) {
           </div>
         )}
       </div>
-    </div>
+    </SlideLayout>
   )
 }

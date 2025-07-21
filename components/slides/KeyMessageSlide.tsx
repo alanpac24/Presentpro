@@ -1,6 +1,7 @@
 import React from 'react'
 import { BaseSlideProps, KeyMessageSlideData } from './types'
 import { Quote } from 'lucide-react'
+import { CenteredLayout } from '../slides/shared/SlideLayouts'
 
 interface KeyMessageSlideProps extends BaseSlideProps {
   data: KeyMessageSlideData
@@ -8,7 +9,7 @@ interface KeyMessageSlideProps extends BaseSlideProps {
 
 export function KeyMessageSlide({ data, className = '' }: KeyMessageSlideProps) {
   return (
-    <div className={`h-full flex flex-col items-center justify-center ${className}`}>
+    <CenteredLayout className={className}>
       <Quote className="w-16 h-16 text-blue-600 mb-8 opacity-20" />
       
       <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-center mb-12 max-w-4xl leading-tight">
@@ -33,6 +34,6 @@ export function KeyMessageSlide({ data, className = '' }: KeyMessageSlideProps) 
           Source: {data.source}
         </p>
       )}
-    </div>
+    </CenteredLayout>
   )
 }

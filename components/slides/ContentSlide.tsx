@@ -1,5 +1,6 @@
 import React from 'react'
 import { BaseSlideProps, ContentSlideData } from './types'
+import { SlideLayout, SlideHeader, ListItem } from './shared'
 
 interface ContentSlideProps extends BaseSlideProps {
   data: ContentSlideData
@@ -7,13 +8,8 @@ interface ContentSlideProps extends BaseSlideProps {
 
 export function ContentSlide({ data, className = '' }: ContentSlideProps) {
   return (
-    <div className={`h-full flex flex-col ${className}`}>
-      <div className="mb-6">
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-          {data.title}
-        </h2>
-        <div className="w-20 h-1 bg-blue-600 mt-4"></div>
-      </div>
+    <SlideLayout className={className}>
+      <SlideHeader title={data.title} />
 
       <div className="flex-1 overflow-auto">
         {data.content && (
@@ -25,16 +21,13 @@ export function ContentSlide({ data, className = '' }: ContentSlideProps) {
         {data.bullets && data.bullets.length > 0 && (
           <ul className="space-y-4">
             {data.bullets.map((bullet, idx) => (
-              <li key={idx} className="flex items-start group">
-                <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 mr-4 flex-shrink-0 group-hover:scale-125 transition-transform" />
-                <span className="text-lg text-gray-700 leading-relaxed">
-                  {bullet}
-                </span>
-              </li>
+              <ListItem key={idx} icon={<div className="w-2 h-2 bg-blue-600 rounded-full mt-1" />}>
+                {bullet}
+              </ListItem>
             ))}
           </ul>
         )}
       </div>
-    </div>
+    </SlideLayout>
   )
 }

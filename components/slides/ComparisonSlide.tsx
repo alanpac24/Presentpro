@@ -1,6 +1,8 @@
 import React from 'react'
 import { BaseSlideProps, ComparisonSlideData } from './types'
 import { Check, X } from 'lucide-react'
+import { SlideLayout } from '../slides/shared/SlideLayouts'
+import { SlideHeader } from '../slides/shared/SlideComponents'
 
 interface ComparisonSlideProps extends BaseSlideProps {
   data: ComparisonSlideData
@@ -8,16 +10,8 @@ interface ComparisonSlideProps extends BaseSlideProps {
 
 export function ComparisonSlide({ data, className = '' }: ComparisonSlideProps) {
   return (
-    <div className={`h-full flex flex-col ${className}`}>
-      <div className="mb-6">
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-          {data.title}
-        </h2>
-        {data.subtitle && (
-          <p className="text-lg text-gray-600">{data.subtitle}</p>
-        )}
-        <div className="w-20 h-1 bg-blue-600 mt-4"></div>
-      </div>
+    <SlideLayout className={className}>
+      <SlideHeader title={data.title} subtitle={data.subtitle} />
 
       <div className="flex-1 overflow-auto">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -65,6 +59,6 @@ export function ComparisonSlide({ data, className = '' }: ComparisonSlideProps) 
           ))}
         </div>
       </div>
-    </div>
+    </SlideLayout>
   )
 }

@@ -1,6 +1,7 @@
 import React from 'react'
 import { BaseSlideProps, TitleSlideData } from './types'
 import { Target } from 'lucide-react'
+import { CenteredLayout } from './shared'
 
 interface TitleSlideProps extends BaseSlideProps {
   data: TitleSlideData
@@ -8,7 +9,7 @@ interface TitleSlideProps extends BaseSlideProps {
 
 export function TitleSlide({ data, className = '' }: TitleSlideProps) {
   return (
-    <div className={`h-full flex flex-col items-center justify-center text-center ${className}`}>
+    <CenteredLayout className={className}>
       <div className="mb-8">
         <Target className="w-20 h-20 text-blue-600 mx-auto mb-6" />
       </div>
@@ -36,6 +37,6 @@ export function TitleSlide({ data, className = '' }: TitleSlideProps) {
           <p className="text-sm">{data.date}</p>
         )}
       </div>
-    </div>
+    </CenteredLayout>
   )
 }

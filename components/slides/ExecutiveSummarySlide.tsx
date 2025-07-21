@@ -1,6 +1,7 @@
 import React from 'react'
 import { BaseSlideProps, ExecutiveSummarySlideData } from './types'
 import { ArrowRight, TrendingUp } from 'lucide-react'
+import { SlideLayout, SlideHeader, HighlightBox, MetricCard } from './shared'
 
 interface ExecutiveSummarySlideProps extends BaseSlideProps {
   data: ExecutiveSummarySlideData
@@ -8,23 +9,18 @@ interface ExecutiveSummarySlideProps extends BaseSlideProps {
 
 export function ExecutiveSummarySlide({ data, className = '' }: ExecutiveSummarySlideProps) {
   return (
-    <div className={`h-full flex flex-col ${className}`}>
-      <div className="mb-6">
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-          {data.title}
-        </h2>
-        <div className="w-20 h-1 bg-blue-600"></div>
-      </div>
+    <SlideLayout className={className}>
+      <SlideHeader title={data.title} />
 
       {/* Key Message Box */}
-      <div className="bg-blue-50 border-l-4 border-blue-600 p-6 rounded-r-lg mb-8">
-        <h3 className="text-xl md:text-2xl font-semibold text-blue-900 mb-2">
+      <HighlightBox variant="info" className="mb-8">
+        <h3 className="text-xl md:text-2xl font-semibold mb-2">
           Key Message
         </h3>
-        <p className="text-lg text-blue-800">
+        <p className="text-lg">
           {data.keyMessage}
         </p>
-      </div>
+      </HighlightBox>
 
       {/* Supporting Points Grid */}
       {data.supportingPoints && data.supportingPoints.length > 0 && (
@@ -58,6 +54,6 @@ export function ExecutiveSummarySlide({ data, className = '' }: ExecutiveSummary
           </div>
         </div>
       )}
-    </div>
+    </SlideLayout>
   )
 }

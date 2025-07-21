@@ -1,5 +1,6 @@
 import React from 'react'
 import { BaseSlideProps, CoverSlideData } from './types'
+import { SlideLayout } from './shared'
 
 interface CoverSlideProps extends BaseSlideProps {
   data: CoverSlideData
@@ -7,7 +8,7 @@ interface CoverSlideProps extends BaseSlideProps {
 
 export function CoverSlide({ data, className = '' }: CoverSlideProps) {
   return (
-    <div className={`h-full flex flex-col justify-between p-12 bg-gradient-to-br from-gray-50 to-white ${className}`}>
+    <SlideLayout className={`justify-between p-12 bg-gradient-to-br from-gray-50 to-white ${className}`}>
       {/* Header with logos */}
       <div className="flex justify-between items-start">
         {data.clientLogo && (
@@ -61,6 +62,6 @@ export function CoverSlide({ data, className = '' }: CoverSlideProps) {
           <p className="font-medium">{data.vendorName}</p>
         </div>
       </div>
-    </div>
+    </SlideLayout>
   )
 }

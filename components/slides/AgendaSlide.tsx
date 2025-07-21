@@ -1,6 +1,7 @@
 import React from 'react'
 import { BaseSlideProps, AgendaSlideData } from './types'
 import { Clock, ChevronRight } from 'lucide-react'
+import { SlideLayout, SlideHeader } from './shared'
 
 interface AgendaSlideProps extends BaseSlideProps {
   data: AgendaSlideData
@@ -8,13 +9,12 @@ interface AgendaSlideProps extends BaseSlideProps {
 
 export function AgendaSlide({ data, className = '' }: AgendaSlideProps) {
   return (
-    <div className={`h-full flex flex-col ${className}`}>
-      <div className="mb-8">
-        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-          {data.title}
-        </h2>
-        <div className="w-24 h-1 bg-blue-600"></div>
-      </div>
+    <SlideLayout className={className}>
+      <SlideHeader 
+        title={data.title}
+        className="mb-8"
+        showDivider={true}
+      />
 
       <div className="flex-1 grid gap-4">
         {data.agendaSections.map((section, index) => (
@@ -66,6 +66,6 @@ export function AgendaSlide({ data, className = '' }: AgendaSlideProps) {
           </p>
         </div>
       )}
-    </div>
+    </SlideLayout>
   )
 }

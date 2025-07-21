@@ -1,4 +1,7 @@
 // Central registry for all slide components
+export * from './types'
+
+// Core slide components
 export { TitleSlide } from './TitleSlide'
 export { ContentSlide } from './ContentSlide'
 export { MetricsSlide } from './MetricsSlide'
@@ -48,9 +51,7 @@ export { NextStepsSlide } from './NextStepsSlide'
 export { ContactSlide } from './ContactSlide'
 export { ThankYouSlide } from './ThankYouSlide'
 
-export * from './types'
-
-// Slide component mapping
+// Import all components for mapping
 import { TitleSlide } from './TitleSlide'
 import { ContentSlide } from './ContentSlide'
 import { MetricsSlide } from './MetricsSlide'
@@ -78,8 +79,6 @@ import { InitiativePrioritizationSlide } from './InitiativePrioritizationSlide'
 import { HypothesisTreeSlide } from './HypothesisTreeSlide'
 import { DecisionTreeSlide } from './DecisionTreeSlide'
 import { OrgStructureSlide } from './OrgStructureSlide'
-
-// Sales-oriented slide imports
 import { CoverSlide } from './CoverSlide'
 import { AgendaSlide } from './AgendaSlide'
 import { CustomerVoiceSlide } from './CustomerVoiceSlide'
@@ -100,7 +99,9 @@ import { NextStepsSlide } from './NextStepsSlide'
 import { ContactSlide } from './ContactSlide'
 import { ThankYouSlide } from './ThankYouSlide'
 
+// Slide component mapping
 export const slideComponents = {
+  // Core slides
   title: TitleSlide,
   content: ContentSlide,
   metrics: MetricsSlide,
@@ -128,6 +129,7 @@ export const slideComponents = {
   hypothesisTree: HypothesisTreeSlide,
   decisionTree: DecisionTreeSlide,
   orgStructure: OrgStructureSlide,
+  
   // Sales-oriented slides
   cover: CoverSlide,
   agenda: AgendaSlide,
@@ -148,7 +150,8 @@ export const slideComponents = {
   nextSteps: NextStepsSlide,
   contact: ContactSlide,
   thankYou: ThankYouSlide,
-  // Legacy mappings
+  
+  // Legacy mappings for backward compatibility
   bullet: ContentSlide,
   twoColumn: ComparisonSlide,
 } as const

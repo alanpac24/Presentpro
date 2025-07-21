@@ -1,5 +1,7 @@
 import React from 'react'
 import { BaseSlideProps, MatrixSlideData } from './types'
+import { SlideLayout } from '../slides/shared/SlideLayouts'
+import { SlideHeader } from '../slides/shared/SlideComponents'
 
 interface MatrixSlideProps extends BaseSlideProps {
   data: MatrixSlideData
@@ -17,16 +19,8 @@ export function MatrixSlide({ data, className = '' }: MatrixSlideProps) {
   }
 
   return (
-    <div className={`h-full flex flex-col ${className}`}>
-      <div className="mb-6">
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-          {data.title}
-        </h2>
-        {data.subtitle && (
-          <p className="text-lg text-gray-600">{data.subtitle}</p>
-        )}
-        <div className="w-20 h-1 bg-blue-600 mt-4"></div>
-      </div>
+    <SlideLayout className={className}>
+      <SlideHeader title={data.title} subtitle={data.subtitle} />
 
       <div className="flex-1 flex flex-col">
         <div className="flex-1 relative bg-gray-50 rounded-lg p-8">
@@ -119,6 +113,6 @@ export function MatrixSlide({ data, className = '' }: MatrixSlideProps) {
           ))}
         </div>
       </div>
-    </div>
+    </SlideLayout>
   )
 }

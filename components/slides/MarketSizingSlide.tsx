@@ -1,23 +1,24 @@
 import React from 'react'
 import { BaseSlideProps, MarketSizingSlideData } from './types'
 import { Globe, Users, Target, TrendingUp } from 'lucide-react'
+import { SlideLayout, SlideHeader } from './shared'
 
 interface MarketSizingSlideProps extends BaseSlideProps {
   data: MarketSizingSlideData
 }
 
 export function MarketSizingSlide({ data, className = '' }: MarketSizingSlideProps) {
+  // Add defensive checks for required data
+  const tam = data.tam || { value: '$0', description: 'Total addressable market' }
+  const sam = data.sam || { value: '$0', description: 'Serviceable addressable market' }
+  const som = data.som || { value: '$0', description: 'Serviceable obtainable market' }
+
   return (
-    <div className={`h-full flex flex-col ${className}`}>
-      <div className="mb-6">
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-          {data.title}
-        </h2>
-        {data.subtitle && (
-          <p className="text-lg text-gray-600">{data.subtitle}</p>
-        )}
-        <div className="w-20 h-1 bg-blue-600 mt-4"></div>
-      </div>
+    <SlideLayout className={className}>
+      <SlideHeader 
+        title={data.title}
+        subtitle={data.subtitle}
+      />
 
       <div className="flex-1 flex flex-col justify-center">
         {/* Funnel visualization */}
@@ -29,8 +30,8 @@ export function MarketSizingSlide({ data, className = '' }: MarketSizingSlidePro
                 <Globe className="w-6 h-6 text-blue-600 mr-2" />
                 <h3 className="text-xl font-semibold text-blue-900">Total Addressable Market (TAM)</h3>
               </div>
-              <div className="text-3xl font-bold text-blue-800 mb-2">{data.tam.value}</div>
-              <p className="text-sm text-blue-700">{data.tam.description}</p>
+              <div className="text-3xl font-bold text-blue-800 mb-2">{tam.value}</div>
+              <p className="text-sm text-blue-700">{tam.description}</p>
             </div>
           </div>
 
@@ -41,8 +42,8 @@ export function MarketSizingSlide({ data, className = '' }: MarketSizingSlidePro
                 <Users className="w-5 h-5 text-green-600 mr-2" />
                 <h3 className="text-lg font-semibold text-green-900">Serviceable Addressable Market (SAM)</h3>
               </div>
-              <div className="text-2xl font-bold text-green-800 mb-2">{data.sam.value}</div>
-              <p className="text-sm text-green-700">{data.sam.description}</p>
+              <div className="text-2xl font-bold text-green-800 mb-2">{sam.value}</div>
+              <p className="text-sm text-green-700">{sam.description}</p>
             </div>
           </div>
 
@@ -53,8 +54,8 @@ export function MarketSizingSlide({ data, className = '' }: MarketSizingSlidePro
                 <Target className="w-5 h-5 text-orange-600 mr-2" />
                 <h3 className="text-lg font-semibold text-orange-900">Serviceable Obtainable Market (SOM)</h3>
               </div>
-              <div className="text-2xl font-bold text-orange-800 mb-2">{data.som.value}</div>
-              <p className="text-sm text-orange-700">{data.som.description}</p>
+              <div className="text-2xl font-bold text-orange-800 mb-2">{som.value}</div>
+              <p className="text-sm text-orange-700">{som.description}</p>
             </div>
           </div>
         </div>
@@ -71,6 +72,6 @@ export function MarketSizingSlide({ data, className = '' }: MarketSizingSlidePro
           </div>
         )}
       </div>
-    </div>
+    </SlideLayout>
   )
 }

@@ -1,6 +1,7 @@
 import React from 'react'
 import { BaseSlideProps, SWOTAnalysisSlideData } from './types'
 import { Shield, AlertTriangle, TrendingUp, Zap } from 'lucide-react'
+import { SlideLayout, SlideHeader } from './shared'
 
 interface SWOTAnalysisSlideProps extends BaseSlideProps {
   data: SWOTAnalysisSlideData
@@ -47,13 +48,8 @@ export function SWOTAnalysisSlide({ data, className = '' }: SWOTAnalysisSlidePro
   ]
 
   return (
-    <div className={`h-full flex flex-col ${className}`}>
-      <div className="mb-6">
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-          {data.title}
-        </h2>
-        <div className="w-20 h-1 bg-blue-600"></div>
-      </div>
+    <SlideLayout className={className}>
+      <SlideHeader title={data.title} />
 
       <div className="flex-1 grid grid-cols-2 gap-4">
         {quadrants.map((quadrant, idx) => {
@@ -87,6 +83,6 @@ export function SWOTAnalysisSlide({ data, className = '' }: SWOTAnalysisSlidePro
         <div className="absolute h-full w-0.5 bg-gray-300 -translate-x-1/2"></div>
         <div className="absolute w-full h-0.5 bg-gray-300 -translate-y-1/2"></div>
       </div>
-    </div>
+    </SlideLayout>
   )
 }

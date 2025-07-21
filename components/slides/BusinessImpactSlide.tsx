@@ -1,6 +1,7 @@
 import React from 'react'
 import { BaseSlideProps, BusinessImpactSlideData } from './types'
 import { Target, TrendingDown, TrendingUp, DollarSign } from 'lucide-react'
+import { SlideLayout, SlideHeader, HighlightBox } from './shared'
 
 interface BusinessImpactSlideProps extends BaseSlideProps {
   data: BusinessImpactSlideData
@@ -8,16 +9,11 @@ interface BusinessImpactSlideProps extends BaseSlideProps {
 
 export function BusinessImpactSlide({ data, className = '' }: BusinessImpactSlideProps) {
   return (
-    <div className={`h-full flex flex-col ${className}`}>
-      <div className="mb-6">
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-          {data.title}
-        </h2>
-        {data.subtitle && (
-          <p className="text-lg text-gray-600">{data.subtitle}</p>
-        )}
-        <div className="w-20 h-1 bg-blue-600 mt-4"></div>
-      </div>
+    <SlideLayout className={className}>
+      <SlideHeader 
+        title={data.title}
+        subtitle={data.subtitle}
+      />
 
       <div className="flex-1 grid gap-4">
         {data.kpis.map((kpi, index) => (
@@ -74,11 +70,11 @@ export function BusinessImpactSlide({ data, className = '' }: BusinessImpactSlid
         ))}
       </div>
 
-      <div className="mt-6 bg-blue-50 p-4 rounded-lg text-center">
-        <p className="text-sm font-medium text-blue-900">
+      <HighlightBox variant="info" className="mt-6 text-center">
+        <p className="text-sm font-medium">
           Addressing these KPIs can transform your operational efficiency and bottom line
         </p>
-      </div>
-    </div>
+      </HighlightBox>
+    </SlideLayout>
   )
 }

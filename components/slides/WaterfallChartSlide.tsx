@@ -1,6 +1,8 @@
 import React from 'react'
 import { BaseSlideProps, WaterfallChartSlideData } from './types'
 import { TrendingUp, TrendingDown } from 'lucide-react'
+import { SlideLayout } from '../slides/shared/SlideLayouts'
+import { SlideHeader } from '../slides/shared/SlideComponents'
 
 interface WaterfallChartSlideProps extends BaseSlideProps {
   data: WaterfallChartSlideData
@@ -28,16 +30,8 @@ export function WaterfallChartSlide({ data, className = '' }: WaterfallChartSlid
   const baselineY = minValue < 0 ? Math.abs(minValue) / range * 100 : 0
 
   return (
-    <div className={`h-full flex flex-col ${className}`}>
-      <div className="mb-6">
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-          {data.title}
-        </h2>
-        {data.subtitle && (
-          <p className="text-lg text-gray-600">{data.subtitle}</p>
-        )}
-        <div className="w-20 h-1 bg-blue-600 mt-4"></div>
-      </div>
+    <SlideLayout className={className}>
+      <SlideHeader title={data.title} subtitle={data.subtitle} />
 
       <div className="flex-1 flex flex-col">
         <div className="flex-1 bg-gray-50 rounded-lg p-6">
@@ -105,6 +99,6 @@ export function WaterfallChartSlide({ data, className = '' }: WaterfallChartSlid
           )}
         </div>
       </div>
-    </div>
+    </SlideLayout>
   )
 }
