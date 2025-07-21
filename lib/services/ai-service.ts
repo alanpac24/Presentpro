@@ -1686,7 +1686,7 @@ Return JSON with these fields:
         yAxis: 'Innovation Capability',
         competitors: params.competitors && params.competitors.length > 0 ? [
           { name: companyName, x: 65, y: 70, size: 'large', isUs: true },
-          ...params.competitors.slice(0, 3).map((comp, i) => ({
+          ...params.competitors.slice(0, 3).map((comp: string, i: number) => ({
             name: comp,
             x: [80, 45, 30][i],
             y: [60, 85, 40][i],
@@ -1764,12 +1764,12 @@ Return JSON with these fields:
       customerVoice: {
         title: 'What We Heard',
         subtitle: 'Understanding your unique challenges',
-        customerQuotes: params.challenges && params.challenges.length > 0 ? params.challenges.map(c => `"${c}"`) : [
+        customerQuotes: params.challenges && params.challenges.length > 0 ? params.challenges.map((c: string) => `"${c}"`) : [
           'We need to streamline our operations and reduce manual processes',
           'Our current system cannot scale with our growth plans',
           'Integration between systems is causing data silos'
         ],
-        painPoints: params.challenges && params.challenges.length > 0 ? params.challenges.map((c, i) => ({
+        painPoints: params.challenges && params.challenges.length > 0 ? params.challenges.map((c: string, i: number) => ({
           functionalArea: ['Operations', 'IT', 'Finance', 'Sales'][i % 4],
           challenge: c,
           impact: i === 0 ? 'Critical' : 'High'
@@ -1855,7 +1855,7 @@ Return JSON with these fields:
           { opportunity: 'Early Adopter Pricing', benefit: '30% discount for Q1 sign-ups', expiryDate: 'March 31, 2024' }
         ],
         costOfDelay: { monthlyCost: '$200K', yearlyCost: '$2.4M' },
-        lostOpportunities: params.challenges ? params.challenges.slice(0, 2).map(c => `Lost revenue from ${c}`) : []
+        lostOpportunities: params.challenges ? params.challenges.slice(0, 2).map((c: string) => `Lost revenue from ${c}`) : []
       },
       valueProp: {
         title: 'Value Proposition',
@@ -1883,7 +1883,7 @@ Return JSON with these fields:
           firstYearTotal: params.budget || '$225K' 
         },
         annualSavings: params.challenges && params.challenges.length > 0 ? 
-          params.challenges.slice(0, 3).map((c, i) => ({
+          params.challenges.slice(0, 3).map((c: string, i: number) => ({
             category: c,
             amount: ['$500K', '$300K', '$200K'][i] || '$100K',
             description: `Addressing ${c}`
