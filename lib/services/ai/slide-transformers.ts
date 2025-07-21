@@ -558,10 +558,78 @@ export const slideTransformers: SlideTransformer[] = [
     })
   },
 
+  // IndustryTrends Slide
+  {
+    condition: (slide) => slide.type === 'industryTrends',
+    transform: (slide) => ({
+      type: 'industryTrends',
+      data: {
+        title: slide.title || 'Industry Trends',
+        subtitle: slide.subtitle || 'Key market dynamics',
+        trends: slide.trends || []
+      }
+    })
+  },
+
+  // CaseStudy Slide
+  {
+    condition: (slide) => slide.type === 'caseStudy',
+    transform: (slide) => ({
+      type: 'caseStudy',
+      data: {
+        title: slide.title || 'Success Story',
+        subtitle: slide.subtitle,
+        customerName: slide.customerName || 'Enterprise Client',
+        industry: slide.industry,
+        challenge: slide.challenge || 'Key business challenge',
+        solution: slide.solution || 'Our innovative solution',
+        results: slide.results || 'Significant business impact',
+        metrics: slide.metrics || [],
+        quote: slide.quote,
+        quoteAuthor: slide.quoteAuthor,
+        quoteTitle: slide.quoteTitle,
+        logo: slide.logo
+      }
+    })
+  },
+
+  // TechnicalArchitecture Slide
+  {
+    condition: (slide) => slide.type === 'technicalArchitecture',
+    transform: (slide) => ({
+      type: 'technicalArchitecture',
+      data: {
+        title: slide.title || 'Technical Architecture',
+        subtitle: slide.subtitle || 'System design and infrastructure',
+        architectureLayers: slide.architectureLayers || [],
+        keyFeatures: slide.keyFeatures || [],
+        securityMeasures: slide.securityMeasures || [],
+        performanceMetrics: slide.performanceMetrics,
+        deploymentOptions: slide.deploymentOptions || []
+      }
+    })
+  },
+
+  // ImplementationTimeline Slide
+  {
+    condition: (slide) => slide.type === 'implementationTimeline',
+    transform: (slide) => ({
+      type: 'implementationTimeline',
+      data: {
+        title: slide.title || 'Implementation Timeline',
+        subtitle: slide.subtitle || 'Project roadmap and milestones',
+        totalDuration: slide.totalDuration || '12 weeks',
+        startDate: slide.startDate,
+        phases: slide.phases || [],
+        keySuccessFactors: slide.keySuccessFactors || [],
+        risks: slide.risks || []
+      }
+    })
+  },
+
   // Other sales slides with simpler structures
   {
-    condition: (slide) => ['industryTrends', 'caseStudy', 
-                          'technicalArchitecture', 'implementationTimeline'].includes(slide.type),
+    condition: (slide) => [].includes(slide.type),
     transform: (slide) => ({
       type: slide.type,
       data: {

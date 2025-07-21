@@ -43,7 +43,7 @@ export function ImplementationTimelineSlide({ data, className = '' }: Implementa
 
         {/* Timeline Phases */}
         <div className="space-y-4">
-          {data.phases.map((phase, index) => (
+          {data.phases && data.phases.map((phase, index) => (
             <div key={index} className="relative">
               {/* Connection line */}
               {index < data.phases.length - 1 && (

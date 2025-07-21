@@ -47,7 +47,7 @@ export function CaseStudySlide({ data, className = '' }: CaseStudySlideProps) {
         <div className="bg-blue-50 rounded-lg p-6">
           <h4 className="text-lg font-semibold text-blue-900 mb-4">Results & Impact</h4>
           <div className="grid md:grid-cols-3 gap-4">
-            {data.metrics.map((metric, index) => (
+            {data.metrics && data.metrics.map((metric, index) => (
               <div key={index} className="text-center bg-white rounded-lg p-4">
                 <div className="text-3xl font-bold text-blue-600 mb-1">{metric.value}</div>
                 <div className="text-sm text-gray-700">{metric.metric}</div>

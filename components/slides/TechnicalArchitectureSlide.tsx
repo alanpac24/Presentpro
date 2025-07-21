@@ -33,7 +33,7 @@ export function TechnicalArchitectureSlide({ data, className = '' }: TechnicalAr
         {/* Architecture Diagram/Layers */}
         <div className="space-y-3">
           <h3 className="text-lg font-semibold text-gray-800 mb-3">System Architecture</h3>
-          {data.architectureLayers.map((layer, index) => (
+          {data.architectureLayers && data.architectureLayers.map((layer, index) => (
             <div key={index} className="bg-gradient-to-r from-blue-50 to-white border border-gray-200 rounded-lg p-4">
               <div className="flex items-center mb-2">
                 <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
@@ -61,7 +61,7 @@ export function TechnicalArchitectureSlide({ data, className = '' }: TechnicalAr
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <h4 className="font-semibold text-gray-900 mb-3">Key Technical Features</h4>
             <ul className="space-y-2">
-              {data.keyFeatures.map((feature, index) => (
+              {data.keyFeatures && data.keyFeatures.map((feature, index) => (
                 <li key={index} className="flex items-start text-sm">
                   <span className="text-blue-600 mr-2 mt-0.5">▪</span>
                   <span className="text-gray-700">{feature}</span>
@@ -77,7 +77,7 @@ export function TechnicalArchitectureSlide({ data, className = '' }: TechnicalAr
               Security & Compliance
             </h4>
             <ul className="space-y-2">
-              {data.securityMeasures.map((measure, index) => (
+              {data.securityMeasures && data.securityMeasures.map((measure, index) => (
                 <li key={index} className="flex items-start text-sm">
                   <span className="text-green-600 mr-2">✓</span>
                   <span className="text-gray-700">{measure}</span>
