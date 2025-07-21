@@ -458,9 +458,38 @@ export const slideTransformers: SlideTransformer[] = [
     })
   },
 
+  // ROI Slide
+  {
+    condition: (slide) => slide.type === 'roi',
+    transform: (slide) => ({
+      type: 'roi',
+      data: {
+        title: slide.title || 'Return on Investment',
+        subtitle: slide.subtitle || 'Financial benefits and payback',
+        totalInvestment: slide.totalInvestment || {
+          software: slide.softwareCost || '$50,000',
+          implementation: slide.implementationCost || '$25,000',
+          training: slide.trainingCost || '$10,000',
+          firstYearTotal: slide.firstYearTotal || '$85,000'
+        },
+        annualSavings: slide.annualSavings || [
+          { category: 'Operational Efficiency', amount: '$50,000/year' },
+          { category: 'Time Savings', amount: '$30,000/year' },
+          { category: 'Error Reduction', amount: '$20,000/year' }
+        ],
+        totalAnnualSavings: slide.totalAnnualSavings || '$100,000',
+        paybackPeriod: slide.paybackPeriod || '10 months',
+        threeYearROI: slide.threeYearROI || '253%',
+        netPresentValue: slide.netPresentValue,
+        additionalBenefits: slide.additionalBenefits || [],
+        assumptions: slide.assumptions || []
+      }
+    })
+  },
+
   // Other sales slides with simpler structures
   {
-    condition: (slide) => ['customerVoice', 'industryTrends', 'caseStudy', 'roi', 'investmentSummary', 
+    condition: (slide) => ['customerVoice', 'industryTrends', 'caseStudy', 'investmentSummary', 
                           'technicalArchitecture', 'implementationTimeline', 'contact', 'thankYou'].includes(slide.type),
     transform: (slide) => ({
       type: slide.type,

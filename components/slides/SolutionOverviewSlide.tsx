@@ -1,20 +1,22 @@
 import React from 'react'
 import { BaseSlideProps, SolutionOverviewSlideData } from './types'
 import { Sparkles, CheckCircle } from 'lucide-react'
+import { SlideLayout, SlideHeader } from './shared'
 
 interface SolutionOverviewSlideProps extends BaseSlideProps {
   data: SolutionOverviewSlideData
 }
 
 export function SolutionOverviewSlide({ data, className = '' }: SolutionOverviewSlideProps) {
+  // Add defensive checks
+  const keyFeatures = data.keyFeatures || []
+
   return (
-    <div className={`h-full flex flex-col ${className}`}>
-      <div className="mb-6">
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-          {data.title}
-        </h2>
-        <div className="w-20 h-1 bg-blue-600"></div>
-      </div>
+    <SlideLayout className={className}>
+      <SlideHeader 
+        title={data.title}
+        subtitle={data.subtitle}
+      />
 
       <div className="flex-1 grid md:grid-cols-2 gap-8">
         {/* Left side - Solution info */}
@@ -31,7 +33,7 @@ export function SolutionOverviewSlide({ data, className = '' }: SolutionOverview
 
           <div className="space-y-3">
             <h4 className="text-lg font-semibold text-gray-900">Key Features</h4>
-            {data.keyFeatures.map((feature, index) => (
+            {keyFeatures.map((feature, index) => (
               <div key={index} className="flex items-start">
                 <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
                   {feature.icon ? (
@@ -77,6 +79,6 @@ export function SolutionOverviewSlide({ data, className = '' }: SolutionOverview
           A comprehensive solution designed specifically for your needs
         </p>
       </div>
-    </div>
+    </SlideLayout>
   )
 }

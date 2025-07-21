@@ -1,12 +1,18 @@
 import React from 'react'
 import { BaseSlideProps, NextStepsSlideData } from './types'
 import { ArrowRight, Calendar, Users, FileCheck } from 'lucide-react'
+import { SlideLayout, SlideHeader } from './shared'
 
 interface NextStepsSlideProps extends BaseSlideProps {
   data: NextStepsSlideData
 }
 
 export function NextStepsSlide({ data, className = '' }: NextStepsSlideProps) {
+  // Add defensive checks
+  const immediateActions = data.immediateActions || []
+  const decisionCriteria = data.decisionCriteria || []
+  const stakeholders = data.stakeholders || []
+
   const getActionIcon = (action: string) => {
     const actionLower = action.toLowerCase()
     if (actionLower.includes('meeting') || actionLower.includes('call')) return <Users className="w-5 h-5" />
@@ -16,23 +22,18 @@ export function NextStepsSlide({ data, className = '' }: NextStepsSlideProps) {
   }
 
   return (
-    <div className={`h-full flex flex-col ${className}`}>
-      <div className="mb-6">
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-          {data.title}
-        </h2>
-        {data.subtitle && (
-          <p className="text-lg text-gray-600">{data.subtitle}</p>
-        )}
-        <div className="w-20 h-1 bg-blue-600 mt-4"></div>
-      </div>
+    <SlideLayout className={className}>
+      <SlideHeader 
+        title={data.title}
+        subtitle={data.subtitle}
+      />
 
       <div className="flex-1 space-y-6">
         {/* Immediate Actions */}
         <div className="bg-blue-50 rounded-lg p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Immediate Actions</h3>
           <div className="space-y-3">
-            {data.immediateActions.map((action, index) => (
+            {immediateActions.map((action, index) => (
               <div key={index} className="flex items-start bg-white rounded-lg p-4 border border-blue-200">
                 <div className="flex-shrink-0 w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center mr-4">
                   {index + 1}
@@ -55,11 +56,11 @@ export function NextStepsSlide({ data, className = '' }: NextStepsSlideProps) {
         </div>
 
         {/* Decision Criteria */}
-        {data.decisionCriteria && data.decisionCriteria.length > 0 && (
+        {decisionCriteria.length > 0 && (
           <div className="bg-green-50 rounded-lg p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Key Decision Criteria</h3>
             <div className="grid md:grid-cols-2 gap-3">
-              {data.decisionCriteria.map((criteria, index) => (
+              {decisionCriteria.map((criteria, index) => (
                 <div key={index} className="flex items-center bg-white rounded-lg p-3">
                   <div className="w-2 h-2 bg-green-600 rounded-full mr-3"></div>
                   <span className="text-gray-700">{criteria}</span>
@@ -70,11 +71,11 @@ export function NextStepsSlide({ data, className = '' }: NextStepsSlideProps) {
         )}
 
         {/* Stakeholders */}
-        {data.stakeholders && data.stakeholders.length > 0 && (
+        {stakeholders.length > 0 && (
           <div className="bg-gray-50 rounded-lg p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Key Stakeholders</h3>
             <div className="grid md:grid-cols-2 gap-4">
-              {data.stakeholders.map((stakeholder, index) => (
+              {stakeholders.map((stakeholder, index) => (
                 <div key={index} className="bg-white rounded-lg p-3">
                   <p className="font-medium text-gray-900">{stakeholder.name}</p>
                   <p className="text-sm text-gray-600">{stakeholder.role}</p>
@@ -127,6 +128,6 @@ export function NextStepsSlide({ data, className = '' }: NextStepsSlideProps) {
           )}
         </div>
       </div>
-    </div>
+    </SlideLayout>
   )
 }

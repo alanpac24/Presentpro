@@ -1,12 +1,19 @@
 import React from 'react'
 import { BaseSlideProps, ProductDeepDiveSlideData } from './types'
 import { Layers, Zap, Shield, Settings, ArrowRight } from 'lucide-react'
+import { SlideLayout, SlideHeader } from './shared'
 
 interface ProductDeepDiveSlideProps extends BaseSlideProps {
   data: ProductDeepDiveSlideData
 }
 
 export function ProductDeepDiveSlide({ data, className = '' }: ProductDeepDiveSlideProps) {
+  // Add defensive checks
+  const coreFeatures = data.coreFeatures || []
+  const businessBenefits = data.businessBenefits || []
+  const technicalDetails = data.technicalDetails || { architecture: '', security: '', integrations: [] }
+  const integrations = technicalDetails.integrations || []
+
   const getFeatureIcon = (index: number) => {
     const icons = [Layers, Zap, Shield, Settings]
     const Icon = icons[index % icons.length]
@@ -14,22 +21,17 @@ export function ProductDeepDiveSlide({ data, className = '' }: ProductDeepDiveSl
   }
 
   return (
-    <div className={`h-full flex flex-col ${className}`}>
-      <div className="mb-6">
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-          {data.title}
-        </h2>
-        {data.productName && (
-          <p className="text-lg text-blue-600 font-semibold">{data.productName}</p>
-        )}
-        <div className="w-20 h-1 bg-blue-600 mt-4"></div>
-      </div>
+    <SlideLayout className={className}>
+      <SlideHeader 
+        title={data.title}
+        subtitle={data.subtitle || data.productName}
+      />
 
       <div className="flex-1 grid md:grid-cols-2 gap-8">
         {/* Left side - Features */}
         <div className="space-y-4">
           <h3 className="text-xl font-semibold text-gray-800 mb-4">Core Capabilities</h3>
-          {data.coreFeatures.map((feature, index) => (
+          {coreFeatures.map((feature, index) => (
             <div key={index} className="bg-white border border-gray-200 rounded-lg p-4 hover:border-blue-400 hover:shadow-md transition-all">
               <div className="flex items-start">
                 <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
@@ -55,7 +57,7 @@ export function ProductDeepDiveSlide({ data, className = '' }: ProductDeepDiveSl
           <div>
             <h3 className="text-xl font-semibold text-gray-800 mb-4">Business Benefits</h3>
             <div className="space-y-2">
-              {data.businessBenefits.map((benefit, index) => (
+              {businessBenefits.map((benefit, index) => (
                 <div key={index} className="flex items-center bg-green-50 rounded-lg p-3">
                   <ArrowRight className="w-4 h-4 text-green-600 mr-2 flex-shrink-0" />
                   <span className="text-sm text-gray-700">{benefit}</span>
@@ -65,27 +67,27 @@ export function ProductDeepDiveSlide({ data, className = '' }: ProductDeepDiveSl
           </div>
 
           {/* Technical Details */}
-          {data.technicalDetails && (
+          {technicalDetails && (Object.keys(technicalDetails).length > 0) && (
             <div className="bg-gray-50 rounded-lg p-4">
               <h4 className="text-lg font-semibold text-gray-800 mb-3">Technical Overview</h4>
               <div className="space-y-2">
-                {data.technicalDetails.architecture && (
+                {technicalDetails.architecture && (
                   <div className="text-sm">
                     <span className="font-medium text-gray-700">Architecture:</span>
-                    <span className="text-gray-600 ml-2">{data.technicalDetails.architecture}</span>
+                    <span className="text-gray-600 ml-2">{technicalDetails.architecture}</span>
                   </div>
                 )}
-                {data.technicalDetails.security && (
+                {technicalDetails.security && (
                   <div className="text-sm">
                     <span className="font-medium text-gray-700">Security:</span>
-                    <span className="text-gray-600 ml-2">{data.technicalDetails.security}</span>
+                    <span className="text-gray-600 ml-2">{technicalDetails.security}</span>
                   </div>
                 )}
-                {data.technicalDetails.integrations && data.technicalDetails.integrations.length > 0 && (
+                {integrations.length > 0 && (
                   <div className="text-sm">
                     <span className="font-medium text-gray-700">Integrations:</span>
                     <div className="mt-1 flex flex-wrap gap-2">
-                      {data.technicalDetails.integrations.map((integration, index) => (
+                      {integrations.map((integration, index) => (
                         <span key={index} className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
                           {integration}
                         </span>
@@ -106,6 +108,6 @@ export function ProductDeepDiveSlide({ data, className = '' }: ProductDeepDiveSl
           )}
         </div>
       </div>
-    </div>
+    </SlideLayout>
   )
 }

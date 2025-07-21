@@ -1,23 +1,29 @@
 import React from 'react'
 import { BaseSlideProps, ROISlideData } from './types'
 import { TrendingUp, DollarSign, Clock, PiggyBank, ArrowUp, BarChart3 } from 'lucide-react'
+import { SlideLayout, SlideHeader } from './shared'
 
 interface ROISlideProps extends BaseSlideProps {
   data: ROISlideData
 }
 
 export function ROISlide({ data, className = '' }: ROISlideProps) {
+  // Add defensive checks
+  const totalInvestment = data.totalInvestment || {
+    software: '$0',
+    implementation: '$0',
+    training: '$0'
+  }
+  const annualSavings = data.annualSavings || []
+  const additionalBenefits = data.additionalBenefits || []
+  const assumptions = data.assumptions || []
+
   return (
-    <div className={`h-full flex flex-col ${className}`}>
-      <div className="mb-6">
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-          {data.title}
-        </h2>
-        {data.subtitle && (
-          <p className="text-lg text-gray-600">{data.subtitle}</p>
-        )}
-        <div className="w-20 h-1 bg-blue-600 mt-4"></div>
-      </div>
+    <SlideLayout className={className}>
+      <SlideHeader 
+        title={data.title}
+        subtitle={data.subtitle}
+      />
 
       <div className="flex-1 grid md:grid-cols-2 gap-6">
         {/* Left side - Investment & Savings */}
@@ -31,21 +37,21 @@ export function ROISlide({ data, className = '' }: ROISlideProps) {
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-gray-700">Software License</span>
-                <span className="font-semibold">{data.totalInvestment.software}</span>
+                <span className="font-semibold">{totalInvestment.software}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-700">Implementation</span>
-                <span className="font-semibold">{data.totalInvestment.implementation}</span>
+                <span className="font-semibold">{totalInvestment.implementation}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-700">Training</span>
-                <span className="font-semibold">{data.totalInvestment.training}</span>
+                <span className="font-semibold">{totalInvestment.training}</span>
               </div>
-              {data.totalInvestment.firstYearTotal && (
+              {totalInvestment.firstYearTotal && (
                 <div className="border-t pt-2 mt-2">
                   <div className="flex justify-between items-center">
                     <span className="font-semibold text-gray-900">First Year Total</span>
-                    <span className="font-bold text-xl text-gray-900">{data.totalInvestment.firstYearTotal}</span>
+                    <span className="font-bold text-xl text-gray-900">{totalInvestment.firstYearTotal}</span>
                   </div>
                 </div>
               )}
@@ -59,7 +65,7 @@ export function ROISlide({ data, className = '' }: ROISlideProps) {
               Annual Savings
             </h3>
             <div className="space-y-3">
-              {data.annualSavings.map((saving, index) => (
+              {annualSavings.map((saving, index) => (
                 <div key={index}>
                   <div className="flex justify-between items-center mb-1">
                     <span className="text-gray-700">{saving.category}</span>
@@ -110,11 +116,11 @@ export function ROISlide({ data, className = '' }: ROISlideProps) {
       </div>
 
       {/* Additional Benefits */}
-      {data.additionalBenefits && data.additionalBenefits.length > 0 && (
+      {additionalBenefits.length > 0 && (
         <div className="mt-6 bg-yellow-50 rounded-lg p-4">
           <h4 className="font-semibold text-gray-900 mb-2">Additional Non-Quantified Benefits</h4>
           <div className="grid md:grid-cols-2 gap-2">
-            {data.additionalBenefits.map((benefit, index) => (
+            {additionalBenefits.map((benefit, index) => (
               <div key={index} className="flex items-center text-sm text-gray-700">
                 <ArrowUp className="w-4 h-4 text-yellow-600 mr-2" />
                 {benefit}
@@ -125,16 +131,16 @@ export function ROISlide({ data, className = '' }: ROISlideProps) {
       )}
 
       {/* Assumptions */}
-      {data.assumptions && data.assumptions.length > 0 && (
+      {assumptions.length > 0 && (
         <div className="mt-4 text-xs text-gray-500">
           <p className="font-medium">Key Assumptions:</p>
           <ul className="mt-1">
-            {data.assumptions.map((assumption, index) => (
+            {assumptions.map((assumption, index) => (
               <li key={index}>• {assumption}</li>
             ))}
           </ul>
         </div>
       )}
-    </div>
+    </SlideLayout>
   )
 }
