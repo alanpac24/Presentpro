@@ -42,7 +42,7 @@ export function KPIDashboardSlide({ data, className = '' }: KPIDashboardSlidePro
       </div>
 
       <div className="flex-1 grid grid-cols-2 md:grid-cols-3 gap-4">
-        {data.kpis.map((kpi, idx) => (
+        {(data.kpis || []).map((kpi, idx) => (
           <div key={idx} className={`${getStatusColor(kpi.status)} border-2 rounded-lg p-4 hover:shadow-lg transition-shadow`}>
             <div className="flex items-start justify-between mb-2">
               <h3 className="font-semibold text-gray-900">{kpi.name}</h3>

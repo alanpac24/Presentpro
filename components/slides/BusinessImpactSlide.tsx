@@ -16,7 +16,7 @@ export function BusinessImpactSlide({ data, className = '' }: BusinessImpactSlid
       />
 
       <div className="flex-1 grid gap-4">
-        {data.kpis.map((kpi, index) => (
+        {(data.kpis || []).map((kpi, index) => (
           <div key={index} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-semibold text-gray-900 flex items-center">

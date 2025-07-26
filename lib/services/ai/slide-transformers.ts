@@ -5,42 +5,94 @@ export interface SlideTransformer {
   transform: (slide: any) => { type: string; data: any }
 }
 
+// Universal string extraction function
+// Handles nested objects, arrays, and various object patterns
+function extractString(value: any, fallback: string = ''): string {
+  // Handle null/undefined
+  if (value === null || value === undefined) {
+    return fallback
+  }
+  
+  // Already a string
+  if (typeof value === 'string') {
+    return value
+  }
+  
+  // Number or boolean - convert to string
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value)
+  }
+  
+  // Handle objects
+  if (typeof value === 'object') {
+    // Check common object patterns
+    if (value.text !== undefined) return extractString(value.text, fallback)
+    if (value.value !== undefined) return extractString(value.value, fallback)
+    if (value.name !== undefined) return extractString(value.name, fallback)
+    if (value.title !== undefined) return extractString(value.title, fallback)
+    if (value.content !== undefined) return extractString(value.content, fallback)
+    if (value.label !== undefined) return extractString(value.label, fallback)
+    
+    // Array - join elements
+    if (Array.isArray(value)) {
+      return value.map(v => extractString(v, '')).filter(Boolean).join(', ') || fallback
+    }
+    
+    // Try to stringify if it's a simple object
+    try {
+      const str = JSON.stringify(value)
+      console.warn(`Field was object, stringified: ${str.substring(0, 100)}...`)
+      return fallback // Don't return the stringified object
+    } catch (e) {
+      console.warn(`Field was non-stringifiable object`)
+    }
+  }
+  
+  return fallback
+}
+
+// Extract array ensuring all string fields are properly converted
+function extractArray(arr: any[], fieldExtractors: Record<string, (item: any) => any> = {}): any[] {
+  if (!Array.isArray(arr)) return []
+  
+  return arr.map(item => {
+    if (typeof item === 'string') return item
+    if (typeof item !== 'object' || item === null) return String(item)
+    
+    // Apply field extractors
+    const extracted: any = {}
+    for (const [field, extractor] of Object.entries(fieldExtractors)) {
+      if (item[field] !== undefined) {
+        extracted[field] = extractor(item)
+      }
+    }
+    
+    // Copy over any fields not in extractors
+    for (const [key, value] of Object.entries(item)) {
+      if (!(key in extracted)) {
+        extracted[key] = typeof value === 'string' ? value : extractString(value)
+      }
+    }
+    
+    return extracted
+  })
+}
+
 // Define transformation rules for each slide type
 export const slideTransformers: SlideTransformer[] = [
   // Title slide (first slide or explicit title type)
   {
     condition: (slide, index) => slide.type === 'title' || index === 0,
-    transform: (slide) => {
-      // Extract string values from potentially nested objects
-      const extractString = (value: any, fallback: string): string => {
-        if (typeof value === 'string') return value
-        if (typeof value === 'object' && value !== null) {
-          // Check common object patterns
-          if (value.text) return String(value.text)
-          if (value.name) return String(value.name)
-          if (value.value) return String(value.value)
-          // Try to stringify if it's a simple object
-          try {
-            const str = JSON.stringify(value)
-            console.warn(`Title slide field was object, stringified: ${str}`)
-          } catch (e) {
-            console.warn(`Title slide field was non-stringifiable object`)
-          }
-        }
-        return fallback
+    transform: (slide) => ({
+      type: 'title',
+      data: {
+        title: extractString(slide.title || slide.mainTitle, 'Presentation'),
+        subtitle: extractString(slide.subtitle || slide.content),
+        presenter: extractString(slide.presenter, 'Your Sales Team'),
+        company: extractString(slide.company || slide.companyName, 'Target Company'),
+        date: extractString(slide.date, new Date().toLocaleDateString())
       }
-
-      return {
-        type: 'title',
-        data: {
-          title: extractString(slide.title || slide.mainTitle, 'Presentation'),
-          subtitle: extractString(slide.subtitle || slide.content, ''),
-          presenter: extractString(slide.presenter, 'Your Sales Team'),
-          company: extractString(slide.company || slide.companyName, 'Target Company'),
-          date: extractString(slide.date, new Date().toLocaleDateString())
-        }
-      }
-    }
+    })
   },
 
   // Executive Summary
@@ -49,108 +101,14 @@ export const slideTransformers: SlideTransformer[] = [
     transform: (slide) => ({
       type: 'executiveSummary',
       data: {
-        title: slide.title,
-        keyMessage: slide.keyMessage,
-        supportingPoints: slide.supportingPoints || [],
-        recommendation: slide.recommendation || ''
-      }
-    })
-  },
-
-  // Metrics slide
-  {
-    condition: (slide) => slide.metrics && slide.metrics.length > 0 && !slide.kpis && !slide.status,
-    transform: (slide) => ({
-      type: 'metrics',
-      data: {
-        title: slide.title,
-        subtitle: slide.subtitle,
-        metrics: slide.metrics
-      }
-    })
-  },
-
-  // Chart slide
-  {
-    condition: (slide) => slide.chartData,
-    transform: (slide) => ({
-      type: 'chart',
-      data: {
-        title: slide.title,
-        subtitle: slide.subtitle,
-        chartType: slide.chartType || 'bar',
-        data: slide.chartData
-      }
-    })
-  },
-
-  // Matrix slide
-  {
-    condition: (slide) => slide.xAxis && slide.yAxis && slide.quadrants,
-    transform: (slide) => ({
-      type: 'matrix',
-      data: {
-        title: slide.title,
-        subtitle: slide.subtitle,
-        xAxis: slide.xAxis,
-        yAxis: slide.yAxis,
-        quadrants: slide.quadrants
-      }
-    })
-  },
-
-  // ROI Calculation (old format)
-  {
-    condition: (slide) => slide.investment && slide.returns,
-    transform: (slide) => ({
-      type: 'roiCalculation',
-      data: {
-        title: slide.title,
-        subtitle: slide.subtitle,
-        investment: slide.investment,
-        returns: slide.returns,
-        metrics: slide.metrics
-      }
-    })
-  },
-
-  // Roadmap
-  {
-    condition: (slide) => slide.phases && !slide.totalDuration,
-    transform: (slide) => ({
-      type: 'roadmap',
-      data: {
-        title: slide.title,
-        subtitle: slide.subtitle,
-        phases: slide.phases
-      }
-    })
-  },
-
-  // Quick Wins
-  {
-    condition: (slide) => slide.timeframes,
-    transform: (slide) => ({
-      type: 'quickWins',
-      data: {
-        title: slide.title,
-        subtitle: slide.subtitle,
-        timeframes: slide.timeframes
-      }
-    })
-  },
-
-  // Competitive Landscape
-  {
-    condition: (slide) => slide.competitors && slide.xAxis && slide.yAxis,
-    transform: (slide) => ({
-      type: 'competitiveLandscape',
-      data: {
-        title: slide.title,
-        subtitle: slide.subtitle,
-        xAxis: slide.xAxis,
-        yAxis: slide.yAxis,
-        competitors: slide.competitors
+        title: extractString(slide.title, 'Executive Summary'),
+        keyMessage: extractString(slide.keyMessage, 'Key strategic initiative'),
+        supportingPoints: extractArray(slide.supportingPoints || [], {
+          label: (v) => extractString(v.label || v),
+          value: (v) => extractString(v.value || v),
+          description: (v) => extractString(v.description || v)
+        }),
+        recommendation: extractString(slide.recommendation)
       }
     })
   },
@@ -161,84 +119,327 @@ export const slideTransformers: SlideTransformer[] = [
     transform: (slide) => ({
       type: 'swotAnalysis',
       data: {
-        title: slide.title,
-        subtitle: slide.subtitle,
-        strengths: slide.strengths,
-        weaknesses: slide.weaknesses,
-        opportunities: slide.opportunities,
-        threats: slide.threats
+        title: extractString(slide.title, 'SWOT Analysis'),
+        subtitle: extractString(slide.subtitle),
+        strengths: extractArray(slide.strengths || []).map(s => extractString(s)),
+        weaknesses: extractArray(slide.weaknesses || []).map(s => extractString(s)),
+        opportunities: extractArray(slide.opportunities || []).map(s => extractString(s)),
+        threats: extractArray(slide.threats || []).map(s => extractString(s))
       }
     })
   },
 
-  // KPI Dashboard
+  // Metrics slide
   {
-    condition: (slide) => slide.summary && slide.metrics && slide.metrics.some((m: any) => m.status),
+    condition: (slide) => slide.metrics && slide.metrics.length > 0 && !slide.kpis && !slide.status,
     transform: (slide) => ({
-      type: 'kpiDashboard',
+      type: 'metrics',
       data: {
-        title: slide.title,
-        subtitle: slide.subtitle,
-        kpis: slide.metrics,
-        summary: slide.summary
+        title: extractString(slide.title, 'Key Metrics'),
+        subtitle: extractString(slide.subtitle),
+        metrics: extractArray(slide.metrics, {
+          label: (v) => extractString(v.label || v.name || v),
+          value: (v) => extractString(v.value || v),
+          trend: (v) => extractString(v.trend),
+          color: (v) => v.color || 'blue'
+        })
       }
     })
   },
 
-  // Value Chain
+  // Value Proposition
   {
-    condition: (slide) => slide.primaryActivities || slide.supportActivities || slide.layers,
+    condition: (slide) => slide.type === 'valueProp' || slide.mainValue,
     transform: (slide) => ({
-      type: 'valueChain',
+      type: 'valueProp',
       data: {
-        title: slide.title,
-        subtitle: slide.subtitle,
-        primaryActivities: slide.primaryActivities || [],
-        supportActivities: slide.supportActivities || slide.layers || []
+        title: extractString(slide.title, 'Value Proposition'),
+        subtitle: extractString(slide.subtitle),
+        mainValue: extractString(slide.mainValue, 'We deliver measurable business outcomes'),
+        valuePillars: extractArray(slide.valuePillars || [], {
+          pillar: (v) => extractString(v.pillar || v.name || v),
+          description: (v) => extractString(v.description || v),
+          metrics: (v) => extractArray(v.metrics || []).map(m => extractString(m))
+        }),
+        beforeAfter: slide.beforeAfter,
+        uniqueSellingPoint: extractString(slide.uniqueSellingPoint)
       }
     })
   },
 
-  // Sales-oriented slides
+  // Why Us
   {
-    condition: (slide) => slide.type === 'cover',
+    condition: (slide) => slide.type === 'whyUs' || slide.differentiators,
     transform: (slide) => ({
-      type: 'cover',
+      type: 'whyUs',
       data: {
-        title: slide.title,
-        proposalTitle: slide.proposalTitle || slide.title,
-        clientName: slide.clientName || 'Client Name',
-        vendorName: slide.vendorName || 'Your Company',
-        proposalDate: slide.proposalDate || new Date().toLocaleDateString(),
-        salesRepName: slide.salesRepName || 'Your Name',
-        salesRepTitle: slide.salesRepTitle || 'Title',
-        ...slide
+        title: extractString(slide.title, 'Why Partner With Us'),
+        subtitle: extractString(slide.subtitle),
+        differentiators: extractArray(slide.differentiators || [], {
+          differentiator: (v) => extractString(v.differentiator || v.name || v),
+          description: (v) => extractString(v.description || v),
+          proof: (v) => extractString(v.proof),
+          icon: (v) => extractString(v.icon)
+        }),
+        clientResults: extractArray(slide.clientResults || [], {
+          metric: (v) => extractString(v.metric || v),
+          description: (v) => extractString(v.description || v)
+        }),
+        awards: extractArray(slide.awards || [], {
+          award: (v) => extractString(v.award || v.name || v),
+          year: (v) => extractString(v.year)
+        }),
+        partnershipLevel: extractString(slide.partnershipLevel)
       }
     })
   },
 
-  // Comparison slide (for backward compatibility)
+  // Why Now
   {
-    condition: (slide) => slide.type === 'comparison' && slide.bullets,
+    condition: (slide) => slide.type === 'whyNow' || slide.urgencyFactors,
+    transform: (slide) => ({
+      type: 'whyNow',
+      data: {
+        title: extractString(slide.title, 'Why Act Now'),
+        subtitle: extractString(slide.subtitle),
+        urgencyFactors: extractArray(slide.urgencyFactors || [], {
+          factor: (v) => extractString(v.factor || v.name || v),
+          impact: (v) => extractString(v.impact || v.description || v),
+          timeline: (v) => extractString(v.timeline)
+        }),
+        opportunities: extractArray(slide.opportunities || [], {
+          opportunity: (v) => extractString(v.opportunity || v.name || v),
+          benefit: (v) => extractString(v.benefit || v.description || v)
+        }),
+        costOfDelay: slide.costOfDelay,
+        callToAction: extractString(slide.callToAction, 'Start your transformation journey today')
+      }
+    })
+  },
+
+  // Pricing
+  {
+    condition: (slide) => slide.type === 'pricing' || slide.pricingTiers,
+    transform: (slide) => ({
+      type: 'pricing',
+      data: {
+        title: extractString(slide.title, 'Investment Options'),
+        subtitle: extractString(slide.subtitle),
+        pricingTiers: extractArray(slide.pricingTiers || [], {
+          tierName: (v) => extractString(v.tierName || v.name || v),
+          price: (v) => extractString(v.price || v),
+          description: (v) => extractString(v.description),
+          features: (v) => extractArray(v.features || []).map(f => extractString(f)),
+          limitations: (v) => extractArray(v.limitations || []).map(l => extractString(l)),
+          isRecommended: (v) => !!v.isRecommended
+        }),
+        volumeDiscounts: slide.volumeDiscounts,
+        paymentTerms: slide.paymentTerms,
+        customQuote: extractString(slide.customQuote)
+      }
+    })
+  },
+
+  // ROI Calculation
+  {
+    condition: (slide) => slide.investment && slide.returns,
+    transform: (slide) => ({
+      type: 'roiCalculation',
+      data: {
+        title: extractString(slide.title, 'ROI Analysis'),
+        subtitle: extractString(slide.subtitle),
+        investment: {
+          label: extractString(slide.investment.label || 'Initial Investment'),
+          value: extractString(slide.investment.value || slide.investment)
+        },
+        returns: extractArray(slide.returns, {
+          year: (v) => extractString(v.year || v),
+          value: (v) => extractString(v.value || v)
+        }),
+        metrics: {
+          roi: extractString(slide.metrics?.roi || slide.roi),
+          payback: extractString(slide.metrics?.payback || slide.payback),
+          npv: extractString(slide.metrics?.npv || slide.npv)
+        }
+      }
+    })
+  },
+
+  // ROI (Sales version)
+  {
+    condition: (slide) => slide.type === 'roi' || slide.totalInvestment,
+    transform: (slide) => ({
+      type: 'roi',
+      data: {
+        title: extractString(slide.title, 'Return on Investment'),
+        subtitle: extractString(slide.subtitle),
+        totalInvestment: {
+          software: extractString(slide.totalInvestment?.software || slide.softwareCost),
+          implementation: extractString(slide.totalInvestment?.implementation || slide.implementationCost),
+          training: extractString(slide.totalInvestment?.training || slide.trainingCost),
+          firstYearTotal: extractString(slide.totalInvestment?.firstYearTotal || slide.firstYearTotal)
+        },
+        annualSavings: extractArray(slide.annualSavings || [], {
+          category: (v) => extractString(v.category || v.name || v),
+          amount: (v) => extractString(v.amount || v.value || v),
+          description: (v) => extractString(v.description)
+        }),
+        totalAnnualSavings: extractString(slide.totalAnnualSavings),
+        paybackPeriod: extractString(slide.paybackPeriod),
+        threeYearROI: extractString(slide.threeYearROI),
+        netPresentValue: extractString(slide.netPresentValue),
+        additionalBenefits: extractArray(slide.additionalBenefits || []).map(b => extractString(b)),
+        assumptions: extractArray(slide.assumptions || []).map(a => extractString(a))
+      }
+    })
+  },
+
+  // Solution Overview
+  {
+    condition: (slide) => slide.type === 'solutionOverview' || slide.solutionStatement,
+    transform: (slide) => ({
+      type: 'solutionOverview',
+      data: {
+        title: extractString(slide.title, 'Our Solution'),
+        subtitle: extractString(slide.subtitle),
+        solutionStatement: extractString(slide.solutionStatement, 'Comprehensive solution tailored to your needs'),
+        keyFeatures: extractArray(slide.keyFeatures || slide.features || [], {
+          feature: (v) => extractString(v.feature || v.name || v),
+          description: (v) => extractString(v.description || v)
+        }),
+        deploymentModel: extractString(slide.deploymentModel),
+        supportModel: extractString(slide.supportModel)
+      }
+    })
+  },
+
+  // Next Steps
+  {
+    condition: (slide) => slide.type === 'nextSteps' || slide.immediateActions,
+    transform: (slide) => ({
+      type: 'nextSteps',
+      data: {
+        title: extractString(slide.title, 'Next Steps'),
+        subtitle: extractString(slide.subtitle),
+        immediateActions: extractArray(slide.immediateActions || slide.actions || [], {
+          action: (v) => extractString(v.action || v.name || v),
+          owner: (v) => extractString(v.owner),
+          timeline: (v) => extractString(v.timeline)
+        }),
+        decisionCriteria: extractArray(slide.decisionCriteria || []).map(d => extractString(d)),
+        stakeholders: extractArray(slide.stakeholders || []),
+        timeline: slide.timeline
+      }
+    })
+  },
+
+  // Chart slide
+  {
+    condition: (slide) => slide.chartData,
+    transform: (slide) => ({
+      type: 'chart',
+      data: {
+        title: extractString(slide.title, 'Data Analysis'),
+        subtitle: extractString(slide.subtitle),
+        chartType: slide.chartType || 'bar',
+        data: slide.chartData
+      }
+    })
+  },
+
+  // Comparison slide
+  {
+    condition: (slide) => slide.type === 'comparison' && slide.comparisons,
     transform: (slide) => ({
       type: 'comparison',
       data: {
-        title: slide.title,
-        subtitle: slide.subtitle,
-        leftTitle: 'Traditional',
-        rightTitle: 'Modern',
-        comparisons: slide.bullets.map((bullet: string) => {
-          if (bullet.includes('|')) {
-            const [left, right] = bullet.split('|')
-            const feature = left.includes(':') ? left.split(':')[0] : 'Feature'
-            return {
-              feature: feature.trim(),
-              left: left.includes(':') ? left.split(':')[1].trim() : left.trim(),
-              right: right.trim()
-            }
-          }
-          return { feature: bullet, left: '', right: '' }
+        title: extractString(slide.title, 'Comparison'),
+        subtitle: extractString(slide.subtitle),
+        leftTitle: extractString(slide.leftTitle, 'Option A'),
+        rightTitle: extractString(slide.rightTitle, 'Option B'),
+        comparisons: extractArray(slide.comparisons, {
+          feature: (v) => extractString(v.feature || v.name || v),
+          left: (v) => extractString(v.left || v.optionA || v),
+          right: (v) => extractString(v.right || v.optionB || v)
         })
+      }
+    })
+  },
+
+  // Timeline/Roadmap slides
+  {
+    condition: (slide) => slide.phases && !slide.totalDuration,
+    transform: (slide) => ({
+      type: 'roadmap',
+      data: {
+        title: extractString(slide.title, 'Implementation Roadmap'),
+        subtitle: extractString(slide.subtitle),
+        phases: extractArray(slide.phases, {
+          name: (v) => extractString(v.name || v.phase || v),
+          duration: (v) => extractString(v.duration || v),
+          workstreams: (v) => extractArray(v.workstreams || [], {
+            name: (w) => extractString(w.name || w),
+            activities: (w) => extractArray(w.activities || []).map(a => extractString(a))
+          })
+        })
+      }
+    })
+  },
+
+  // Quick Wins
+  {
+    condition: (slide) => slide.type === 'quickWins' || slide.timeframes,
+    transform: (slide) => ({
+      type: 'quickWins',
+      data: {
+        title: extractString(slide.title, 'Quick Wins'),
+        subtitle: extractString(slide.subtitle),
+        timeframes: extractArray(slide.timeframes || [], {
+          period: (v) => extractString(v.period || v.timeframe || v),
+          actions: (v) => extractArray(v.actions || [], {
+            action: (a) => extractString(a.action || a),
+            impact: (a) => extractString(a.impact || a.value),
+            owner: (a) => extractString(a.owner)
+          })
+        })
+      }
+    })
+  },
+
+  // Customer Voice
+  {
+    condition: (slide) => slide.type === 'customerVoice' || slide.customerQuotes,
+    transform: (slide) => ({
+      type: 'customerVoice',
+      data: {
+        title: extractString(slide.title, 'Voice of the Customer'),
+        subtitle: extractString(slide.subtitle),
+        customerQuotes: extractArray(slide.customerQuotes || []).map(q => extractString(q)),
+        painPoints: extractArray(slide.painPoints || [], {
+          functionalArea: (v) => extractString(v.functionalArea || v.area),
+          challenge: (v) => extractString(v.challenge || v),
+          impact: (v) => extractString(v.impact)
+        }),
+        stakeholders: extractArray(slide.stakeholders || [])
+      }
+    })
+  },
+
+  // Product Deep Dive
+  {
+    condition: (slide) => slide.type === 'productDeepDive' || slide.coreFeatures,
+    transform: (slide) => ({
+      type: 'productDeepDive',
+      data: {
+        title: extractString(slide.title, 'Solution Deep Dive'),
+        subtitle: extractString(slide.subtitle),
+        coreFeatures: extractArray(slide.coreFeatures || slide.features || [], {
+          feature: (v) => extractString(v.feature || v.name || v),
+          description: (v) => extractString(v.description || v),
+          howItWorks: (v) => extractString(v.howItWorks)
+        }),
+        businessBenefits: extractArray(slide.businessBenefits || []).map(b => extractString(b)),
+        technicalDetails: slide.technicalDetails || { architecture: '', security: '', integrations: [] }
       }
     })
   },
@@ -249,445 +450,202 @@ export const slideTransformers: SlideTransformer[] = [
     transform: (slide) => ({
       type: 'marketSizing',
       data: {
-        title: slide.title || 'Market Opportunity',
-        subtitle: slide.subtitle || 'Addressable market analysis',
-        tam: slide.tam || { value: slide.tamValue || '$10B', description: slide.tamDescription || 'Total Addressable Market' },
-        sam: slide.sam || { value: slide.samValue || '$3B', description: slide.samDescription || 'Serviceable Addressable Market' },
-        som: slide.som || { value: slide.somValue || '$500M', description: slide.somDescription || 'Serviceable Obtainable Market' },
-        growth: slide.growth || '15% CAGR'
-      }
-    })
-  },
-
-  // ValueProp
-  {
-    condition: (slide) => slide.type === 'valueProp',
-    transform: (slide) => ({
-      type: 'valueProp',
-      data: {
-        title: slide.title || 'Value Proposition',
-        subtitle: slide.subtitle || 'Your transformation journey',
-        mainValue: slide.mainValue || 'We deliver measurable business outcomes through innovative solutions',
-        valuePillars: slide.valuePillars || [
-          { 
-            pillar: 'Efficiency', 
-            description: 'Streamline operations and reduce costs',
-            metrics: ['30% time savings', '25% cost reduction']
-          },
-          { 
-            pillar: 'Growth', 
-            description: 'Expand market reach and revenue',
-            metrics: ['40% revenue growth', 'New market entry']
-          },
-          { 
-            pillar: 'Innovation', 
-            description: 'Stay ahead with cutting-edge technology',
-            metrics: ['First-to-market advantage', 'Future-ready platform']
-          }
-        ],
-        beforeAfter: slide.beforeAfter,
-        uniqueSellingPoint: slide.uniqueSellingPoint
-      }
-    })
-  },
-
-  // WhyUs
-  {
-    condition: (slide) => slide.type === 'whyUs',
-    transform: (slide) => ({
-      type: 'whyUs',
-      data: {
-        title: slide.title || 'Why Partner With Us',
-        subtitle: slide.subtitle || 'Our unique differentiators',
-        differentiators: slide.differentiators || [
-          {
-            differentiator: 'Proven Track Record',
-            description: 'Successfully delivered 500+ transformations',
-            proof: '95% client satisfaction rate'
-          },
-          {
-            differentiator: 'Industry Expertise',
-            description: 'Deep domain knowledge and best practices',
-            proof: '20+ years of experience'
-          }
-        ],
-        clientResults: slide.clientResults || [],
-        awards: slide.awards || [],
-        partnershipLevel: slide.partnershipLevel
-      }
-    })
-  },
-
-  // WhyNow
-  {
-    condition: (slide) => slide.type === 'whyNow',
-    transform: (slide) => ({
-      type: 'whyNow',
-      data: {
-        title: slide.title || 'Why Act Now',
-        subtitle: slide.subtitle || 'The urgency and opportunity',
-        urgencyFactors: slide.urgencyFactors || [
-          {
-            factor: 'Market Dynamics',
-            impact: 'Competitors are already moving ahead',
-            timeline: 'Next 6 months critical'
-          },
-          {
-            factor: 'Cost of Delay',
-            impact: 'Every month of delay costs opportunity',
-            timeline: 'Immediate action needed'
-          }
-        ],
-        opportunities: slide.opportunities || [
-          {
-            opportunity: 'First Mover Advantage',
-            benefit: 'Capture market share before competitors'
-          }
-        ],
-        costOfDelay: slide.costOfDelay,
-        callToAction: slide.callToAction || 'Start your transformation journey today'
-      }
-    })
-  },
-
-  // Pricing
-  {
-    condition: (slide) => slide.type === 'pricing',
-    transform: (slide) => ({
-      type: 'pricing',
-      data: {
-        title: slide.title || 'Investment Options',
-        subtitle: slide.subtitle || 'Flexible pricing to meet your needs',
-        pricingTiers: slide.pricingTiers || [
-          {
-            tierName: 'Starter',
-            price: '$X/month',
-            description: 'For small teams',
-            features: ['Core features', 'Basic support'],
-            limitations: ['Limited users']
-          },
-          {
-            tierName: 'Professional',
-            price: '$XX/month',
-            description: 'For growing businesses',
-            features: ['All features', 'Priority support', 'Advanced analytics'],
-            isRecommended: true
-          },
-          {
-            tierName: 'Enterprise',
-            price: 'Custom',
-            description: 'For large organizations',
-            features: ['Unlimited everything', 'Dedicated support', 'Custom features']
-          }
-        ],
-        volumeDiscounts: slide.volumeDiscounts,
-        paymentTerms: slide.paymentTerms,
-        customQuote: slide.customQuote
-      }
-    })
-  },
-
-  // Agenda
-  {
-    condition: (slide) => slide.type === 'agenda',
-    transform: (slide) => ({
-      type: 'agenda',
-      data: {
-        title: slide.title || 'Meeting Agenda',
-        agendaSections: slide.agendaSections || slide.sections || [
-          { section: 'Understanding Your Needs', estimatedTime: '10 min' },
-          { section: 'Our Solution Approach', estimatedTime: '20 min' },
-          { section: 'Value & Investment', estimatedTime: '15 min' },
-          { section: 'Next Steps', estimatedTime: '5 min' }
-        ]
-      }
-    })
-  },
-
-  // BusinessImpact
-  {
-    condition: (slide) => slide.type === 'businessImpact',
-    transform: (slide) => ({
-      type: 'businessImpact',
-      data: {
-        title: slide.title || 'Business Impact Analysis',
-        subtitle: slide.subtitle || 'Current state vs. desired outcomes',
-        kpis: slide.kpis || [
-          {
-            name: 'Operational Efficiency',
-            current: '60%',
-            ideal: '90%',
-            improvement: '50%'
-          }
-        ]
-      }
-    })
-  },
-
-  // NextSteps
-  {
-    condition: (slide) => slide.type === 'nextSteps',
-    transform: (slide) => ({
-      type: 'nextSteps',
-      data: {
-        title: slide.title || 'Next Steps',
-        subtitle: slide.subtitle || 'Moving forward together',
-        immediateActions: slide.immediateActions || slide.actions || [
-          { action: 'Schedule follow-up meeting', owner: 'Both', timeline: 'This week' },
-          { action: 'Share detailed proposal', owner: 'Us', timeline: '2 days' },
-          { action: 'Internal review', owner: 'You', timeline: '1 week' }
-        ],
-        decisionCriteria: slide.decisionCriteria || [],
-        stakeholders: slide.stakeholders || [],
-        timeline: slide.timeline
-      }
-    })
-  },
-
-  // SolutionOverview
-  {
-    condition: (slide) => slide.type === 'solutionOverview',
-    transform: (slide) => ({
-      type: 'solutionOverview',
-      data: {
-        title: slide.title || 'Our Solution',
-        subtitle: slide.subtitle || 'How we address your specific needs',
-        solutionStatement: slide.solutionStatement || 'Comprehensive solution tailored to your needs',
-        keyFeatures: slide.keyFeatures || slide.features || [
-          { feature: 'Scalable Architecture', description: 'Grows with your business' },
-          { feature: 'User-Friendly Interface', description: 'Minimal training required' },
-          { feature: 'Advanced Analytics', description: 'Data-driven insights' }
-        ],
-        deploymentModel: slide.deploymentModel,
-        supportModel: slide.supportModel
-      }
-    })
-  },
-
-  // ProductDeepDive
-  {
-    condition: (slide) => slide.type === 'productDeepDive',
-    transform: (slide) => ({
-      type: 'productDeepDive',
-      data: {
-        title: slide.title || 'Solution Deep Dive',
-        subtitle: slide.subtitle || 'Detailed capabilities and features',
-        coreFeatures: slide.coreFeatures || slide.features || [],
-        businessBenefits: slide.businessBenefits || [],
-        technicalDetails: slide.technicalDetails || { architecture: '', security: '', integrations: [] }
-      }
-    })
-  },
-
-  // ROI Slide
-  {
-    condition: (slide) => slide.type === 'roi',
-    transform: (slide) => ({
-      type: 'roi',
-      data: {
-        title: slide.title || 'Return on Investment',
-        subtitle: slide.subtitle || 'Financial benefits and payback',
-        totalInvestment: slide.totalInvestment || {
-          software: slide.softwareCost || '$50,000',
-          implementation: slide.implementationCost || '$25,000',
-          training: slide.trainingCost || '$10,000',
-          firstYearTotal: slide.firstYearTotal || '$85,000'
+        title: extractString(slide.title, 'Market Opportunity'),
+        subtitle: extractString(slide.subtitle),
+        tam: {
+          value: extractString(slide.tam?.value || slide.tamValue || '$10B'),
+          description: extractString(slide.tam?.description || slide.tamDescription || 'Total Addressable Market')
         },
-        annualSavings: slide.annualSavings || [
-          { category: 'Operational Efficiency', amount: '$50,000/year' },
-          { category: 'Time Savings', amount: '$30,000/year' },
-          { category: 'Error Reduction', amount: '$20,000/year' }
-        ],
-        totalAnnualSavings: slide.totalAnnualSavings || '$100,000',
-        paybackPeriod: slide.paybackPeriod || '10 months',
-        threeYearROI: slide.threeYearROI || '253%',
-        netPresentValue: slide.netPresentValue,
-        additionalBenefits: slide.additionalBenefits || [],
-        assumptions: slide.assumptions || []
+        sam: {
+          value: extractString(slide.sam?.value || slide.samValue || '$3B'),
+          description: extractString(slide.sam?.description || slide.samDescription || 'Serviceable Addressable Market')
+        },
+        som: {
+          value: extractString(slide.som?.value || slide.somValue || '$500M'),
+          description: extractString(slide.som?.description || slide.somDescription || 'Serviceable Obtainable Market')
+        },
+        growth: extractString(slide.growth || '15% CAGR')
       }
     })
   },
 
-  // CustomerVoice Slide
+  // Competitive Landscape
   {
-    condition: (slide) => slide.type === 'customerVoice',
+    condition: (slide) => slide.type === 'competitiveLandscape' || (slide.competitors && slide.xAxis && slide.yAxis),
     transform: (slide) => ({
-      type: 'customerVoice',
+      type: 'competitiveLandscape',
       data: {
-        title: slide.title || 'Voice of the Customer',
-        subtitle: slide.subtitle || 'What we heard from stakeholders',
-        customerQuotes: slide.customerQuotes || [],
-        painPoints: slide.painPoints || [],
-        stakeholders: slide.stakeholders || []
+        title: extractString(slide.title, 'Competitive Landscape'),
+        subtitle: extractString(slide.subtitle),
+        xAxis: extractString(slide.xAxis, 'Market Position'),
+        yAxis: extractString(slide.yAxis, 'Innovation'),
+        competitors: extractArray(Array.isArray(slide.competitors) ? slide.competitors : [], {
+          name: (v) => extractString(v.name || v),
+          x: (v) => typeof v.x === 'number' ? v.x : 50,
+          y: (v) => typeof v.y === 'number' ? v.y : 50,
+          size: (v) => v.size || 'medium',
+          description: (v) => extractString(v.description),
+          isUs: (v) => !!v.isUs
+        })
       }
     })
   },
 
-  // Contact Slide
+  // Value Chain
   {
-    condition: (slide) => slide.type === 'contact',
+    condition: (slide) => slide.type === 'valueChain' || slide.primaryActivities || slide.supportActivities,
     transform: (slide) => ({
-      type: 'contact',
+      type: 'valueChain',
       data: {
-        title: slide.title || 'Contact Us',
-        subtitle: slide.subtitle || 'Get in touch with our team',
-        companyName: slide.companyName || 'Your Company',
-        companyLogo: slide.companyLogo,
-        tagline: slide.tagline,
-        addresses: slide.addresses || [],
-        website: slide.website,
-        email: slide.email,
-        phone: slide.phone,
-        socialLinks: slide.socialLinks || [],
-        teamContacts: slide.teamContacts || [],
-        legalText: slide.legalText
+        title: extractString(slide.title, 'Value Chain Analysis'),
+        subtitle: extractString(slide.subtitle),
+        primaryActivities: extractArray(slide.primaryActivities || [], {
+          name: (v) => extractString(v.name || v),
+          description: (v) => extractString(v.description || v)
+        }),
+        supportActivities: extractArray(slide.supportActivities || slide.layers || [], {
+          name: (v) => extractString(v.name || v),
+          description: (v) => extractString(v.description || v)
+        })
       }
     })
   },
 
-  // ThankYou Slide
+  // KPI Dashboard
   {
-    condition: (slide) => slide.type === 'thankYou',
+    condition: (slide) => slide.type === 'kpiDashboard' || (slide.kpis && slide.summary),
     transform: (slide) => ({
-      type: 'thankYou',
+      type: 'kpiDashboard',
       data: {
-        title: slide.title || 'Thank You',
-        subtitle: slide.subtitle,
-        icon: slide.icon || 'heart',
-        messages: slide.messages || [],
-        contactPrompt: slide.contactPrompt,
-        contactInfo: slide.contactInfo,
-        closingStatement: slide.closingStatement,
-        companyLogo: slide.companyLogo
+        title: extractString(slide.title, 'KPI Dashboard'),
+        subtitle: extractString(slide.subtitle),
+        kpis: extractArray(slide.kpis || slide.metrics || [], {
+          name: (v) => extractString(v.name || v.metric || v),
+          value: (v) => extractString(v.value || v),
+          unit: (v) => extractString(v.unit),
+          target: (v) => extractString(v.target),
+          trend: (v) => extractString(v.trend),
+          comparison: (v) => extractString(v.comparison),
+          status: (v) => v.status || 'on-track',
+          progress: (v) => typeof v.progress === 'number' ? v.progress : 0
+        }),
+        summary: extractString(slide.summary)
       }
     })
   },
 
-  // InvestmentSummary Slide
+  // Matrix slide
   {
-    condition: (slide) => slide.type === 'investmentSummary',
+    condition: (slide) => slide.type === 'matrix' || (slide.xAxis && slide.yAxis && slide.quadrants),
     transform: (slide) => ({
-      type: 'investmentSummary',
+      type: 'matrix',
       data: {
-        title: slide.title || 'Investment Summary',
-        subtitle: slide.subtitle || 'Pricing and package options',
-        packages: slide.packages || [],
-        executiveSponsorIncentive: slide.executiveSponsorIncentive,
-        additionalServices: slide.additionalServices || [],
-        termsConditions: slide.termsConditions
+        title: extractString(slide.title, 'Strategic Matrix'),
+        subtitle: extractString(slide.subtitle),
+        xAxis: {
+          label: extractString(slide.xAxis?.label || slide.xAxis),
+          labels: extractArray(slide.xAxis?.labels || []).map(l => extractString(l))
+        },
+        yAxis: {
+          label: extractString(slide.yAxis?.label || slide.yAxis),
+          labels: extractArray(slide.yAxis?.labels || []).map(l => extractString(l))
+        },
+        quadrants: slide.quadrants,
+        items: extractArray(slide.items || [])
       }
     })
   },
 
-  // IndustryTrends Slide
+  // Timeline slide
   {
-    condition: (slide) => slide.type === 'industryTrends',
+    condition: (slide) => slide.type === 'timeline' || (slide.phases && slide.totalDuration),
     transform: (slide) => ({
-      type: 'industryTrends',
+      type: 'timeline',
       data: {
-        title: slide.title || 'Industry Trends',
-        subtitle: slide.subtitle || 'Key market dynamics',
-        trends: slide.trends || []
+        title: extractString(slide.title, 'Project Timeline'),
+        subtitle: extractString(slide.subtitle),
+        phases: extractArray(slide.phases || [], {
+          phase: (v) => extractString(v.phase || v.name || v),
+          duration: (v) => extractString(v.duration || v),
+          activities: (v) => extractArray(v.activities || []).map(a => extractString(a)),
+          milestone: (v) => extractString(v.milestone)
+        })
       }
     })
   },
 
-  // CaseStudy Slide
+  // Generic content slide (with bullets support)
   {
-    condition: (slide) => slide.type === 'caseStudy',
+    condition: (slide) => slide.bullets && slide.bullets.length > 0,
     transform: (slide) => ({
-      type: 'caseStudy',
+      type: 'content',
       data: {
-        title: slide.title || 'Success Story',
-        subtitle: slide.subtitle,
-        customerName: slide.customerName || 'Enterprise Client',
-        industry: slide.industry,
-        challenge: slide.challenge || 'Key business challenge',
-        solution: slide.solution || 'Our innovative solution',
-        results: slide.results || 'Significant business impact',
-        metrics: slide.metrics || [],
-        quote: slide.quote,
-        quoteAuthor: slide.quoteAuthor,
-        quoteTitle: slide.quoteTitle,
-        logo: slide.logo
+        title: extractString(slide.title, 'Key Points'),
+        subtitle: extractString(slide.subtitle),
+        content: extractString(slide.content),
+        bullets: extractArray(slide.bullets || []).map(b => extractString(b))
       }
     })
   },
 
-  // TechnicalArchitecture Slide
-  {
-    condition: (slide) => slide.type === 'technicalArchitecture',
-    transform: (slide) => ({
-      type: 'technicalArchitecture',
-      data: {
-        title: slide.title || 'Technical Architecture',
-        subtitle: slide.subtitle || 'System design and infrastructure',
-        architectureLayers: slide.architectureLayers || [],
-        keyFeatures: slide.keyFeatures || [],
-        securityMeasures: slide.securityMeasures || [],
-        performanceMetrics: slide.performanceMetrics,
-        deploymentOptions: slide.deploymentOptions || []
-      }
-    })
-  },
-
-  // ImplementationTimeline Slide
-  {
-    condition: (slide) => slide.type === 'implementationTimeline',
-    transform: (slide) => ({
-      type: 'implementationTimeline',
-      data: {
-        title: slide.title || 'Implementation Timeline',
-        subtitle: slide.subtitle || 'Project roadmap and milestones',
-        totalDuration: slide.totalDuration || '12 weeks',
-        startDate: slide.startDate,
-        phases: slide.phases || [],
-        keySuccessFactors: slide.keySuccessFactors || [],
-        risks: slide.risks || []
-      }
-    })
-  },
-
-  // Other sales slides with simpler structures (removed - all have specific transformers now)
-
-  // Default content slide
+  // Default content slide (fallback)
   {
     condition: () => true,
     transform: (slide) => ({
       type: slide.type || 'content',
       data: {
-        title: slide.title || `Slide`,
-        subtitle: slide.subtitle,
-        content: slide.content,
-        bullets: slide.bullets,
-        ...slide
+        title: extractString(slide.title, `Slide`),
+        subtitle: extractString(slide.subtitle),
+        content: extractString(slide.content),
+        bullets: slide.bullets ? extractArray(slide.bullets || []).map(b => extractString(b)) : undefined,
+        ...slide // Include all other fields as-is
       }
     })
   }
 ]
 
 export function transformSlide(slide: any, index: number): { type: string; data: any } {
-  // Log the slide data for debugging
-  if (index === 0 || slide.type === 'title') {
-    console.log('Title slide raw data:', JSON.stringify(slide, null, 2))
+  // Log problematic slides for debugging
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`Transforming slide ${index + 1}:`, {
+      type: slide.type,
+      hasTitle: !!slide.title,
+      titleType: typeof slide.title,
+      keys: Object.keys(slide).slice(0, 10)
+    })
   }
   
   // Find the first matching transformer
   const transformer = slideTransformers.find(t => t.condition(slide, index))
   
   if (transformer) {
-    const transformed = transformer.transform(slide)
-    if (index === 0 || slide.type === 'title') {
-      console.log('Title slide transformed data:', JSON.stringify(transformed, null, 2))
+    try {
+      const transformed = transformer.transform(slide)
+      
+      // Ensure we always have valid data
+      if (!transformed.data.title) {
+        transformed.data.title = `Slide ${index + 1}`
+      }
+      
+      return transformed
+    } catch (error) {
+      console.error(`Error transforming slide ${index + 1}:`, error)
+      return {
+        type: 'content',
+        data: {
+          title: `Slide ${index + 1}`,
+          content: 'Error loading slide content',
+          bullets: ['Please try regenerating this slide']
+        }
+      }
     }
-    return transformed
   }
   
-  // Fallback to content slide
+  // This should never happen due to the default transformer
   return {
     type: 'content',
     data: {
-      title: slide.title || `Slide ${index + 1}`,
+      title: `Slide ${index + 1}`,
       subtitle: slide.subtitle,
       content: slide.content,
       bullets: slide.bullets

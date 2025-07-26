@@ -1572,7 +1572,7 @@ Return JSON with these fields:
           }
         ],
         temperature: 0.7,
-        max_tokens: 1000,
+        max_tokens: 2000,
         response_format: { type: 'json_object' }
       })
 
@@ -1600,27 +1600,30 @@ Return JSON with these fields:
    * Get system prompt for specific slide type
    */
   private getSlideSystemPrompt(slideType: string): string {
+    // Base instruction for all slides
+    const baseInstruction = 'IMPORTANT: ALL text fields must be simple strings, not objects. Follow these length limits: titles (50 chars), subtitles (80 chars), descriptions (120 chars), bullet points (100 chars), labels (30 chars).\n\n'
+    
     const prompts: Record<string, string> = {
-      title: 'Create a title slide. Generate fields: title (main presentation title), subtitle (optional tagline), presenter (who is presenting), company (company being presented to), date. Return simple strings only.',
-      executiveSummary: 'You are creating an executive summary slide. Generate a compelling key message, 3 supporting points with metrics, and a clear recommendation. Be concise and impactful.',
-      swotAnalysis: 'You are creating a SWOT analysis slide. Generate 3-4 items for each category (Strengths, Weaknesses, Opportunities, Threats). Be specific and relevant to the company context.',
-      competitiveLandscape: 'You are creating a competitive landscape slide. Position competitors on a 2x2 matrix with relevant axes. Include the company being presented to and mark them distinctly.',
-      roiCalculation: 'You are creating an ROI calculation slide. Include investment amount, returns over 3 years, and key metrics (ROI %, payback period, NPV if relevant).',
-      quickWins: 'You are creating a quick wins slide. Organize actions by timeframe (30 days, 60 days, 90 days) with specific actions and their impact.',
-      valueChain: 'You are creating a value chain slide. Include 4-5 primary activities and 3-4 support activities relevant to the business.',
-      roadmap: 'You are creating an implementation roadmap. Include 3-4 phases with duration, key workstreams, and activities for each phase.',
+      title: baseInstruction + 'Create a title slide. Generate fields: title (main presentation title, max 50 chars), subtitle (optional tagline, max 80 chars), presenter (who is presenting, max 40 chars), company (company being presented to, max 40 chars), date (date string). Return ONLY simple strings.',
+      executiveSummary: baseInstruction + 'Create an executive summary slide. Generate: title (max 50 chars), keyMessage (compelling message, max 150 chars), supportingPoints array with 3 items each having label (max 30 chars), value (max 20 chars), description (max 100 chars), and recommendation (max 120 chars). ALL fields must be strings.',
+      swotAnalysis: baseInstruction + 'Create a SWOT analysis slide. Generate: title (max 50 chars), subtitle (max 80 chars), and 3-4 items for each category (strengths, weaknesses, opportunities, threats) as string arrays. Each item max 100 chars. Return strings only.',
+      competitiveLandscape: baseInstruction + 'Create a competitive landscape slide. Generate: title (max 50 chars), subtitle (max 80 chars), xAxis and yAxis (max 30 chars each), competitors array with name (max 30 chars), x/y (0-100 numbers), description (max 100 chars). Strings only.',
+      roiCalculation: baseInstruction + 'Create an ROI calculation slide. Generate: title (max 50 chars), investment object with label and value as strings, returns array with year and value as strings, metrics object with roi, payback, npv as strings. No nested objects.',
+      quickWins: baseInstruction + 'Create a quick wins slide. Generate: title (max 50 chars), timeframes array with period (max 20 chars) and actions array. Each action has action (max 100 chars), impact (max 80 chars), owner (max 30 chars) as strings.',
+      valueChain: baseInstruction + 'Create a value chain slide. Generate: title (max 50 chars), primaryActivities and supportActivities arrays. Each activity has name (max 40 chars) and description (max 100 chars) as strings.',
+      roadmap: baseInstruction + 'Create an implementation roadmap. Generate: title (max 50 chars), phases array with name (max 40 chars), duration (max 20 chars), workstreams array. Each workstream has name (max 40 chars) and activities (string array, each max 80 chars).',
       // Sales-oriented slides
-      customerVoice: 'Create a customer voice slide. Generate customerQuotes array with relevant pain points, and painPoints array with functionalArea, challenge, and impact.',
-      whyUs: 'Create a why us slide. Generate differentiators array with differentiator, description, and proof. Include clientResults and awards if relevant.',
-      whyNow: 'Create a why now slide. Generate urgencyFactors array with factor, impact, and timeline. Include opportunities and costOfDelay.',
-      valueProp: 'Create a value proposition slide. Generate mainValue statement and valuePillars array with pillar, description, and metrics.',
-      pricing: 'Create a pricing slide. Generate pricingTiers array with tierName, price, features, and mark one as isRecommended.',
-      roi: 'Create ROI slide. Generate totalInvestment object, annualSavings array, and calculate paybackPeriod and threeYearROI.',
-      solutionOverview: 'Create solution overview. Generate keyFeatures array with feature and description for each.',
-      productDeepDive: 'Create product deep dive. Generate coreFeatures array, businessBenefits array, and technicalDetails object.',
-      nextSteps: 'Create next steps slide. Generate immediateActions array with action, owner, and timeline.',
+      customerVoice: baseInstruction + 'Create a customer voice slide. Generate: title (max 50 chars), customerQuotes (string array, each max 150 chars), painPoints array with functionalArea (max 40 chars), challenge (max 100 chars), impact (max 80 chars) as strings.',
+      whyUs: baseInstruction + 'Create a why us slide. Generate: title (max 50 chars), differentiators array with differentiator (max 50 chars), description (max 120 chars), proof (max 100 chars) as strings. Optional clientResults and awards arrays.',
+      whyNow: baseInstruction + 'Create a why now slide. Generate: title (max 50 chars), urgencyFactors array with factor (max 50 chars), impact (max 100 chars), timeline (max 30 chars) as strings. Include opportunities array and costOfDelay object.',
+      valueProp: baseInstruction + 'Create a value proposition slide. Generate: title (max 50 chars), mainValue (max 150 chars string), valuePillars array with pillar (max 40 chars), description (max 100 chars), metrics (string array, each max 50 chars).',
+      pricing: baseInstruction + 'Create a pricing slide. Generate: title (max 50 chars), pricingTiers array with tierName (max 30 chars), price (max 20 chars), features (string array, each max 80 chars). Mark one tier as isRecommended (boolean).',
+      roi: baseInstruction + 'Create ROI slide. Generate: title (max 50 chars), totalInvestment object with software, implementation, training as strings (max 20 chars each), annualSavings array with category (max 40 chars), amount (max 20 chars) as strings, paybackPeriod and threeYearROI as strings.',
+      solutionOverview: baseInstruction + 'Create solution overview. Generate: title (max 50 chars), solutionStatement (max 120 chars), keyFeatures array with feature (max 50 chars) and description (max 100 chars) as strings.',
+      productDeepDive: baseInstruction + 'Create product deep dive. Generate: title (max 50 chars), coreFeatures array with feature (max 50 chars), description (max 120 chars) as strings, businessBenefits (string array, each max 100 chars).',
+      nextSteps: baseInstruction + 'Create next steps slide. Generate: title (max 50 chars), immediateActions array with action (max 100 chars), owner (max 30 chars), timeline (max 30 chars) as strings.',
       // Add more as needed
-      default: 'You are creating a business presentation slide. Generate relevant content based on the context provided. Be professional, concise, and data-driven.'
+      default: baseInstruction + 'Create a business presentation slide. Generate content with title (max 50 chars), subtitle (max 80 chars), content or bullets as appropriate. ALL text must be strings with length limits respected.'
     }
     
     return prompts[slideType] || prompts.default

@@ -24,7 +24,7 @@ export function RoadmapSlide({ data, className = '' }: RoadmapSlideProps) {
       <div className="flex-1 overflow-auto">
         {/* Timeline header */}
         <div className="flex mb-6">
-          {data.phases.map((phase, idx) => (
+          {(data.phases || []).map((phase, idx) => (
             <div key={idx} className="flex-1 text-center">
               <div className={`${colors[idx % colors.length]} text-white py-3 px-4 rounded-t-lg`}>
                 <div className="font-semibold">{phase.name}</div>
@@ -54,7 +54,7 @@ export function RoadmapSlide({ data, className = '' }: RoadmapSlideProps) {
 
                 {/* Activities per phase */}
                 <div className="flex flex-1">
-                  {data.phases.map((phase, phaseIdx) => {
+                  {(data.phases || []).map((phase, phaseIdx) => {
                     const workstream = phase.workstreams.find(ws => ws.name === workstreamName)
                     return (
                       <div key={phaseIdx} className="flex-1 px-2">
@@ -79,7 +79,7 @@ export function RoadmapSlide({ data, className = '' }: RoadmapSlideProps) {
         <div className="mt-6 flex">
           <div className="w-32 flex-shrink-0"></div>
           <div className="flex flex-1">
-            {data.phases.map((phase, idx) => (
+            {(data.phases || []).map((phase, idx) => (
               <div key={idx} className="flex-1 px-2">
                 <div className="flex items-center justify-center">
                   <CheckCircle className={`w-6 h-6 ${colors[idx % colors.length].replace('bg-', 'text-')}`} />

@@ -15,7 +15,7 @@ export function MetricsSlide({ data, className = '' }: MetricsSlideProps) {
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 flex-1">
-        {data.metrics.map((metric, idx) => (
+        {(data.metrics || []).map((metric, idx) => (
           <MetricCard
             key={idx}
             value={metric.value}

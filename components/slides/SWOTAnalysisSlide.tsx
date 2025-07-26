@@ -11,7 +11,7 @@ export function SWOTAnalysisSlide({ data, className = '' }: SWOTAnalysisSlidePro
   const quadrants = [
     {
       title: 'Strengths',
-      items: data.strengths,
+      items: data.strengths || [],
       icon: Shield,
       bgColor: 'bg-green-50',
       borderColor: 'border-green-200',
@@ -20,7 +20,7 @@ export function SWOTAnalysisSlide({ data, className = '' }: SWOTAnalysisSlidePro
     },
     {
       title: 'Weaknesses',
-      items: data.weaknesses,
+      items: data.weaknesses || [],
       icon: AlertTriangle,
       bgColor: 'bg-red-50',
       borderColor: 'border-red-200',
@@ -29,7 +29,7 @@ export function SWOTAnalysisSlide({ data, className = '' }: SWOTAnalysisSlidePro
     },
     {
       title: 'Opportunities',
-      items: data.opportunities,
+      items: data.opportunities || [],
       icon: TrendingUp,
       bgColor: 'bg-blue-50',
       borderColor: 'border-blue-200',
@@ -38,7 +38,7 @@ export function SWOTAnalysisSlide({ data, className = '' }: SWOTAnalysisSlidePro
     },
     {
       title: 'Threats',
-      items: data.threats,
+      items: data.threats || [],
       icon: Zap,
       bgColor: 'bg-orange-50',
       borderColor: 'border-orange-200',

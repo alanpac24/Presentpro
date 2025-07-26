@@ -15,7 +15,7 @@ export function TimelineSlide({ data, className = '' }: TimelineSlideProps) {
 
       <div className="flex-1 overflow-auto">
         <div className="space-y-6">
-          {data.phases.map((phase, idx) => (
+          {(data.phases || []).map((phase, idx) => (
             <div key={idx} className="flex">
               <div className="flex flex-col items-center mr-6">
                 <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">

@@ -28,7 +28,7 @@ export function QuickWinsSlide({ data, className = '' }: QuickWinsSlideProps) {
       </div>
 
       <div className="flex-1 space-y-6 overflow-auto">
-        {data.timeframes.map((timeframe, idx) => {
+        {(data.timeframes || []).map((timeframe, idx) => {
           const bgColor = timeframeColors[timeframe.period as keyof typeof timeframeColors] || 'bg-gray-600'
           
           return (
@@ -83,7 +83,7 @@ export function QuickWinsSlide({ data, className = '' }: QuickWinsSlideProps) {
             </span>
           </div>
           <div className="flex items-center space-x-4">
-            {data.timeframes.map((timeframe, idx) => {
+            {(data.timeframes || []).map((timeframe, idx) => {
               const bgColor = timeframeColors[timeframe.period as keyof typeof timeframeColors] || 'bg-gray-600'
               return (
                 <div key={idx} className="flex items-center">

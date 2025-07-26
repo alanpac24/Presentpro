@@ -36,7 +36,7 @@ export function CompetitiveLandscapeSlide({ data, className = '' }: CompetitiveL
           </div>
 
           {/* Competitors */}
-          {data.competitors.map((competitor, idx) => {
+          {(data.competitors || []).map((competitor, idx) => {
             const isUs = competitor.name === 'Us' || competitor.isUs
             const size = competitor.size === 'large' ? 'w-24 h-24' : 
                         competitor.size === 'small' ? 'w-12 h-12' : 'w-16 h-16'
